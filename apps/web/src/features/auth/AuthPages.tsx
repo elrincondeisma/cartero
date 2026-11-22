@@ -1,37 +1,19 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { type FormEvent, type ReactNode, useState } from 'react'
+import { type FormEvent, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
 import { toast } from 'sonner'
 import { api } from '@/api/client'
 import { qk, useMe } from '@/api/hooks'
-import { LanguageLinks } from '@/components/LanguageSwitch'
-import { Logo } from '@/components/Logo'
-import { Button, Field, Input, Spinner } from '@/components/ui'
+import { Lock, Mail, User } from 'lucide-react'
+import { Button, Spinner } from '@/components/ui'
+import { AuthField, AuthShell, PasswordField, StrengthMeter, SubmitButton } from './AuthShell'
 import { lang, t } from "@/i18n";
-
-function AuthShell({ title, subtitle, children }: { title: string; subtitle?: ReactNode; children: ReactNode }) {
-  return (
-    <div className="flex min-h-full items-center justify-center bg-soft p-6">
-      <div className="w-full max-w-sm">
-        <div className="mb-6 flex justify-center">
-          <Logo size={30} />
-        </div>
-        <div className="rounded-xl border border-app bg-app p-6 shadow-sm">
-          <h1 className="text-lg font-semibold">{title}</h1>
-          {subtitle && <p className="mt-1 text-muted">{subtitle}</p>}
-          <div className="mt-5">{children}</div>
-        </div>
-        <p className="mt-4 text-center text-xs text-muted">{t("Cartero · cliente de APIs open source")}</p>
-        <LanguageLinks className="mt-3" />
-      </div>
-    </div>
-  )
-}
 
 export function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const [shake, setShake] = useState(0)
   const [params] = useSearchParams()
   const nav = useNavigate()
   const qc = useQueryClient()
@@ -45,6 +27,7 @@ export function LoginPage() {
       await qc.invalidateQueries({ queryKey: qk.me })
       nav(params.get('next') ?? '/', { replace: true })
     } catch (err) {
+      setShake((n) => n + 1)
       toast.error((err as Error).message)
     } finally {
       setLoading(false)
@@ -52,24 +35,28 @@ export function LoginPage() {
   }
 
   return (
-    <AuthShell title={t("Inicia sesión")} subtitle={t("Accede a tus colecciones y workspaces.")}>
-      <form onSubmit={submit} className="space-y-3">
-        <Field label={t("Email")}>
-          <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoFocus required autoComplete="email" />
-        </Field>
-        <Field label={t("Contraseña")}>
-          <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="current-password" />
-        </Field>
-        <Button type="submit" variant="primary" className="w-full" loading={loading}>
-          {t("Entrar")}</Button>
+    <AuthShell
+      title={t('Hola de nuevo')}
+      subtitle={t('Accede a tus colecciones y workspaces.')}
+      shake={shake}
+      footer={
+        cfg?.allowRegistration !== false && (
+          <>
+            {t('¿No tienes cuenta?')}{' '}
+            <Link to={`/register${params.get('next') ? `?next=${encodeURIComponent(params.get('next')!)}` : ''}`} className="font-semibold text-brand-600 hover:underline dark:text-brand-400">
+              {t('Regístrate')}
+            </Link>
+          </>
+        )
+      }
+    >
+      <form onSubmit={submit} className="space-y-4">
+        <AuthField label={t('Email')} icon={<Mail />} type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoFocus required autoComplete="email" placeholder={t('tu@empresa.com')} delay={240} />
+        <PasswordField label={t('Contraseña')} icon={<Lock />} value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="current-password" placeholder="••••••••" delay={300} />
+        <SubmitButton loading={loading} delay={380}>
+          {t('Entrar')}
+        </SubmitButton>
       </form>
-      {cfg?.allowRegistration !== false && (
-        <p className="mt-4 text-center text-muted">
-          {t("¿No tienes cuenta?")}{' '}
-          <Link to={`/register${params.get('next') ? `?next=${encodeURIComponent(params.get('next')!)}` : ''}`} className="text-brand-600 hover:underline">
-            {t("Regístrate")}</Link>
-        </p>
-      )}
     </AuthShell>
   )
 }
@@ -79,6 +66,7 @@ export function RegisterPage({ invitation, presetEmail }: { invitation?: string;
   const [name, setName] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const [shake, setShake] = useState(0)
   const [params] = useSearchParams()
   const nav = useNavigate()
   const qc = useQueryClient()
@@ -92,6 +80,7 @@ export function RegisterPage({ invitation, presetEmail }: { invitation?: string;
       await qc.invalidateQueries({ queryKey: qk.workspaces })
       nav(params.get('next') ?? '/', { replace: true })
     } catch (err) {
+      setShake((n) => n + 1)
       toast.error((err as Error).message)
     } finally {
       setLoading(false)
@@ -99,27 +88,52 @@ export function RegisterPage({ invitation, presetEmail }: { invitation?: string;
   }
 
   return (
-    <AuthShell title={t("Crea tu cuenta")} subtitle={t("Gratis y sin límites: es tu servidor.")}>
-      <form onSubmit={submit} className="space-y-3">
-        <Field label={t("Nombre")}>
-          <Input value={name} onChange={(e) => setName(e.target.value)} autoFocus required autoComplete="name" />
-        </Field>
-        <Field label={t("Email")}>
-          <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required readOnly={!!presetEmail} autoComplete="email" />
-        </Field>
-        <Field label={t("Contraseña")} hint={t("Mínimo 8 caracteres")}>
-          <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} minLength={8} required autoComplete="new-password" />
-        </Field>
-        <Button type="submit" variant="primary" className="w-full" loading={loading}>
-          {t("Crear cuenta")}</Button>
+    <AuthShell
+      title={t('Crea tu cuenta')}
+      subtitle={invitation ? t('Te han invitado a un workspace. Crea tu cuenta para entrar.') : t('Gratis y sin límites: es tu servidor.')}
+      shake={shake}
+      footer={
+        !invitation && (
+          <>
+            {t('¿Ya tienes cuenta?')}{' '}
+            <Link to="/login" className="font-semibold text-brand-600 hover:underline dark:text-brand-400">
+              {t('Inicia sesión')}
+            </Link>
+          </>
+        )
+      }
+    >
+      <form onSubmit={submit} className="space-y-4">
+        <AuthField label={t('Nombre')} icon={<User />} value={name} onChange={(e) => setName(e.target.value)} autoFocus required autoComplete="name" placeholder="Ada Lovelace" delay={240} />
+        <AuthField
+          label={t('Email')}
+          icon={<Mail />}
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+          readOnly={!!presetEmail}
+          autoComplete="email"
+          placeholder={t('tu@empresa.com')}
+          className={presetEmail ? 'cursor-not-allowed opacity-70' : ''}
+          delay={300}
+        />
+        <PasswordField
+          label={t('Contraseña')}
+          icon={<Lock />}
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          minLength={8}
+          required
+          autoComplete="new-password"
+          placeholder="••••••••"
+          hint={<StrengthMeter password={password} />}
+          delay={360}
+        />
+        <SubmitButton loading={loading} delay={440}>
+          {t('Crear cuenta')}
+        </SubmitButton>
       </form>
-      {!invitation && (
-        <p className="mt-4 text-center text-muted">
-          {t("¿Ya tienes cuenta?")}{' '}
-          <Link to="/login" className="text-brand-600 hover:underline">
-            {t("Inicia sesión")}</Link>
-        </p>
-      )}
     </AuthShell>
   )
 }
