@@ -65,7 +65,7 @@ async function handleMock(req: FastifyRequest, reply: FastifyReply) {
   const body = typeof req.body === 'string' ? req.body : req.body ? JSON.stringify(req.body) : undefined
   const res = mockResponse(collection, { method: req.method, path, query: req.query as any, headers: req.headers, body }, vars)
 
-  void db
+  await db
     .insert(schema.mockLogs)
     .values({
       mockId: mock.id,
@@ -76,7 +76,7 @@ async function handleMock(req: FastifyRequest, reply: FastifyReply) {
       matchedExample: res.match?.example.name ?? null,
       request: { headers: req.headers, body: body?.slice(0, 10_000) },
     })
-    .execute()
+    .catch((e) => req.log.warn(`No se pudo guardar el log del mock: ${e.message}`))
 
   if (mock.delayMs) await new Promise((r) => setTimeout(r, mock.delayMs))
   for (const h of res.headers) reply.header(h.key, h.value)
