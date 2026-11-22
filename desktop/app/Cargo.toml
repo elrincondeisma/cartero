@@ -12,9 +12,37 @@ name = "cartero"
 path = "src/main.rs"
 
 [dependencies]
-gpui-kit = { version = "=0.10.0", default-features = false, features = ["component", "assets", "tree-sitter", "tree-sitter-javascript", "tree-sitter-html", "tree-sitter-yaml"] }
+cartero-model = { path = "../crates/model" }
+cartero-http = { path = "../crates/http" }
+cartero-script = { path = "../crates/script" }
+cartero-runner = { path = "../crates/runner" }
+cartero-store = { path = "../crates/store" }
+gpui-kit = { version = "=0.10.0", default-features = false, features = [
+    "component",
+    "assets",
+    "tree-sitter",
+    "tree-sitter-javascript",
+    "tree-sitter-html",
+    "tree-sitter-yaml",
+    "tree-sitter-bash",
+    "tree-sitter-python",
+    "tree-sitter-go",
+    "tree-sitter-php",
+    "tree-sitter-csharp",
+] }
+serde.workspace = true
 serde_json.workspace = true
 anyhow.workspace = true
+tokio.workspace = true
+dirs = "6"
+keyring = { version = "3", features = ["apple-native", "windows-native", "async-secret-service", "tokio", "crypto-rust"] }
+base64 = "0.22"
+uuid = { version = "1", features = ["v4"] }
+chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
+url = "2"
+open = "5"
+sha2 = "0.10"
+rand = "0.9"
 
 [lints]
 workspace = true

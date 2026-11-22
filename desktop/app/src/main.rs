@@ -1,48 +1,51 @@
-//! F0 · Prueba de riesgo de la interfaz: ventana, paneles redimensionables y editor JSON grande.
-use gpui_kit::component::input::*;
-use gpui_kit::component::label::Label;
-use gpui_kit::component::*;
+//! Cartero de escritorio: cliente de APIs nativo, con tus colecciones en este ordenador y,
+//! si quieres, sincronizadas con un servidor de Cartero.
+
+mod assets;
+mod i18n;
+mod oauth2;
+mod runtime;
+mod sample;
+mod settings;
+mod state;
+mod theme;
+mod ui;
+mod update;
+
 use gpui_kit::*;
-use std::sync::OnceLock;
-use std::time::Instant;
-
-/// Momento de arranque, para medir el primer fotograma (prueba de rendimiento F0)
-static START: OnceLock<Instant> = OnceLock::new();
-
-struct Spike {
-    editor: Entity<EditorState>,
-    first_frame: bool,
-}
-
-impl Spike {
-    fn new(window: &mut Window, cx: &mut Context<Self>) -> Self {
-        let big = std::env::var("CARTERO_SPIKE_FILE").ok().and_then(|p| std::fs::read_to_string(p).ok());
-        let editor = cx.new(|cx| {
-            EditorState::new(window, cx)
-                .language("json".to_string())
-                .line_number(true)
-                .soft_wrap(false)
-                .default_value(big.unwrap_or_else(|| "{\n  \"hola\": \"Cartero\"\n}".into()))
-        });
-        eprintln!("editor creado: {:?}", START.get().unwrap().elapsed());
-        Self { editor, first_frame: true }
-    }
-}
-
-impl Render for Spike {
-    fn render(&mut self, _: &mut Window, _: &mut Context<Self>) -> impl IntoElement {
-        if std::mem::take(&mut self.first_frame) {
-            eprintln!("primer render: {:?}", START.get().unwrap().elapsed());
-        }
-        div().v_flex().size_full().child(div().p_2().child(Label::new("Cartero · F0"))).child(Editor::new(&self.editor).h_full())
-    }
-}
 
 fn main() {
-    START.get_or_init(Instant::now);
-    gpui_kit::application().run(move |cx| {
+    let state = match state::AppState::open() {
+        Ok(s) => s,
+        Err(e) => {
+            eprintln!("No se pudo abrir la base de datos de Cartero: {e}");
+            std::process::exit(1);
+        }
+    };
+    i18n::set_english(state.settings.english());
+    gpui_kit::application().with_assets(assets::Assets).run(move |cx| {
         gpui_kit::init(cx);
-        gpui_kit::open_window(WindowOptions::default(), cx, |window, cx| cx.new(|cx| Spike::new(window, cx)))
-            .expect("No se pudo abrir la ventana");
+        ui::window::bind_keys(cx);
+        let theme_choice = state.settings.theme;
+        theme::apply(theme_choice, None, cx);
+        let app = cx.new(|_| state);
+        let options = WindowOptions {
+            window_bounds: Some(WindowBounds::centered(size(px(1360.), px(860.)), cx)),
+            window_min_size: Some(size(px(900.), px(560.))),
+            app_id: Some("cartero".into()),
+            ..gpui_kit::component::TitleBar::window_options()
+        };
+        gpui_kit::open_window(options, cx, |window, cx| {
+            theme::apply(theme_choice, Some(window), cx);
+            cx.new(|cx| ui::window::MainWindow::new(app.clone(), window, cx))
+        })
+        .expect("No se pudo abrir la ventana");
+        cx.on_window_closed(|cx, _| {
+            if cx.windows().is_empty() {
+                cx.quit();
+            }
+        })
+        .detach();
+        cx.activate(true);
     });
 }

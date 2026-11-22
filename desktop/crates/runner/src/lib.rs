@@ -18,7 +18,7 @@ use serde::Serialize;
 use serde_json::{Map, Value, json};
 use tokio::sync::Mutex;
 
-pub use run::{RunConfig, RunEvent, RunItemResult, RunSummary, run_collection};
+pub use run::{RunConfig, RunEvent, RunItemResult, RunSummary, requests_in_order as run_requests, run_collection};
 
 /// Variables vivas durante una ejecución. Los scripts las cambian y la app guarda los cambios.
 #[derive(Debug, Clone, Default)]
