@@ -2,7 +2,7 @@ export const languages = { es: 'Español', en: 'English' } as const
 export type Lang = keyof typeof languages
 
 /** URL del repositorio. Cámbiala con PUBLIC_REPO_URL al publicar. */
-export const REPO_URL = import.meta.env.PUBLIC_REPO_URL ?? 'https://github.com/cartero-dev/cartero'
+export const REPO_URL = import.meta.env.PUBLIC_REPO_URL ?? 'https://github.com/elrincondeisma/cartero'
 
 export const ui = {
   es: {

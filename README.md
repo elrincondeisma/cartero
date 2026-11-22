@@ -26,7 +26,7 @@
 ## Puesta en marcha
 
 ```bash
-git clone <este-repo> cartero && cd cartero
+git clone https://github.com/elrincondeisma/cartero.git && cd cartero
 cp .env.example .env        # cambia CARTERO_SECRET_KEY y POSTGRES_PASSWORD
 docker compose up -d
 ```
