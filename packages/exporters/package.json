@@ -1,0 +1,27 @@
+{
+  "name": "@cartero/exporters",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc -p tsconfig.json --watch --preserveWatchOutput",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@cartero/core": "workspace:*",
+    "postman-code-generators": "^2.1.1",
+    "postman-collection": "^5.3.1"
+  },
+  "devDependencies": {
+    "@cartero/importers": "workspace:*"
+  }
+}

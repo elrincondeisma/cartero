@@ -20,7 +20,24 @@ export interface RunOptions {
   cookieJar?: unknown
   /** Ficheros para form-data/binary: src → ruta absoluta en disco */
   fileResolverBaseDir?: string
+  /** Hosts o rangos CIDR prohibidos (protección SSRF). Ej: ['10.0.0.0/8', 'localhost'] */
+  restrictedAddresses?: string[]
 }
+
+/** Rangos privados/reservados habituales para bloquear SSRF en despliegues públicos. */
+export const PRIVATE_NETWORKS = [
+  'localhost',
+  '0.0.0.0/8',
+  '10.0.0.0/8',
+  '100.64.0.0/10',
+  '127.0.0.0/8',
+  '169.254.0.0/16',
+  '172.16.0.0/12',
+  '192.168.0.0/16',
+  '::1/128',
+  'fc00::/7',
+  'fe80::/10',
+]
 
 export interface SentRequest {
   method: string

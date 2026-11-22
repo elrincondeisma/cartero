@@ -55,7 +55,7 @@ function normalizeVariables(values: any[]): Variable[] {
     .filter((v) => v && typeof v.key === 'string')
     .map((v) => {
       const out: Variable = { key: v.key, value: v.value == null ? '' : String(v.value) }
-      if (v.type && v.type !== 'text') out.type = v.type
+      if (v.type && v.type !== 'text' && v.type !== 'default') out.type = v.type
       if (v.enabled === false || v.disabled === true) out.disabled = true
       if (v.description) out.description = typeof v.description === 'string' ? v.description : v.description.content
       return out

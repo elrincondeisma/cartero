@@ -48,6 +48,14 @@ function parseStructured(text: string): any | undefined {
 }
 
 async function importJson(json: any): Promise<ImportResult> {
+  // Exportación de workspace de Cartero
+  if (json && json.cartero === 1 && Array.isArray(json.collections)) {
+    const r = empty('cartero-workspace')
+    for (const c of json.collections) r.collections.push(await importPostmanCollection(c))
+    for (const e of json.environments ?? []) r.environments.push(importPostmanEnvironment(e))
+    if (Array.isArray(json.globals) && json.globals.length) r.globals = importPostmanGlobals({ values: json.globals })
+    return r
+  }
   if (isPostmanDump(json)) {
     const r = empty('postman-dump')
     for (const c of json.collections) r.collections.push(await importPostmanCollection(c))

@@ -147,6 +147,9 @@ export function runCollection(opts: RunOptions, onEvent: (e: RunEvent) => void =
       fileResolver: opts.fileResolverBaseDir ? fileResolver(opts.fileResolverBaseDir) : undefined,
       script: { serializeLogs: false },
     }
+    if (opts.restrictedAddresses?.length) {
+      runOpts.network = { restrictedAddresses: Object.fromEntries(opts.restrictedAddresses.map((a) => [a, true])) }
+    }
     if (opts.entrypoint) runOpts.entrypoint = { execute: opts.entrypoint, lookupStrategy: 'idOrName' }
 
     runner.run(collection, runOpts, (err: any, run: any) => {

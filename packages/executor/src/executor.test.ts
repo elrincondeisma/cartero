@@ -115,6 +115,16 @@ describe('runCollection', () => {
   })
 })
 
+describe('SSRF', () => {
+  it('bloquea redes privadas si se configura', async () => {
+    const { PRIVATE_NETWORKS } = await import('./index.js')
+    const c: Collection = { info: { name: 'c' }, item: [{ name: 'x', request: { method: 'GET', url: base } }] }
+    const r = await runCollection({ collection: c, restrictedAddresses: PRIVATE_NETWORKS })
+    expect(r.executions[0].error).toBeTruthy()
+    expect(r.executions[0].response).toBeUndefined()
+  })
+})
+
 describe('runIsolated', () => {
   it('ejecuta en proceso hijo', async () => {
     const r = await runIsolated({ collection: col(), entrypoint: 'login', environment: [{ key: 'user', value: 'ana' }] })
