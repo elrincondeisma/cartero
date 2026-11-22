@@ -11,6 +11,7 @@ import { assertCollection, assertRole, itemCollection } from '../lib/access.js'
 import { requireUser } from '../lib/auth.js'
 import { openVariables, sealVariables } from '../lib/crypto.js'
 import { badRequest, conflict, notFound } from '../lib/errors.js'
+import { unscheduleMonitor } from '../lib/monitors.js'
 import { broadcast } from '../lib/realtime.js'
 import { collectionData, flattenItems, insertCollection, itemData, loadCollection, rowToItem } from '../lib/tree.js'
 
@@ -175,6 +176,8 @@ export async function collectionRoutes(app: FastifyInstance) {
     const user = requireUser(req)
     const { id } = req.params as { id: string }
     const ws = await assertCollection(id, user.id, 'editor')
+    const mons = await db.select({ id: schema.monitors.id }).from(schema.monitors).where(eq(schema.monitors.collectionId, id))
+    for (const m of mons) await unscheduleMonitor(m.id).catch(() => {})
     await db.delete(schema.collections).where(eq(schema.collections.id, id))
     broadcast(ws, { type: 'collections.changed', by: user.id })
     return { ok: true }

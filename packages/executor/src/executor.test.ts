@@ -131,6 +131,19 @@ describe('runIsolated', () => {
     expect(r.executions[0].response?.code).toBe(200)
     expect(r.environment.find((v) => v.key === 'token')?.value).toBe('tok-0')
   })
+  it('entrega resultados grandes sin perderlos', async () => {
+    const c: Collection = {
+      info: { name: 'grande' },
+      item: Array.from({ length: 4 }, (_, i) => ({
+        name: `r${i}`,
+        request: { method: 'POST', url: `${base}/echo`, body: { mode: 'raw', raw: 'x'.repeat(400_000) } },
+      })),
+    }
+    const r = await runIsolated({ collection: c })
+    expect(r.error).toBeUndefined()
+    expect(r.executions).toHaveLength(4)
+  }, 20000)
+
   it('mata bucles infinitos por timeout', async () => {
     const c: Collection = {
       info: { name: 'c' },

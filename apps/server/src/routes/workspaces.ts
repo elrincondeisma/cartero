@@ -7,6 +7,7 @@ import { assertRole } from '../lib/access.js'
 import { requireUser } from '../lib/auth.js'
 import { openVariables, randomToken, sealVariables } from '../lib/crypto.js'
 import { badRequest, forbidden } from '../lib/errors.js'
+import { unscheduleMonitor } from '../lib/monitors.js'
 import { sendMail } from '../lib/notify.js'
 import { broadcast } from '../lib/realtime.js'
 
@@ -61,6 +62,9 @@ export async function workspaceRoutes(app: FastifyInstance) {
     await assertRole(ws, user.id, 'owner')
     const [row] = await db.select().from(schema.workspaces).where(eq(schema.workspaces.id, ws))
     if (row?.type === 'personal') throw badRequest('No se puede borrar el workspace personal')
+    // Los monitores viven también en Redis: hay que desprogramarlos antes del borrado en cascada
+    const mons = await db.select({ id: schema.monitors.id }).from(schema.monitors).where(eq(schema.monitors.workspaceId, ws))
+    for (const m of mons) await unscheduleMonitor(m.id).catch(() => {})
     await db.delete(schema.workspaces).where(eq(schema.workspaces.id, ws))
     return { ok: true }
   })
