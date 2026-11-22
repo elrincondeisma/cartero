@@ -17,6 +17,8 @@ mod update;
 use gpui_kit::*;
 
 fn main() {
+    // Idioma del sistema para los datos de ejemplo de la primera vez; luego, el de los ajustes
+    i18n::set_english(i18n::system_prefers_english());
     let state = match state::AppState::open() {
         Ok(s) => s,
         Err(e) => {

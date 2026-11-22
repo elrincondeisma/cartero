@@ -9,7 +9,7 @@ use gpui_kit::SharedString;
 
 static ENGLISH: AtomicBool = AtomicBool::new(false);
 
-static EN: LazyLock<HashMap<&'static str, &'static str>> =
+static EN: LazyLock<HashMap<String, String>> =
     LazyLock::new(|| serde_json::from_str(include_str!("i18n/en.json")).expect("en.json válido"));
 
 pub fn set_english(on: bool) {
@@ -30,11 +30,15 @@ pub fn system_prefers_english() -> bool {
 }
 
 pub fn tr(es: &'static str) -> SharedString {
-    if is_english() {
-        SharedString::new_static(EN.get(es).copied().unwrap_or(es))
-    } else {
-        SharedString::new_static(es)
+    let text: SharedString = match EN.get(es).filter(|_| is_english()) {
+        Some(en) => en.clone().into(),
+        None => SharedString::new_static(es),
+    };
+    // En macOS los atajos van con ⌘
+    if cfg!(target_os = "macos") && text.contains("Ctrl+") {
+        return text.replace("Ctrl+", "⌘").into();
     }
+    text
 }
 
 /// Con sustituciones: `trf("Hace {n} min", &[("n", "5")])`.
@@ -48,6 +52,14 @@ pub fn trf(es: &'static str, args: &[(&str, &str)]) -> SharedString {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn en_json_valido() {
+        assert!(super::EN.len() > 300);
+        super::set_english(true);
+        assert_eq!(super::tr("Guardar").as_ref(), "Save");
+        super::set_english(false);
+    }
+
     /// Todas las cadenas de tr("…") y trf("…") del código tienen traducción inglesa.
     #[test]
     fn no_faltan_traducciones() {

@@ -3,6 +3,7 @@
 
 use std::rc::Rc;
 
+use gpui_kit::component::highlighter::HighlightTheme;
 use gpui_kit::component::{Theme, ThemeConfig, ThemeMode};
 use gpui_kit::{App, Hsla, Rgba, Window, rgb};
 
@@ -29,6 +30,11 @@ pub fn apply(choice: ThemeChoice, window: Option<&mut Window>, cx: &mut App) {
         t.dark_theme = darkc.clone();
     });
     Theme::change(if dark { ThemeMode::Dark } else { ThemeMode::Light }, None, cx);
+    // El editor de código usa su propio tema de resaltado
+    Theme::update(cx, |t| {
+        t.highlight_theme = if dark { HighlightTheme::default_dark() } else { HighlightTheme::default_light() };
+    });
+    cx.refresh_windows();
 }
 
 /// Color de cada método HTTP, como en la web.

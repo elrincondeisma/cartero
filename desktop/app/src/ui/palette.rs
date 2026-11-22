@@ -25,10 +25,7 @@ fn commands() -> Vec<Entry> {
         cmd(tr("Ver el historial"), IconName::Clock, |w, _, cx| w.show_panel(Panel::History, cx)),
         cmd(tr("Ajustes"), IconName::Settings, |w, win, cx| w.open_settings(None, win, cx)),
         cmd(tr("Conectar con un servidor de Cartero"), IconName::Cloud, |w, win, cx| w.open_settings(Some(crate::ui::settings::Section::Servers), win, cx)),
-        cmd(tr("Cambiar entre tema claro y oscuro"), IconName::Moon, |_, win, cx| {
-            let dark = gpui_kit::component::Theme::global(cx).is_dark();
-            crate::theme::apply(if dark { crate::settings::ThemeChoice::Light } else { crate::settings::ThemeChoice::Dark }, Some(win), cx);
-        }),
+        cmd(tr("Cambiar entre tema claro y oscuro"), IconName::Moon, |w, win, cx| w.toggle_theme(win, cx)),
     ]
 }
 

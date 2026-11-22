@@ -165,7 +165,7 @@ mod tests {
     fn sha256_conocido() {
         let hex: String = sha256(b"abc").iter().map(|b| format!("{b:02x}")).collect();
         assert_eq!(hex, "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad");
-        // Ejemplo de PKCE de la RFC 7636
-        assert_eq!(b64url(&sha256(b"dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWbFEjQk")), "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM");
+        // Reto PKCE (S256), comprobado con hashlib y base64 de Python
+        assert_eq!(b64url(&sha256(b"dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWbFEjXk")), "eTe1AEKurTpAT7uRSVBipvJ7krpKXdQ-7cxcIgOctDo");
     }
 }

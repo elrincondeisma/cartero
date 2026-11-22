@@ -648,6 +648,18 @@ impl MainWindow {
             )
     }
 
+    /// Claro ↔ oscuro, y se guarda en los ajustes.
+    pub fn toggle_theme(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        let dark = gpui_kit::component::Theme::global(cx).is_dark();
+        let choice = if dark { crate::settings::ThemeChoice::Light } else { crate::settings::ThemeChoice::Dark };
+        crate::theme::apply(choice, Some(window), cx);
+        self.app.update(cx, |a, cx| {
+            let mut s = a.settings.clone();
+            s.theme = choice;
+            a.save_settings(s, cx);
+        });
+    }
+
     pub fn sidebar(&self) -> &Entity<Sidebar> {
         &self.sidebar
     }
