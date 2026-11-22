@@ -10,6 +10,8 @@ export default defineConfig({
   resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
   server: {
     port: 5173,
+    // Acceso por Tailscale (tailscale serve) y otros proxies
+    allowedHosts: ['.ts.net', 'localhost'],
     proxy: {
       '/api/ws': { target: api.replace(/^http/, 'ws'), ws: true },
       '/api': api,
