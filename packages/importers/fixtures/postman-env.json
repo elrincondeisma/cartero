@@ -1,0 +1,5 @@
+{ "id": "e1", "name": "Producción", "values": [
+  { "key": "baseUrl", "value": "https://api.example.com", "enabled": true },
+  { "key": "token", "value": "abc", "type": "secret", "enabled": true },
+  { "key": "old", "value": "x", "enabled": false }
+], "_postman_variable_scope": "environment" }

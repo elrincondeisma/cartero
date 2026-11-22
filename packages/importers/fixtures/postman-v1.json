@@ -1,0 +1,7 @@
+{
+  "id": "c1", "name": "Legacy v1", "order": ["r1"], "folders": [{ "id": "f1", "name": "Carpeta", "order": ["r2"] }],
+  "requests": [
+    { "id": "r1", "name": "Root req", "url": "https://example.com/a", "method": "GET", "headers": "Accept: */*\n", "data": [], "dataMode": "params", "collectionId": "c1" },
+    { "id": "r2", "name": "Folder req", "url": "https://example.com/b", "method": "DELETE", "headers": "", "collectionId": "c1", "folder": "f1" }
+  ]
+}

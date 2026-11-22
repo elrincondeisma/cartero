@@ -1,0 +1,6 @@
+{
+  "info": { "name": "Old v2.0", "_postman_id": "aaaa", "schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json" },
+  "item": [
+    { "name": "Login", "request": { "url": "https://httpbin.org/post", "method": "POST", "auth": { "type": "basic", "basic": { "username": "u", "password": "p" } }, "header": [{ "key": "X-A", "value": "1" }], "body": { "mode": "raw", "raw": "hi" } } }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "_type": "export", "__export_format": 4, "__export_source": "insomnia.desktop.app:v2023.5.8",
+  "resources": [
+    { "_id": "wrk_1", "_type": "workspace", "parentId": null, "name": "Mi API" },
+    { "_id": "env_base", "_type": "environment", "parentId": "wrk_1", "name": "Base", "data": { "base_url": "https://api.test" } },
+    { "_id": "env_dev", "_type": "environment", "parentId": "env_base", "name": "Dev", "data": { "base_url": "http://localhost:3000", "auth": { "token": "t" } } },
+    { "_id": "fld_1", "_type": "request_group", "parentId": "wrk_1", "name": "Auth", "metaSortKey": 1 },
+    { "_id": "req_1", "_type": "request", "parentId": "fld_1", "name": "Login", "method": "POST", "url": "{{ _.base_url }}/login", "metaSortKey": 1,
+      "body": { "mimeType": "application/json", "text": "{\"u\":\"a\"}" }, "headers": [{ "name": "Content-Type", "value": "application/json" }],
+      "parameters": [{ "name": "v", "value": "2" }], "authentication": { "type": "bearer", "token": "{{ _.auth.token }}" } },
+    { "_id": "req_2", "_type": "request", "parentId": "wrk_1", "name": "Form", "method": "POST", "url": "{{ _.base_url }}/form", "metaSortKey": 2,
+      "body": { "mimeType": "application/x-www-form-urlencoded", "params": [{ "name": "a", "value": "1" }, { "name": "b", "value": "2", "disabled": true }] }, "headers": [] }
+  ]
+}

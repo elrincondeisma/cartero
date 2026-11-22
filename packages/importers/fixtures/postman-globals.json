@@ -1,0 +1,1 @@
+{ "id": "g", "name": "Globals", "values": [{ "key": "g1", "value": "v", "enabled": true }], "_postman_variable_scope": "globals" }
