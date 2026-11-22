@@ -12,6 +12,7 @@ import {
   Plus,
   Server,
   Settings,
+  ShieldCheck,
   Sun,
   Variable,
   Zap,
@@ -299,6 +300,7 @@ function TopBar() {
             onSelect: () => void changeLanguage(l.id),
           })),
           'separator',
+          ...(me.role === 'admin' ? [{ label: t('Administración'), icon: <ShieldCheck />, onSelect: () => nav('/admin') }, 'separator' as const] : []),
           {
             label: t("Cerrar sesión"),
             icon: <LogOut />,

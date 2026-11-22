@@ -26,6 +26,7 @@
 | **Idiomas** | Interfaz, manual y datos de ejemplo en **español e inglés**, con selector de idioma guardado en tu cuenta |
 | **Ayuda** | Asistente de bienvenida, recorrido guiado, paleta de comandos (Ctrl+K), [manual completo](docs/manual/es/README.md) en `/ayuda` y datos de ejemplo con APIs reales que se quitan con un clic |
 | **Equipos** | Workspaces, invitaciones, roles (propietario, admin, editor, lector), presencia en tiempo real, comentarios, historial de cambios con restauración, fork y merge, tokens de API |
+| **Acceso y administración** | Email y contraseña, **Google** y **GitHub**. Panel de administración para gestionar cuentas (roles admin/usuario, desactivar, borrar), registro abierto, dominios de email permitidos y credenciales OAuth |
 
 ## Puesta en marcha
 
@@ -37,7 +38,7 @@ docker compose up -d
 
 Abre `http://localhost:3000` y crea tu cuenta.
 
-Para desactivar el registro abierto, pon `ALLOW_REGISTRATION=false`: el primer usuario siempre puede registrarse, y el resto solo con invitación.
+La primera cuenta que crees es la admin de la instancia. Desde **Administración** (menú de la cuenta) puedes cerrar el registro, limitarlo a tus dominios de email, activar el login con Google y GitHub y gestionar las cuentas. Lo tienes en el [manual](docs/manual/es/17-administracion-y-login-social.md).
 
 ### Configuración
 
@@ -47,7 +48,10 @@ Para desactivar el registro abierto, pon `ALLOW_REGISTRATION=false`: el primer u
 | `DATABASE_URL` | — | PostgreSQL 14 o superior |
 | `REDIS_URL` | — | Redis (para los monitores) |
 | `PUBLIC_URL` | `http://localhost:3000` | URL pública: enlaces de invitación, OAuth y avisos |
-| `ALLOW_REGISTRATION` | `true` | Registro abierto |
+| `ALLOW_REGISTRATION` | `true` | Valor inicial del registro abierto (después se cambia en el panel de administración) |
+| `ADMIN_EMAILS` | — | Cuentas que son admin de la instancia, separadas por comas |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | — | Login con Google (opcional; también desde el panel) |
+| `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | — | Login con GitHub (opcional; también desde el panel) |
 | `BLOCK_PRIVATE_NETWORKS` | `false` | Bloquea peticiones a IPs privadas (protección SSRF). Actívalo si tu instancia es pública |
 | `SMTP_URL` / `SMTP_FROM` | — | Para enviar invitaciones y avisos por email |
 | `INLINE_WORKER` | `true` | `false` para ejecutar los monitores en un proceso aparte (`node dist/worker.js`) |

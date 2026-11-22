@@ -4,9 +4,11 @@ import { config } from './config.js'
 import { sqlClient } from './db/index.js'
 import { runMigrations } from './db/migrate.js'
 import { closeMonitors, startMonitorWorker } from './lib/monitors.js'
+import { ensureAdmin } from './lib/settings.js'
 
 mkdirSync(config.filesDir, { recursive: true })
 await runMigrations()
+await ensureAdmin()
 const app = await buildApp()
 
 if (config.inlineWorker) {

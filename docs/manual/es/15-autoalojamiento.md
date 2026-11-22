@@ -19,7 +19,10 @@ Se levantan tres contenedores: **cartero** (web, API y worker de monitores), **p
 |---|---|
 | `CARTERO_SECRET_KEY` | **Obligatoria.** Cifra los secretos. Si la pierdes, no se podrán descifrar las variables secretas guardadas |
 | `PUBLIC_URL` | URL pública (enlaces de invitación, callback de OAuth, avisos) |
-| `ALLOW_REGISTRATION` | `false` para que solo puedan entrar el primer usuario y los invitados |
+| `ALLOW_REGISTRATION` | Valor inicial del registro abierto. Después se cambia en el [panel de administración](17-administracion-y-login-social.md) |
+| `ADMIN_EMAILS` | Cuentas que son admin de la instancia (separadas por comas) |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Entrar con Google (opcional; también desde el panel) |
+| `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | Entrar con GitHub (opcional; también desde el panel) |
 | `BLOCK_PRIVATE_NETWORKS` | `true` para impedir peticiones a IPs privadas (recomendado si es accesible desde Internet) |
 | `SMTP_URL`, `SMTP_FROM` | Para enviar invitaciones y avisos por email, p. ej. `smtps://usuario:clave@smtp.ejemplo.com:465` |
 | `INLINE_WORKER` | `false` para ejecutar los monitores en otro proceso (`node dist/worker.js`) |

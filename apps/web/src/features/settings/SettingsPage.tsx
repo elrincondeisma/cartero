@@ -13,6 +13,9 @@ import { useUi } from '@/store/ui'
 import { useWs } from '../workspace/context'
 import { DemoSettings } from './DemoSettings'
 import { McpSettings } from './McpSettings'
+import { ProviderIcon, PROVIDER_NAME } from '@/components/ProviderIcon'
+import { useAuthConfig } from '../auth/AuthPages'
+import { oauthUrl } from '../auth/AuthShell'
 import { LANGS, lang, locale, t, tj, type Lang } from "@/i18n";
 
 type Tab = 'workspace' | 'members' | 'tokens' | 'ai' | 'profile'
@@ -364,22 +367,29 @@ function Profile() {
           ))}
         </Select>
       </Section>
-      <Section title={t("Cambiar contraseña")}>
+      <ConnectedAccounts />
+      <Section
+        title={me.hasPassword === false ? t('Poner contraseña') : t('Cambiar contraseña')}
+        description={me.hasPassword === false ? t('Entras con Google o GitHub. Si pones una contraseña, también podrás entrar con tu email.') : undefined}
+      >
         <div className="max-w-sm space-y-3">
-          <Field label={t("Contraseña actual")}>
-            <Input type="password" value={current} onChange={(e) => setCurrent(e.target.value)} autoComplete="current-password" />
-          </Field>
+          {me.hasPassword !== false && (
+            <Field label={t("Contraseña actual")}>
+              <Input type="password" value={current} onChange={(e) => setCurrent(e.target.value)} autoComplete="current-password" />
+            </Field>
+          )}
           <Field label={t("Nueva contraseña")} hint={t("Mínimo 8 caracteres")}>
             <Input type="password" value={next} onChange={(e) => setNext(e.target.value)} autoComplete="new-password" />
           </Field>
           <Button
             variant="primary"
-            disabled={!current || next.length < 8}
+            disabled={(me.hasPassword !== false && !current) || next.length < 8}
             onClick={async () => {
               try {
-                await api.patch('/api/auth/me', { currentPassword: current, newPassword: next })
+                await api.patch('/api/auth/me', { currentPassword: current || undefined, newPassword: next })
                 setCurrent('')
                 setNext('')
+                qc.invalidateQueries({ queryKey: qk.me })
                 toast.success(t("Contraseña cambiada"))
               } catch (e) {
                 toast.error((e as Error).message)
@@ -390,5 +400,55 @@ function Profile() {
         </div>
       </Section>
     </>
+  )
+}
+
+/** Google y GitHub vinculados a la cuenta. */
+function ConnectedAccounts() {
+  const { me } = useWs()
+  const qc = useQueryClient()
+  const { data: cfg } = useAuthConfig()
+  const linked = me.identities ?? []
+  const available = (['google', 'github'] as const).filter((p) => cfg?.providers.includes(p) || linked.some((i) => i.provider === p))
+  if (!available.length) return null
+  return (
+    <Section title={t('Cuentas conectadas')} description={t('Entra con un clic usando Google o GitHub.')}>
+      <div className="max-w-lg divide-y divide-[var(--border)] rounded-lg border border-app">
+        {available.map((p) => {
+          const id = linked.find((i) => i.provider === p)
+          return (
+            <div key={p} className="flex items-center gap-3 px-4 py-3">
+              <span className="flex size-8 items-center justify-center rounded-lg border border-app bg-soft">
+                <ProviderIcon provider={p} />
+              </span>
+              <div className="min-w-0 flex-1">
+                <div className="font-medium">{PROVIDER_NAME[p]}</div>
+                <div className="truncate text-xs text-muted">{id ? (id.email ?? t('Vinculada')) : t('Sin vincular')}</div>
+              </div>
+              {id ? (
+                <Button
+                  size="sm"
+                  onClick={async () => {
+                    try {
+                      await api.del(`/api/auth/identities/${p}`)
+                      qc.invalidateQueries({ queryKey: qk.me })
+                      toast.success(t('Cuenta de {0} desvinculada', [PROVIDER_NAME[p]]))
+                    } catch (e) {
+                      toast.error((e as Error).message)
+                    }
+                  }}
+                >
+                  {t('Desvincular')}
+                </Button>
+              ) : (
+                <a href={oauthUrl(p, { link: true })} className="inline-flex h-7 items-center rounded-md border border-app px-2.5 text-xs font-medium hover:bg-muted">
+                  {t('Vincular')}
+                </a>
+              )}
+            </div>
+          )
+        })}
+      </div>
+    </Section>
   )
 }

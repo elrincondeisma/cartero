@@ -3,7 +3,9 @@ import { type CSSProperties, type InputHTMLAttributes, type ReactNode, forwardRe
 import { LanguageLinks } from '@/components/LanguageSwitch'
 import { Logo } from '@/components/Logo'
 import { Spinner, cx } from '@/components/ui'
-import { t } from '@/i18n'
+import type { OAuthProvider } from '@/api/types'
+import { PROVIDER_NAME, ProviderIcon } from '@/components/ProviderIcon'
+import { lang, t } from '@/i18n'
 
 const d = (ms: number) => ({ '--d': `${ms}ms` }) as CSSProperties
 
@@ -385,5 +387,42 @@ function UrlText({ url }: { url: string }) {
         ),
       )}
     </>
+  )
+}
+
+/** URL que arranca el login social en el servidor. */
+export function oauthUrl(provider: OAuthProvider, opts: { next?: string | null; invitation?: string; link?: boolean } = {}) {
+  const q = new URLSearchParams({ lang })
+  if (opts.next) q.set('next', opts.next)
+  if (opts.invitation) q.set('invitation', opts.invitation)
+  if (opts.link) q.set('link', '1')
+  return `/api/auth/oauth/${provider}?${q}`
+}
+
+/** Botones «Continuar con Google / GitHub» y separador, si hay proveedores activos. */
+export function SocialButtons({ providers, next, invitation, delay = 240 }: { providers?: OAuthProvider[]; next?: string | null; invitation?: string; delay?: number }) {
+  const [going, setGoing] = useState<OAuthProvider | null>(null)
+  if (!providers?.length) return null
+  return (
+    <div className="auth-rise mb-6" style={d(delay)}>
+      <div className={cx('grid gap-3', providers.length > 1 ? 'sm:grid-cols-2' : '')}>
+        {providers.map((p) => (
+          <a
+            key={p}
+            href={oauthUrl(p, { next, invitation })}
+            onClick={() => setGoing(p)}
+            className="group flex h-12 items-center justify-center gap-2.5 rounded-xl border border-app bg-app text-[14px] font-medium text-app shadow-sm transition-all hover:-translate-y-px hover:border-zinc-300 hover:shadow-md active:translate-y-0 dark:hover:border-zinc-600"
+          >
+            {going === p ? <Spinner className="size-[18px]" /> : <ProviderIcon provider={p} className="size-[18px] transition-transform duration-300 group-hover:scale-110" />}
+            {t('Continuar con {0}', [PROVIDER_NAME[p]])}
+          </a>
+        ))}
+      </div>
+      <div className="mt-6 flex items-center gap-3 text-xs text-muted">
+        <span className="h-px flex-1 bg-[var(--border)]" />
+        {t('o con tu email')}
+        <span className="h-px flex-1 bg-[var(--border)]" />
+      </div>
+    </div>
   )
 }

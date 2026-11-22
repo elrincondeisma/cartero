@@ -26,6 +26,7 @@
 | **Languages** | UI, user guide and sample data in **English and Spanish**, with a language switch saved to your account |
 | **Help** | Welcome wizard, guided tour, command palette (Ctrl+K), [full user guide](docs/manual/README.md) at `/ayuda` and sample data with real APIs that you can remove in one click |
 | **Teams** | Workspaces, invitations, roles (owner, admin, editor, viewer), real-time presence, comments, change history with restore, fork and merge, API tokens |
+| **Sign-in and admin** | Email and password, **Google** and **GitHub**. Admin panel to manage accounts (admin/user roles, disable, delete), open sign-up, allowed email domains and OAuth credentials |
 
 ## Getting started
 
@@ -37,7 +38,7 @@ docker compose up -d
 
 Open `http://localhost:3000` and create your account.
 
-To turn off open sign-up, set `ALLOW_REGISTRATION=false`: the first user can always register, everyone else only by invitation.
+The first account you create is the instance admin. From **Administration** (account menu) you can close sign-up, limit it to your email domains, turn on Google and GitHub sign-in and manage accounts. See the [user guide](docs/manual/17-admin-and-social-login.md).
 
 ### Configuration
 
@@ -47,7 +48,10 @@ To turn off open sign-up, set `ALLOW_REGISTRATION=false`: the first user can alw
 | `DATABASE_URL` | — | PostgreSQL 14 or later |
 | `REDIS_URL` | — | Redis (for monitors) |
 | `PUBLIC_URL` | `http://localhost:3000` | Public URL: invitation links, OAuth and alerts |
-| `ALLOW_REGISTRATION` | `true` | Open sign-up |
+| `ALLOW_REGISTRATION` | `true` | Initial value for open sign-up (then changed in the admin panel) |
+| `ADMIN_EMAILS` | — | Accounts that are instance admins, comma-separated |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | — | Google sign-in (optional; can also be set in the admin panel) |
+| `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | — | GitHub sign-in (optional; can also be set in the admin panel) |
 | `BLOCK_PRIVATE_NETWORKS` | `false` | Blocks requests to private IPs (SSRF protection). Turn it on if your instance is public |
 | `SMTP_URL` / `SMTP_FROM` | — | To send invitations and email alerts |
 | `INLINE_WORKER` | `true` | `false` to run monitors in a separate process (`node dist/worker.js`) |

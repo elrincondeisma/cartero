@@ -12,6 +12,7 @@ import { assertRole } from './lib/access.js'
 import { registerAuth, resolveUser } from './lib/auth.js'
 import { HttpError } from './lib/errors.js'
 import { join } from './lib/realtime.js'
+import { adminRoutes } from './routes/admin.js'
 import { authRoutes } from './routes/auth.js'
 import { collectionRoutes } from './routes/collections.js'
 import { demoRoutes } from './routes/demo.js'
@@ -20,6 +21,7 @@ import { environmentRoutes } from './routes/environments.js'
 import { executeRoutes } from './routes/execute.js'
 import { mcpRoutes } from './routes/mcp.js'
 import { mockRoutes } from './routes/mocks.js'
+import { oauthRoutes } from './routes/oauth.js'
 import { monitorRoutes } from './routes/monitors.js'
 import { toolRoutes } from './routes/tools.js'
 import { workspaceRoutes } from './routes/workspaces.js'
@@ -53,6 +55,8 @@ export async function buildApp(opts: { logger?: boolean } = {}) {
   app.get('/api/health', async () => ({ ok: true, version: '0.1.0' }))
 
   await app.register(authRoutes)
+  await app.register(oauthRoutes)
+  await app.register(adminRoutes)
   await app.register(workspaceRoutes)
   await app.register(collectionRoutes)
   await app.register(environmentRoutes)

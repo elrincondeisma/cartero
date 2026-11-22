@@ -8,7 +8,7 @@ export interface WorkspaceCtx {
   role: Role
   canEdit: boolean
   isAdmin: boolean
-  me: { id: string; name: string; email: string }
+  me: { id: string; name: string; email: string; role?: 'admin' | 'user'; hasPassword?: boolean; identities?: { provider: 'google' | 'github'; email: string | null }[] }
 }
 
 export const WorkspaceContext = createContext<WorkspaceCtx | null>(null)

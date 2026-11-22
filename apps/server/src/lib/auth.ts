@@ -3,12 +3,13 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import { config } from '../config.js'
 import { db, schema } from '../db/index.js'
 import { randomToken, sha256 } from './crypto.js'
-import { unauthorized } from './errors.js'
+import { forbidden, unauthorized } from './errors.js'
 
 export interface AuthUser {
   id: string
   email: string
   name: string
+  role: 'admin' | 'user'
 }
 
 declare module 'fastify' {
@@ -41,10 +42,10 @@ export async function destroySession(req: FastifyRequest, reply: FastifyReply) {
 
 async function userFromSession(token: string): Promise<AuthUser | undefined> {
   const rows = await db
-    .select({ id: schema.users.id, email: schema.users.email, name: schema.users.name })
+    .select({ id: schema.users.id, email: schema.users.email, name: schema.users.name, role: schema.users.role })
     .from(schema.sessions)
     .innerJoin(schema.users, eq(schema.users.id, schema.sessions.userId))
-    .where(and(eq(schema.sessions.id, sha256(token)), gt(schema.sessions.expiresAt, new Date())))
+    .where(and(eq(schema.sessions.id, sha256(token)), gt(schema.sessions.expiresAt, new Date()), eq(schema.users.disabled, false)))
     .limit(1)
   return rows[0]
 }
@@ -55,11 +56,12 @@ async function userFromApiToken(token: string): Promise<AuthUser | undefined> {
       id: schema.users.id,
       email: schema.users.email,
       name: schema.users.name,
+      role: schema.users.role,
       tokenId: schema.apiTokens.id,
     })
     .from(schema.apiTokens)
     .innerJoin(schema.users, eq(schema.users.id, schema.apiTokens.userId))
-    .where(eq(schema.apiTokens.tokenHash, sha256(token)))
+    .where(and(eq(schema.apiTokens.tokenHash, sha256(token)), eq(schema.users.disabled, false)))
     .limit(1)
   const row = rows[0]
   if (!row) return undefined
@@ -68,7 +70,7 @@ async function userFromApiToken(token: string): Promise<AuthUser | undefined> {
     .set({ lastUsedAt: new Date() })
     .where(eq(schema.apiTokens.id, row.tokenId))
     .execute()
-  return { id: row.id, email: row.email, name: row.name }
+  return { id: row.id, email: row.email, name: row.name, role: row.role }
 }
 
 export async function resolveUser(req: FastifyRequest): Promise<AuthUser | undefined> {
@@ -92,4 +94,11 @@ export function registerAuth(app: FastifyInstance) {
 export function requireUser(req: FastifyRequest): AuthUser {
   if (!req.user) throw unauthorized()
   return req.user
+}
+
+/** Solo administradores de la instancia */
+export function requireAdmin(req: FastifyRequest): AuthUser {
+  const user = requireUser(req)
+  if (user.role !== 'admin') throw forbidden('Solo los administradores pueden hacer esto')
+  return user
 }

@@ -18,7 +18,15 @@ export const config = {
   secretKey: secretKey(),
   /** Bloquear peticiones a redes privadas (SSRF) — útil en despliegues públicos */
   blockPrivateNetworks: env.BLOCK_PRIVATE_NETWORKS === 'true',
+  /** Valor inicial: después se cambia desde el panel de administración */
   allowRegistration: env.ALLOW_REGISTRATION !== 'false',
+  /** Emails que son admin de la instancia al arrancar (separados por comas) */
+  adminEmails: (env.ADMIN_EMAILS ?? '').split(',').map((e) => e.trim().toLowerCase()).filter(Boolean),
+  /** Login social desde variables de entorno (el panel de administración tiene prioridad) */
+  oauth: {
+    google: { clientId: env.GOOGLE_CLIENT_ID, clientSecret: env.GOOGLE_CLIENT_SECRET },
+    github: { clientId: env.GITHUB_CLIENT_ID, clientSecret: env.GITHUB_CLIENT_SECRET },
+  },
   webDist: env.WEB_DIST,
   filesDir: env.FILES_DIR ?? './data/files',
   secureCookies: env.NODE_ENV === 'production' && !env.PUBLIC_URL?.startsWith('http://'),

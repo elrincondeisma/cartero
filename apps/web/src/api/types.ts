@@ -2,10 +2,17 @@ import type { Auth, Event, ProtocolProfileBehavior, Request, ResponseExample, Va
 
 export type Role = 'owner' | 'admin' | 'editor' | 'viewer'
 
+export type OAuthProvider = 'google' | 'github'
+
 export interface User {
   id: string
   email: string
   name: string
+  /** Rol en la instancia (distinto del rol en cada workspace) */
+  role?: 'admin' | 'user'
+  hasPassword?: boolean
+  identities?: { provider: OAuthProvider; email: string | null }[]
+  settings?: Record<string, unknown>
 }
 
 export interface Workspace {

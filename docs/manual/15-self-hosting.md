@@ -19,7 +19,10 @@ Three containers start: **cartero** (web, API and monitor worker), **postgres** 
 |---|---|
 | `CARTERO_SECRET_KEY` | **Required.** Encrypts secrets. If you lose it, stored secret variables can't be decrypted |
 | `PUBLIC_URL` | Public URL (invitation links, OAuth callback, alerts) |
-| `ALLOW_REGISTRATION` | `false` so only the first user and invitees can sign up |
+| `ALLOW_REGISTRATION` | Initial value for open sign-up. After that it's changed in the [administration panel](17-admin-and-social-login.md) |
+| `ADMIN_EMAILS` | Accounts that are instance admins (comma-separated) |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Sign in with Google (optional; also from the panel) |
+| `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | Sign in with GitHub (optional; also from the panel) |
 | `BLOCK_PRIVATE_NETWORKS` | `true` to block requests to private IPs (recommended if reachable from the Internet) |
 | `SMTP_URL`, `SMTP_FROM` | To send invitations and alerts by email, e.g. `smtps://user:pass@smtp.example.com:465` |
 | `INLINE_WORKER` | `false` to run monitors in a separate process (`node dist/worker.js`) |

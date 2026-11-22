@@ -6,7 +6,11 @@ import { api } from '@/api/client'
 import { qk, useMe } from '@/api/hooks'
 import { Lock, Mail, User } from 'lucide-react'
 import { Button, Spinner } from '@/components/ui'
-import { AuthField, AuthShell, PasswordField, StrengthMeter, SubmitButton } from './AuthShell'
+import type { OAuthProvider } from '@/api/types'
+import { AuthField, AuthShell, PasswordField, SocialButtons, StrengthMeter, SubmitButton } from './AuthShell'
+
+export const useAuthConfig = () =>
+  useQuery({ queryKey: ['auth-config'], queryFn: () => api.get<{ allowRegistration: boolean; providers: OAuthProvider[] }>('/api/auth/config') })
 import { lang, t } from "@/i18n";
 
 export function LoginPage() {
@@ -17,7 +21,7 @@ export function LoginPage() {
   const [params] = useSearchParams()
   const nav = useNavigate()
   const qc = useQueryClient()
-  const { data: cfg } = useQuery({ queryKey: ['auth-config'], queryFn: () => api.get<{ allowRegistration: boolean }>('/api/auth/config') })
+  const { data: cfg } = useAuthConfig()
 
   const submit = async (e: FormEvent) => {
     e.preventDefault()
@@ -50,6 +54,7 @@ export function LoginPage() {
         )
       }
     >
+      <SocialButtons providers={cfg?.providers} next={params.get('next')} />
       <form onSubmit={submit} className="space-y-4">
         <AuthField label={t('Email')} icon={<Mail />} type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoFocus required autoComplete="email" placeholder={t('tu@empresa.com')} delay={240} />
         <PasswordField label={t('Contraseña')} icon={<Lock />} value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="current-password" placeholder="••••••••" delay={300} />
@@ -70,6 +75,7 @@ export function RegisterPage({ invitation, presetEmail }: { invitation?: string;
   const [params] = useSearchParams()
   const nav = useNavigate()
   const qc = useQueryClient()
+  const { data: cfg } = useAuthConfig()
 
   const submit = async (e: FormEvent) => {
     e.preventDefault()
@@ -103,6 +109,7 @@ export function RegisterPage({ invitation, presetEmail }: { invitation?: string;
         )
       }
     >
+      <SocialButtons providers={cfg?.providers} next={params.get('next')} invitation={invitation} />
       <form onSubmit={submit} className="space-y-4">
         <AuthField label={t('Nombre')} icon={<User />} value={name} onChange={(e) => setName(e.target.value)} autoFocus required autoComplete="name" placeholder="Ada Lovelace" delay={240} />
         <AuthField

@@ -9,10 +9,37 @@ export const users = pgTable('users', {
   id: id(),
   email: text('email').notNull().unique(),
   name: text('name').notNull(),
-  passwordHash: text('password_hash').notNull(),
+  /** Vacío en cuentas creadas solo con Google o GitHub */
+  passwordHash: text('password_hash'),
+  /** Rol en la instancia (distinto del rol en cada workspace) */
+  role: text('role').$type<InstanceRole>().notNull().default('user'),
+  disabled: boolean('disabled').notNull().default(false),
   /** Preferencias de la interfaz: tour completado, etc. */
   settings: jsonb('settings').$type<Record<string, unknown>>().notNull().default({}),
   createdAt: createdAt(),
+})
+
+export type InstanceRole = 'admin' | 'user'
+export type OAuthProvider = 'google' | 'github'
+
+/** Cuentas de Google o GitHub vinculadas a un usuario */
+export const identities = pgTable(
+  'user_identities',
+  {
+    provider: text('provider').$type<OAuthProvider>().notNull(),
+    providerUserId: text('provider_user_id').notNull(),
+    userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    email: text('email'),
+    createdAt: createdAt(),
+  },
+  (t) => [primaryKey({ columns: [t.provider, t.providerUserId] }), index('user_identities_user_idx').on(t.userId)],
+)
+
+/** Ajustes de la instancia que se cambian desde el panel de administración */
+export const instanceSettings = pgTable('instance_settings', {
+  key: text('key').primaryKey(),
+  value: jsonb('value').$type<unknown>().notNull(),
+  updatedAt: updatedAt(),
 })
 
 export const sessions = pgTable('sessions', {

@@ -4,6 +4,8 @@ import { z } from 'zod'
 import { config } from '../config.js'
 import { db, schema } from '../db/index.js'
 import { createSession, destroySession, requireUser } from '../lib/auth.js'
+import { enabledProviders, getSettings } from '../lib/settings.js'
+import { assertCanSignUp, createUser } from '../lib/users.js'
 import { hashPassword, randomToken, sha256, verifyPassword } from '../lib/crypto.js'
 import { HttpError, badRequest, forbidden, notFound } from '../lib/errors.js'
 
@@ -17,7 +19,7 @@ const registerBody = z.object({
 
 const loginBody = z.object({ email: z.string().email(), password: z.string().min(1) })
 
-async function acceptInvitation(token: string, userId: string, email: string) {
+export async function acceptInvitation(token: string, userId: string, email: string) {
   const [inv] = await db
     .select()
     .from(schema.invitations)
@@ -34,29 +36,16 @@ async function acceptInvitation(token: string, userId: string, email: string) {
 }
 
 export async function authRoutes(app: FastifyInstance) {
-  app.get('/api/auth/config', async () => ({ allowRegistration: config.allowRegistration }))
+  app.get('/api/auth/config', async () => ({ allowRegistration: (await getSettings()).allowRegistration, providers: await enabledProviders() }))
 
   app.post('/api/auth/register', { config: { rateLimit: { max: 10, timeWindow: '1 minute' } } }, async (req, reply) => {
     const body = registerBody.parse(req.body)
     const email = body.email.toLowerCase()
-    const [{ count }] = await db.select({ count: sql<number>`count(*)::int` }).from(schema.users)
-    const firstUser = count === 0
-    if (!config.allowRegistration && !firstUser && !body.invitation) throw forbidden('El registro está desactivado')
+    const { firstUser } = await assertCanSignUp(email, body.invitation)
     const exists = await db.select({ id: schema.users.id }).from(schema.users).where(eq(schema.users.email, email))
     if (exists.length) throw new HttpError(409, 'Ya existe una cuenta con ese email', 'email_taken')
 
-    const user = await db.transaction(async (tx) => {
-      const [u] = await tx
-        .insert(schema.users)
-        .values({ email, name: body.name, passwordHash: await hashPassword(body.password), settings: body.lang ? { lang: body.lang } : {} })
-        .returning()
-      const [ws] = await tx
-        .insert(schema.workspaces)
-        .values({ name: body.lang === 'en' ? 'My workspace' : 'Mi workspace', type: 'personal' })
-        .returning()
-      await tx.insert(schema.members).values({ workspaceId: ws.id, userId: u.id, role: 'owner' })
-      return u
-    })
+    const user = await createUser({ email, name: body.name, passwordHash: await hashPassword(body.password), lang: body.lang, admin: firstUser })
     if (body.invitation) await acceptInvitation(body.invitation, user.id, email)
     await createSession(reply, user.id)
     return { id: user.id, email: user.email, name: user.name }
@@ -65,8 +54,9 @@ export async function authRoutes(app: FastifyInstance) {
   app.post('/api/auth/login', { config: { rateLimit: { max: 20, timeWindow: '1 minute' } } }, async (req, reply) => {
     const body = loginBody.parse(req.body)
     const [user] = await db.select().from(schema.users).where(eq(schema.users.email, body.email.toLowerCase())).limit(1)
-    if (!user || !(await verifyPassword(body.password, user.passwordHash)))
+    if (!user || !user.passwordHash || !(await verifyPassword(body.password, user.passwordHash)))
       throw new HttpError(401, 'Email o contraseña incorrectos', 'invalid_credentials')
+    if (user.disabled) throw forbidden('Tu cuenta está desactivada. Habla con un administrador.')
     await createSession(reply, user.id)
     return { id: user.id, email: user.email, name: user.name }
   })
@@ -78,8 +68,15 @@ export async function authRoutes(app: FastifyInstance) {
 
   app.get('/api/auth/me', async (req) => {
     const user = requireUser(req)
-    const [u] = await db.select({ settings: schema.users.settings }).from(schema.users).where(eq(schema.users.id, user.id))
-    return { ...user, settings: u?.settings ?? {} }
+    const [u] = await db
+      .select({ settings: schema.users.settings, passwordHash: schema.users.passwordHash })
+      .from(schema.users)
+      .where(eq(schema.users.id, user.id))
+    const ids = await db
+      .select({ provider: schema.identities.provider, email: schema.identities.email })
+      .from(schema.identities)
+      .where(eq(schema.identities.userId, user.id))
+    return { ...user, settings: u?.settings ?? {}, hasPassword: !!u?.passwordHash, identities: ids }
   })
 
   app.patch('/api/auth/me', async (req) => {
@@ -100,11 +97,24 @@ export async function authRoutes(app: FastifyInstance) {
     }
     if (body.newPassword) {
       const [u] = await db.select().from(schema.users).where(eq(schema.users.id, user.id))
-      if (!body.currentPassword || !(await verifyPassword(body.currentPassword, u.passwordHash)))
+      // Las cuentas creadas con Google o GitHub pueden poner su primera contraseña sin la actual
+      if (u.passwordHash && (!body.currentPassword || !(await verifyPassword(body.currentPassword, u.passwordHash))))
         throw badRequest('La contraseña actual no es correcta')
       patch.passwordHash = await hashPassword(body.newPassword)
     }
     if (Object.keys(patch).length) await db.update(schema.users).set(patch).where(eq(schema.users.id, user.id))
+    return { ok: true }
+  })
+
+  // Desvincular una cuenta de Google o GitHub (sin quedarse sin forma de entrar)
+  app.delete('/api/auth/identities/:provider', async (req) => {
+    const user = requireUser(req)
+    const { provider } = req.params as { provider: string }
+    const [u] = await db.select({ passwordHash: schema.users.passwordHash }).from(schema.users).where(eq(schema.users.id, user.id))
+    const ids = await db.select({ provider: schema.identities.provider }).from(schema.identities).where(eq(schema.identities.userId, user.id))
+    if (!u?.passwordHash && ids.filter((i) => i.provider !== provider).length === 0)
+      throw badRequest('Pon una contraseña antes de desvincular tu única forma de entrar')
+    await db.delete(schema.identities).where(and(eq(schema.identities.userId, user.id), eq(schema.identities.provider, provider as 'google' | 'github')))
     return { ok: true }
   })
 

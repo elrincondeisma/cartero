@@ -1,6 +1,7 @@
 import * as DialogPrimitive from '@radix-ui/react-dialog'
 import { useQueries } from '@tanstack/react-query'
 import {
+  ShieldCheck,
   Activity,
   BookOpen,
   Bot,
@@ -27,6 +28,7 @@ import { useUi } from '@/store/ui'
 import { useTour } from '../onboarding/Tour'
 import { useOpen } from '../workspace/actions'
 import { useWs } from '../workspace/context'
+import { useNavigate } from 'react-router'
 import { t } from "@/i18n";
 
 interface PaletteState {
@@ -62,7 +64,8 @@ function normalize(s: string) {
 }
 
 export function CommandPalette() {
-  const { ws } = useWs()
+  const { ws, me } = useWs()
+  const nav = useNavigate()
   const { open, setOpen, onImport, onShortcuts } = usePalette()
   const [q, setQ] = useState('')
   const [sel, setSel] = useState(0)
@@ -105,6 +108,9 @@ export function CommandPalette() {
       { id: 'a-theme', group: 'Acciones', label: ui.theme === 'dark' ? t("Cambiar a tema claro") : t("Cambiar a tema oscuro"), icon: <Moon />, run: ui.toggleTheme },
       { id: 'a-tour', group: 'Acciones', label: t("Repetir el recorrido guiado"), icon: <Wand2 />, run: startTour },
       { id: 'a-keys', group: 'Acciones', label: t("Atajos de teclado"), hint: '?', icon: <Keyboard />, run: () => onShortcuts?.() },
+      ...(me.role === 'admin'
+        ? [{ id: 'a-admin', group: 'Acciones', label: t('Abrir la administración'), icon: <ShieldCheck />, keywords: 'admin usuarios users google github login', run: () => nav('/admin') }]
+        : []),
       { id: 'a-manual', group: 'Acciones', label: t("Abrir el manual"), icon: <BookOpen />, run: () => window.open('/ayuda', '_blank') },
       { id: 'a-mcp', group: 'Acciones', label: t("Conectar con un asistente de IA (MCP)"), icon: <Bot />, keywords: 'claude cursor ia ai', run: () => ui.openSettings('ai') },
       { id: 's-col', group: 'Ir a', label: t("Colecciones"), icon: <FolderTree />, run: () => ui.setSection('collections') },

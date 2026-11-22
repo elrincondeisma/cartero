@@ -1,7 +1,12 @@
+import { useEffect } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router'
+import { toast } from 'sonner'
 import { useMe, useWorkspaces } from './api/hooks'
 import { Spinner } from './components/ui'
+import { AdminPage } from './features/admin/AdminPage'
 import { InvitePage, LoginPage, RegisterPage } from './features/auth/AuthPages'
+import { t } from './i18n'
+import { useUi } from './store/ui'
 import { OAuthCallback } from './features/auth/OAuthCallback'
 import { PublicDocs } from './features/docs/PublicDocs'
 import { ManualPage } from './features/manual/ManualPage'
@@ -31,7 +36,43 @@ function FullSpinner() {
   )
 }
 
+// Lo que trae la URL al volver de Google o GitHub (se lee antes de que las redirecciones la cambien)
+const oauthParams = new URLSearchParams(location.search)
+
+const OAUTH_ERRORS: Record<string, string> = {
+  provider_disabled: t('Ese método de acceso no está activado.'),
+  invalid_state: t('El inicio de sesión ha caducado. Vuelve a intentarlo.'),
+  cancelled: t('Has cancelado el inicio de sesión.'),
+  provider_error: t('No hemos podido hablar con el proveedor. Vuelve a intentarlo.'),
+  email_unverified: t('Tu cuenta no tiene un email verificado.'),
+  registration_closed: t('El registro está cerrado. Pide a un administrador que te invite.'),
+  domain_not_allowed: t('Tu dominio de email no puede registrarse en esta instancia.'),
+  account_disabled: t('Tu cuenta está desactivada. Habla con un administrador.'),
+  already_linked: t('Esa cuenta ya está vinculada a otro usuario.'),
+}
+
+function useOAuthNotice() {
+  const openSettings = useUi((s) => s.openSettings)
+  useEffect(() => {
+    const error = oauthParams.get('oauth_error')
+    const linked = oauthParams.get('oauth_linked')
+    if (!error && !linked) return
+    if (error) toast.error(OAUTH_ERRORS[error] ?? t('No se ha podido iniciar sesión.'))
+    if (linked) {
+      toast.success(t('Cuenta de {0} vinculada', [linked === 'google' ? 'Google' : 'GitHub']))
+      openSettings('profile')
+    }
+    const url = new URL(location.href)
+    url.searchParams.delete('oauth_error')
+    url.searchParams.delete('oauth_linked')
+    history.replaceState(history.state, '', url.pathname + url.search + url.hash)
+    // Los errores al vincular desde Ajustes vuelven a la app (no al login): se reabre el perfil
+    if (error && location.pathname !== '/login') openSettings('profile')
+  }, [openSettings])
+}
+
 export function App() {
+  useOAuthNotice()
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
@@ -41,6 +82,14 @@ export function App() {
       <Route path="/oauth/callback" element={<OAuthCallback />} />
       <Route path="/ayuda" element={<ManualPage />} />
       <Route path="/ayuda/:slug" element={<ManualPage />} />
+      <Route
+        path="/admin"
+        element={
+          <RequireAuth>
+            <AdminPage />
+          </RequireAuth>
+        }
+      />
       <Route
         path="/w/:ws/*"
         element={
