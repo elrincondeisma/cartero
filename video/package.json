@@ -1,0 +1,22 @@
+{
+  "name": "cartero-video",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Motion-design product video for Cartero (Remotion). Not part of the pnpm workspace: install with `pnpm install --ignore-workspace`.",
+  "scripts": {
+    "dev": "remotion studio",
+    "typecheck": "tsc --noEmit",
+    "render": "remotion render Promo out/cartero-promo.mp4"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.503",
+    "@remotion/google-fonts": "4.0.503",
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
+    "remotion": "4.0.503"
+  },
+  "devDependencies": {
+    "@types/react": "19.0.0",
+    "typescript": "5.8.2"
+  }
+}
