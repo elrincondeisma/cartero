@@ -1,0 +1,320 @@
+---
+import { Image } from 'astro:assets'
+import { getRelativeLocaleUrl } from 'astro:i18n'
+import collab from '../assets/screens/collab.png'
+import docs from '../assets/screens/docs.png'
+import mcp from '../assets/screens/mcp.png'
+import mocks from '../assets/screens/mocks.png'
+import monitors from '../assets/screens/monitors.png'
+import palette from '../assets/screens/palette.png'
+import requestDark from '../assets/screens/request-dark.png'
+import requestLight from '../assets/screens/request-light.png'
+import runner from '../assets/screens/runner.png'
+import scripts from '../assets/screens/scripts.png'
+import { type Lang, REPO_URL, languages, ui } from '../i18n/ui'
+import Icon from './Icon.astro'
+import Logo from './Logo.astro'
+
+interface Props { lang: Lang }
+const { lang } = Astro.props
+const t = ui[lang]
+const other: Lang = lang === 'es' ? 'en' : 'es'
+const shots: Record<string, ImageMetadata> = { scripts, runner, mocks, monitors, collab, docs }
+const manualUrl = `${REPO_URL}/tree/main/docs/manual`
+
+const install = `git clone ${REPO_URL}.git cartero && cd cartero
+cp .env.example .env    # CARTERO_SECRET_KEY=$(openssl rand -base64 32)
+docker compose up -d`
+
+const mcpCmd = `claude mcp add --transport http cartero \\
+  https://cartero.example.com/mcp \\
+  --header "Authorization: Bearer crt_…"`
+
+const ci = `- name: API tests
+  run: npx @cartero/cli run $COLLECTION_ID -e $ENV_ID -r cli,junit --report
+  env:
+    CARTERO_SERVER: https://cartero.example.com
+    CARTERO_TOKEN: \${{ secrets.CARTERO_TOKEN }}`
+
+const imports = ['Postman', 'Insomnia', 'OpenAPI 3', 'Swagger 2', 'cURL']
+const stack = ['TypeScript', 'React 19', 'Fastify', 'PostgreSQL', 'Redis', 'postman-runtime', 'Monaco', 'MCP']
+---
+<!-- NAV -->
+<header class="fixed inset-x-0 top-0 z-50 border-b border-white/10 bg-ink-950/75 backdrop-blur-md">
+  <nav class="mx-auto flex h-16 max-w-7xl items-center gap-8 px-6 text-white">
+    <a href={getRelativeLocaleUrl(lang, '')} aria-label="Cartero"><Logo /></a>
+    <div class="hidden items-center gap-6 text-sm text-zinc-300 md:flex">
+      <a href="#features" class="hover:text-white">{t.nav.features}</a>
+      <a href="#ai" class="hover:text-white">{t.nav.ai}</a>
+      <a href="#install" class="hover:text-white">{t.nav.selfhost}</a>
+      <a href={manualUrl} class="hover:text-white">{t.nav.docs}</a>
+      <a href="#faq" class="hover:text-white">{t.nav.faq}</a>
+    </div>
+    <div class="ml-auto flex items-center gap-3">
+      <a href={getRelativeLocaleUrl(other, '')} hreflang={other} class="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-sm text-zinc-300 hover:bg-white/10 hover:text-white" title={languages[other]}>
+        <Icon name="globe" class="size-4" />{other.toUpperCase()}
+      </a>
+      <a href={REPO_URL} class="flex items-center gap-2 rounded-lg bg-white px-3.5 py-1.5 text-sm font-medium text-ink-950 hover:bg-zinc-200">
+        <Icon name="github" class="size-4" />{t.nav.github}
+      </a>
+    </div>
+  </nav>
+</header>
+
+<main>
+  <!-- HERO -->
+  <section class="relative overflow-hidden bg-ink-950 pt-36 pb-24 text-white">
+    <div class="grid-bg absolute inset-0"></div>
+    <div class="glow absolute inset-0"></div>
+    <div class="relative mx-auto max-w-7xl px-6">
+      <div class="mx-auto max-w-3xl text-center">
+        <span class="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs text-zinc-300">
+          <span class="size-1.5 rounded-full bg-brand-500"></span>{t.hero.badge}
+        </span>
+        <h1 class="mt-6 text-5xl leading-[1.05] font-bold tracking-tight md:text-7xl">
+          {t.hero.title1}<br /><span class="bg-gradient-to-r from-brand-400 to-brand-600 bg-clip-text text-transparent">{t.hero.title2}</span>
+        </h1>
+        <p class="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-zinc-400">{t.hero.subtitle}</p>
+        <div class="mt-9 flex flex-wrap justify-center gap-3">
+          <a href="#install" class="inline-flex items-center gap-2 rounded-xl bg-brand-600 px-6 py-3 font-medium shadow-lg shadow-brand-600/25 hover:bg-brand-500">
+            {t.hero.cta}<Icon name="arrow" class="size-4" />
+          </a>
+          <a href={REPO_URL} class="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-6 py-3 font-medium hover:bg-white/10">
+            <Icon name="github" class="size-4" />{t.hero.github}
+          </a>
+        </div>
+        <div class="mx-auto mt-8 flex max-w-md items-center gap-3 rounded-lg border border-white/10 bg-black/40 px-4 py-2.5 text-left">
+          <span class="code text-brand-400">$</span>
+          <code class="code flex-1 text-zinc-200">docker compose up -d</code>
+          <button data-copy="docker compose up -d" class="text-zinc-500 hover:text-white" aria-label="Copy"><Icon name="copy" class="size-4" /></button>
+        </div>
+      </div>
+
+      <div class="relative mx-auto mt-16 max-w-6xl">
+        <input type="radio" name="theme" id="theme-light" class="sr-only" checked />
+        <input type="radio" name="theme" id="theme-dark" class="sr-only" />
+        <div class="theme-tabs mb-4 flex justify-center gap-1 text-sm text-zinc-400">
+          <label for="theme-light" class="cursor-pointer rounded-md px-3 py-1">{t.hero.light}</label>
+          <label for="theme-dark" class="cursor-pointer rounded-md px-3 py-1">{t.hero.dark}</label>
+        </div>
+        <div class="shots overflow-hidden rounded-xl border border-white/10 bg-ink-900 p-1.5">
+          <div class="flex items-center gap-1.5 px-2 pt-1 pb-2.5">
+            <span class="size-2.5 rounded-full bg-zinc-700"></span><span class="size-2.5 rounded-full bg-zinc-700"></span><span class="size-2.5 rounded-full bg-zinc-700"></span>
+          </div>
+          <Image src={requestLight} alt={t.hero.alt} widths={[800, 1440, 2160]} sizes="(max-width: 1200px) 100vw, 1150px" class="light-shot w-full rounded-lg" loading="eager" fetchpriority="high" />
+          <Image src={requestDark} alt={t.hero.alt} widths={[800, 1440, 2160]} sizes="(max-width: 1200px) 100vw, 1150px" class="dark-shot w-full rounded-lg" />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- IMPORTS -->
+  <section class="border-b border-zinc-100 bg-zinc-50 py-12">
+    <div class="mx-auto max-w-7xl px-6 text-center">
+      <p class="font-medium text-zinc-900">{t.imports.title}</p>
+      <div class="mt-5 flex flex-wrap justify-center gap-3">
+        {imports.map((i) => <span class="rounded-full border border-zinc-200 bg-white px-4 py-1.5 font-mono text-sm text-zinc-700">{i}</span>)}
+      </div>
+      <p class="mt-4 text-sm text-zinc-500">{t.imports.note}</p>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section id="features" class="scroll-mt-16 py-24">
+    <div class="mx-auto max-w-7xl px-6">
+      <div class="reveal mx-auto max-w-2xl text-center">
+        <p class="text-sm font-semibold tracking-wide text-brand-600 uppercase">{t.features.kicker}</p>
+        <h2 class="mt-2 text-4xl font-bold tracking-tight">{t.features.title}</h2>
+        <p class="mt-4 text-lg text-zinc-600">{t.features.subtitle}</p>
+      </div>
+      <div class="mt-14 grid gap-px overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-200 sm:grid-cols-2 lg:grid-cols-3">
+        {
+          t.features.items.map((f) => (
+            <div class="reveal bg-white p-7 transition-colors hover:bg-zinc-50">
+              <span class="inline-flex rounded-lg bg-brand-50 p-2.5 text-brand-600">
+                <Icon name={f.icon} />
+              </span>
+              <h3 class="mt-4 font-semibold">{f.title}</h3>
+              <p class="mt-2 text-sm leading-relaxed text-zinc-600">{f.text}</p>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- SHOWCASE -->
+  <section class="bg-zinc-50 py-24">
+    <div class="mx-auto max-w-7xl space-y-28 px-6">
+      {
+        t.showcase.map((s, i) => (
+          <div class={`reveal grid items-center gap-12 ${i % 2 ? 'lg:grid-cols-[3fr_2fr] lg:[&>*:first-child]:order-2' : 'lg:grid-cols-[2fr_3fr]'}`}>
+            <div>
+              <p class="text-sm font-semibold tracking-wide text-brand-600 uppercase">{s.kicker}</p>
+              <h3 class="mt-2 text-3xl font-bold tracking-tight">{s.title}</h3>
+              <p class="mt-4 leading-relaxed text-zinc-600">{s.text}</p>
+              <ul class="mt-6 space-y-2.5">
+                {s.points.map((p) => (
+                  <li class="flex items-start gap-2.5 text-sm text-zinc-700">
+                    <span class="mt-0.5 rounded-full bg-brand-100 p-0.5 text-brand-700">
+                      <Icon name="check" class="size-3.5" />
+                    </span>
+                    {p}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <Image src={shots[s.key]} alt={s.title} widths={[700, 1200, 1800]} sizes="(max-width: 1024px) 100vw, 720px" class="shot w-full rounded-xl" />
+          </div>
+        ))
+      }
+    </div>
+  </section>
+
+  <!-- AI / MCP -->
+  <section id="ai" class="relative scroll-mt-16 overflow-hidden bg-ink-950 py-24 text-white">
+    <div class="glow absolute inset-0 opacity-70"></div>
+    <div class="relative mx-auto grid max-w-7xl items-center gap-12 px-6 lg:grid-cols-2">
+      <div class="reveal">
+        <p class="inline-flex items-center gap-2 text-sm font-semibold tracking-wide text-brand-400 uppercase"><Icon name="sparkles" class="size-4" />{t.ai.kicker} · MCP</p>
+        <h2 class="mt-2 text-4xl font-bold tracking-tight">{t.ai.title}</h2>
+        <p class="mt-4 text-lg leading-relaxed text-zinc-400">{t.ai.text}</p>
+        <div class="mt-7 space-y-2.5">
+          {t.ai.prompts.map((p) => <div class="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-zinc-200">{p}</div>)}
+        </div>
+        <p class="mt-6 flex items-center gap-2 text-sm text-zinc-400"><Icon name="shield" class="size-4 text-brand-400" />{t.ai.safe}</p>
+      </div>
+      <div class="reveal space-y-4">
+        <div class="overflow-hidden rounded-xl border border-white/10 bg-black/50">
+          <div class="flex items-center justify-between border-b border-white/10 px-4 py-2 text-xs text-zinc-500">
+            <span>Claude Code</span><span>{t.ai.tools}</span>
+          </div>
+          <pre class="code overflow-x-auto p-4 text-zinc-200">{mcpCmd}</pre>
+        </div>
+        <Image src={mcp} alt="MCP" widths={[700, 1200]} sizes="(max-width: 1024px) 100vw, 600px" class="w-full rounded-xl border border-white/10 opacity-95" />
+      </div>
+    </div>
+  </section>
+
+  <!-- PALETTE -->
+  <section class="py-24">
+    <div class="mx-auto grid max-w-7xl items-center gap-12 px-6 lg:grid-cols-[3fr_2fr]">
+      <Image src={palette} alt={t.palette.title} widths={[700, 1200, 1800]} sizes="(max-width: 1024px) 100vw, 720px" class="reveal shot w-full rounded-xl" />
+      <div class="reveal">
+        <h2 class="text-3xl font-bold tracking-tight">{t.palette.title}</h2>
+        <p class="mt-4 leading-relaxed text-zinc-600">{t.palette.text}</p>
+        <div class="mt-6 flex flex-wrap gap-2 text-sm">
+          {['Ctrl K', 'Ctrl T', 'Ctrl ↵', 'Ctrl S', '?'].map((k) => <kbd class="rounded-md border border-zinc-300 bg-zinc-50 px-2 py-1 font-mono text-xs shadow-[0_1px_0_#d4d4d8]">{k}</kbd>)}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- INSTALL -->
+  <section id="install" class="scroll-mt-16 border-y border-zinc-100 bg-zinc-50 py-24">
+    <div class="mx-auto max-w-7xl px-6">
+      <div class="reveal mx-auto max-w-2xl text-center">
+        <p class="text-sm font-semibold tracking-wide text-brand-600 uppercase">{t.selfhost.kicker}</p>
+        <h2 class="mt-2 text-4xl font-bold tracking-tight">{t.selfhost.title}</h2>
+        <p class="mt-4 text-lg text-zinc-600">{t.selfhost.text}</p>
+      </div>
+      <div class="reveal mx-auto mt-12 max-w-3xl overflow-hidden rounded-2xl bg-ink-950 shadow-2xl">
+        <div class="flex items-center justify-between border-b border-white/10 px-5 py-3">
+          <span class="text-xs text-zinc-500 sm:hidden">bash</span>
+          <div class="hidden gap-4 text-xs text-zinc-400 sm:flex">
+            {t.selfhost.steps.map((s, i) => <span><b class="text-brand-400">{i + 1}.</b> {s}</span>)}
+          </div>
+          <button data-copy={install} class="text-zinc-500 hover:text-white" aria-label="Copy"><Icon name="copy" class="size-4" /></button>
+        </div>
+        <pre class="code overflow-x-auto p-5 text-zinc-200">{install}</pre>
+      </div>
+      <p class="mx-auto mt-6 max-w-2xl text-center text-sm text-zinc-600">{t.selfhost.open}</p>
+      <div class="mx-auto mt-10 grid max-w-4xl gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {t.selfhost.points.map((p) => (
+          <div class="flex items-start gap-2 rounded-xl border border-zinc-200 bg-white p-4 text-sm text-zinc-700">
+            <Icon name="check" class="mt-0.5 size-4 shrink-0 text-brand-600" />{p}
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- CLI -->
+  <section class="py-24">
+    <div class="mx-auto grid max-w-7xl items-center gap-12 px-6 lg:grid-cols-2">
+      <div class="reveal">
+        <p class="text-sm font-semibold tracking-wide text-brand-600 uppercase">{t.cli.kicker}</p>
+        <h2 class="mt-2 text-3xl font-bold tracking-tight">{t.cli.title}</h2>
+        <p class="mt-4 leading-relaxed text-zinc-600">{t.cli.text}</p>
+      </div>
+      <div class="reveal overflow-hidden rounded-2xl bg-ink-950 shadow-xl">
+        <div class="border-b border-white/10 px-5 py-2.5 text-xs text-zinc-500">.github/workflows/api.yml</div>
+        <pre class="code overflow-x-auto p-5 text-zinc-200">{ci}</pre>
+        <div class="border-t border-white/10 px-5 py-3 font-mono text-xs">
+          <span class="text-green-400">✓</span> <span class="text-zinc-300">26 tests passed</span> <span class="text-zinc-600">· 1.2s · cartero-junit.xml</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- OPEN SOURCE -->
+  <section class="bg-zinc-50 py-20">
+    <div class="reveal mx-auto max-w-3xl px-6 text-center">
+      <h2 class="text-3xl font-bold tracking-tight">{t.oss.title}</h2>
+      <p class="mt-4 text-lg text-zinc-600">{t.oss.text}</p>
+      <p class="mt-8 text-xs font-semibold tracking-wide text-zinc-400 uppercase">{t.oss.stack}</p>
+      <div class="mt-3 flex flex-wrap justify-center gap-2">
+        {stack.map((s) => <span class="rounded-md border border-zinc-200 bg-white px-3 py-1 text-sm text-zinc-700">{s}</span>)}
+      </div>
+      <a href={REPO_URL} class="mt-8 inline-flex items-center gap-2 rounded-xl bg-ink-950 px-5 py-2.5 font-medium text-white hover:bg-ink-800">
+        <Icon name="github" class="size-4" />{t.oss.star} ★
+      </a>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section id="faq" class="scroll-mt-16 py-24">
+    <div class="mx-auto max-w-3xl px-6">
+      <h2 class="reveal text-center text-3xl font-bold tracking-tight">{t.faq.title}</h2>
+      <div class="mt-10 divide-y divide-zinc-200 border-y border-zinc-200">
+        {t.faq.items.map((f) => (
+          <details class="group py-5">
+            <summary class="flex cursor-pointer list-none items-center justify-between gap-4 font-medium">
+              {f.q}
+              <span class="chev text-zinc-400 transition-transform"><Icon name="plus" class="size-5" /></span>
+            </summary>
+            <p class="mt-3 leading-relaxed text-zinc-600">{f.a}</p>
+          </details>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA FINAL -->
+  <section class="px-6 pb-24">
+    <div class="reveal relative mx-auto max-w-5xl overflow-hidden rounded-3xl bg-ink-950 px-8 py-16 text-center text-white">
+      <div class="glow absolute inset-0"></div>
+      <div class="relative">
+        <h2 class="text-4xl font-bold tracking-tight">{t.final.title}</h2>
+        <p class="mx-auto mt-4 max-w-xl text-lg text-zinc-400">{t.final.text}</p>
+        <a href="#install" class="mt-8 inline-flex items-center gap-2 rounded-xl bg-brand-600 px-6 py-3 font-medium hover:bg-brand-500">
+          {t.final.cta}<Icon name="arrow" class="size-4" />
+        </a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="border-t border-zinc-200 py-10">
+  <div class="mx-auto flex max-w-7xl flex-col items-center gap-4 px-6 text-sm text-zinc-500 md:flex-row">
+    <Logo size={22} />
+    <span>{t.footer.made}</span>
+    <div class="flex gap-5 md:ml-auto">
+      <a href={REPO_URL} class="hover:text-zinc-900">GitHub</a>
+      <a href={manualUrl} class="hover:text-zinc-900">{t.footer.manual}</a>
+      <a href={`${REPO_URL}/blob/main/LICENSE`} class="hover:text-zinc-900">{t.footer.license}</a>
+      <a href={getRelativeLocaleUrl(other, '')} hreflang={other} class="hover:text-zinc-900">{languages[other]}</a>
+    </div>
+  </div>
+  <p class="mx-auto mt-6 max-w-7xl px-6 text-center text-xs text-zinc-400 md:text-left">{t.footer.disclaimer}</p>
+</footer>

@@ -95,7 +95,7 @@ export function RunView({ runId }: { runId: string }) {
   const duration = run.finishedAt ? new Date(run.finishedAt).getTime() - new Date(run.startedAt).getTime() : Date.now() - new Date(run.startedAt).getTime()
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="@container flex h-full flex-col">
       <div className="flex shrink-0 flex-wrap items-center gap-x-6 gap-y-2 border-b border-app px-4 py-3">
         <div className="flex items-center gap-2">
           <RunStatusBadge status={run.status} />
@@ -183,7 +183,9 @@ function ExecutionRow({ e, showIteration }: { e: Execution; showIteration: boole
         {showIteration && <span className="w-8 text-xs text-muted">#{e.iteration + 1}</span>}
         <MethodBadge method={e.request?.method ?? 'GET'} className="w-12" />
         <span className="w-56 truncate font-medium">{e.name}</span>
-        <span className="min-w-0 flex-1 truncate font-mono text-xs text-muted">{e.request?.url}</span>
+        {/* Si el panel es estrecho (p. ej. dentro de Monitores), la URL no cabe: se oculta */}
+        <span className="hidden min-w-0 flex-1 truncate font-mono text-xs text-muted @3xl:block">{e.request?.url}</span>
+        <span className="flex-1 @3xl:hidden" />
         {e.error ? (
           <Badge tone="red">Error</Badge>
         ) : (

@@ -1,0 +1,90 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --color-brand-50: #fff7ed;
+  --color-brand-100: #ffedd5;
+  --color-brand-200: #fed7aa;
+  --color-brand-300: #fdba74;
+  --color-brand-400: #fb923c;
+  --color-brand-500: #f97316;
+  --color-brand-600: #ea580c;
+  --color-brand-700: #c2410c;
+  --color-ink-950: #0c0c0e;
+  --color-ink-900: #141416;
+  --color-ink-800: #1f1f23;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+}
+body {
+  font-family: var(--font-sans);
+  color: #18181b;
+  background: #fff;
+}
+::selection {
+  background: color-mix(in oklab, var(--color-brand-500) 30%, transparent);
+}
+
+.grid-bg {
+  background-image: linear-gradient(to right, rgb(255 255 255 / 0.05) 1px, transparent 1px), linear-gradient(to bottom, rgb(255 255 255 / 0.05) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 40%, transparent 100%);
+}
+.glow {
+  background: radial-gradient(600px circle at 50% 0%, color-mix(in oklab, var(--color-brand-500) 30%, transparent), transparent 70%);
+}
+.shot {
+  box-shadow:
+    0 0 0 1px rgb(0 0 0 / 0.06),
+    0 30px 60px -20px rgb(0 0 0 / 0.35),
+    0 18px 36px -18px rgb(0 0 0 / 0.3);
+}
+.code {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.7;
+}
+/* Solo se oculta si hay JS: sin él (o para buscadores) todo es visible */
+.js .reveal {
+  opacity: 0;
+  transform: translateY(16px);
+  transition:
+    opacity 0.7s ease,
+    transform 0.7s ease;
+}
+.js .reveal.visible {
+  opacity: 1;
+  transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .js .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  html {
+    scroll-behavior: auto;
+  }
+}
+/* Selector de tema de la captura (sin JS) */
+#theme-dark:checked ~ .shots .light-shot {
+  display: none;
+}
+#theme-dark:not(:checked) ~ .shots .dark-shot {
+  display: none;
+}
+#theme-light:checked ~ .theme-tabs label[for='theme-light'],
+#theme-dark:checked ~ .theme-tabs label[for='theme-dark'] {
+  background: rgb(255 255 255 / 0.12);
+  color: #fff;
+}
+details summary::-webkit-details-marker {
+  display: none;
+}
+details[open] .chev {
+  transform: rotate(45deg);
+}

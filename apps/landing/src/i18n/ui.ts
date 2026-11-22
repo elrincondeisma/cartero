@@ -1,0 +1,246 @@
+export const languages = { es: 'Español', en: 'English' } as const
+export type Lang = keyof typeof languages
+
+/** URL del repositorio. Cámbiala con PUBLIC_REPO_URL al publicar. */
+export const REPO_URL = import.meta.env.PUBLIC_REPO_URL ?? 'https://github.com/cartero-dev/cartero'
+
+export const ui = {
+  es: {
+    meta: {
+      title: 'Cartero — El cliente de APIs open source con todo incluido',
+      description:
+        'Alternativa web, autoalojada y MIT a los clientes de APIs de pago. Runner, mock servers, monitores, documentación, equipos y MCP para IA. Importa desde Postman sin perder nada.',
+    },
+    nav: { features: 'Funciones', ai: 'IA', selfhost: 'Instalar', docs: 'Manual', faq: 'FAQ', github: 'GitHub' },
+    hero: {
+      badge: 'Open source · MIT · Autoalojado',
+      title1: 'El cliente de APIs',
+      title2: 'con todo incluido.',
+      subtitle:
+        'Peticiones, tests, runner, mock servers, monitores, documentación pública, equipos en tiempo real y un servidor MCP para tu asistente de IA. Sin límites, sin cuentas en la nube, en tu propio servidor.',
+      cta: 'Instálalo en un minuto',
+      github: 'Ver en GitHub',
+      light: 'Claro',
+      dark: 'Oscuro',
+      alt: 'Editor de peticiones de Cartero con una respuesta JSON',
+    },
+    imports: { title: 'Trae lo que ya tienes. Sin perder nada.', note: 'Colecciones, entornos, scripts, tests, ejemplos y el ZIP de exportación completo.' },
+    features: {
+      kicker: 'Funciones',
+      title: 'Todo lo que necesitas para trabajar con APIs',
+      subtitle: 'Lo que otras herramientas reservan para planes de pago, aquí viene de serie.',
+      items: [
+        { icon: 'send', title: 'Peticiones sin límites', text: 'REST y GraphQL, form-data con ficheros, cookies, historial y código en más de 20 lenguajes. Pega un cURL y listo.' },
+        { icon: 'key', title: 'Todas las autenticaciones', text: 'Basic, Bearer, API Key, JWT, Digest, OAuth 1.0, OAuth 2.0 con PKCE, AWS SigV4, Hawk, NTLM y Akamai.' },
+        { icon: 'code', title: 'Scripts compatibles con Postman', text: 'La API pm.* completa con el motor oficial: tus tests y scripts funcionan sin tocar una línea.' },
+        { icon: 'play', title: 'Runner de colecciones', text: 'Iteraciones, datos CSV/JSON, control de flujo y resultados en vivo. Ejecuta tantas veces como quieras.' },
+        { icon: 'server', title: 'Mock servers', text: 'Simula tu API con los ejemplos guardados: rutas con parámetros, cabeceras x-mock-* y datos falsos realistas.' },
+        { icon: 'activity', title: 'Monitores', text: 'Ejecuciones programadas con cron y avisos por Slack, Discord, Telegram, email o webhook.' },
+        { icon: 'book', title: 'Documentación pública', text: 'Publica tu colección como página web, con ejemplos y cURL. Las credenciales se ocultan solas.' },
+        { icon: 'users', title: 'Equipos en tiempo real', text: 'Roles, presencia, comentarios, historial de cambios con restauración, fork y merge.' },
+        { icon: 'terminal', title: 'CLI para CI', text: 'cartero run con informes JUnit, HTML y JSON. Ejecuta ficheros o colecciones de tu servidor.' },
+      ],
+    },
+    showcase: [
+      {
+        key: 'scripts',
+        kicker: 'Tests',
+        title: 'Escribe tests como siempre. Con autocompletado.',
+        text: 'Editor de código con la API pm.* documentada, fragmentos listos para insertar y resultados al instante. Encadena peticiones guardando variables desde los scripts.',
+        points: ['pm.test, pm.expect y JSON Schema', 'pm.sendRequest y setNextRequest', 'Consola y desglose de tiempos'],
+      },
+      {
+        key: 'runner',
+        kicker: 'Runner',
+        title: 'Ejecuta colecciones enteras, en vivo.',
+        text: 'Lanza una colección o carpeta con datos de un CSV, mira cada petición y cada test según llegan, y guarda el histórico de todas las ejecuciones.',
+        points: ['Pruebas con datos (data-driven)', 'Parar al primer fallo', 'Exporta el informe en JSON'],
+      },
+      {
+        key: 'mocks',
+        kicker: 'Mocks',
+        title: 'Tu API, antes de que exista.',
+        text: 'Un mock server que responde con los ejemplos de tus peticiones. Ideal para que el frontend no espere al backend, o para demos sin tocar producción.',
+        points: ['Elige ejemplo con x-mock-response-code', 'Variables dinámicas: {{$randomEmail}}', 'Log de llamadas y retardo simulado'],
+      },
+      {
+        key: 'monitors',
+        kicker: 'Monitores',
+        title: 'Entérate antes que tus usuarios.',
+        text: 'Programa tus colecciones con cron y recibe un aviso si algo falla. Disponibilidad, tiempos y el detalle de cada ejecución.',
+        points: ['Cada 5 minutos o con cron', 'Slack, Discord, Telegram, email y webhook', 'Zona horaria por monitor'],
+      },
+      {
+        key: 'collab',
+        kicker: 'Equipos',
+        title: 'Colaboración de verdad, en tu servidor.',
+        text: 'Mira quién está conectado y qué petición tiene abierta, comenta, revisa el historial de cambios y restaura cualquier versión. Los conflictos se detectan al guardar.',
+        points: ['Lector, editor, admin y propietario', 'Presencia y cambios en vivo', 'Fork, merge y restauración'],
+      },
+      {
+        key: 'docs',
+        kicker: 'Documentación',
+        title: 'Publica la documentación con un clic.',
+        text: 'Cada colección se convierte en una página pública con descripciones en Markdown, ejemplos de respuesta y cURL listo para copiar. Con contraseña si quieres.',
+        points: ['Índice navegable', 'Secretos y credenciales ocultos', 'Variables de entorno resueltas'],
+      },
+    ],
+    ai: {
+      kicker: 'IA',
+      title: 'Tu asistente de IA ya sabe usar tus APIs',
+      text: 'Cartero incluye un servidor MCP. Conecta Claude, Cursor o cualquier cliente compatible y pídele que pruebe tu API, explique fallos, cree peticiones con tests o importe una especificación OpenAPI.',
+      prompts: ['«Ejecuta la colección Pagos y explícame qué falla»', '«Crea un POST /users con un test que compruebe el 201»', '«Importa esta OpenAPI y prueba todos los GET»'],
+      safe: 'Con tus permisos. Sin borrar nada. Sin ver nunca tus secretos.',
+      tools: '18 herramientas',
+    },
+    palette: { title: 'Rápido de verdad', text: 'Ctrl+K encuentra cualquier petición, entorno o acción. Atajos para todo, tema claro y oscuro, y un recorrido guiado la primera vez.' },
+    selfhost: {
+      kicker: 'Instalar',
+      title: 'En tu servidor en un minuto',
+      text: 'Docker Compose con PostgreSQL y Redis. Funciona en un VPS, en tu homelab o detrás de Tailscale.',
+      steps: ['Clona el repositorio', 'Pon tu clave secreta', 'Arranca'],
+      open: 'Abre http://localhost:3000 y crea tu cuenta. Puedes cargar datos de ejemplo con APIs reales y quitarlos con un clic.',
+      points: ['Tus datos no salen de tu servidor', 'Secretos cifrados con AES-256-GCM', 'Protección SSRF opcional', 'Migraciones automáticas'],
+    },
+    cli: { kicker: 'CLI', title: 'Tus tests de API, en cada push', text: 'La misma colección que usas en la interfaz, en tu CI. Sale con código 1 si algo falla y genera informes JUnit que entienden GitHub, GitLab y Jenkins.' },
+    oss: {
+      title: 'Open source, de verdad',
+      text: 'Licencia MIT. Sin funciones bloqueadas, sin telemetría, sin límites artificiales. Léelo, cámbialo, contribuye.',
+      stack: 'Hecho con',
+      star: 'Dale una estrella en GitHub',
+    },
+    faq: {
+      title: 'Preguntas frecuentes',
+      items: [
+        { q: '¿Funcionarán mis colecciones y scripts de Postman?', a: 'Sí. Cartero importa colecciones v1, v2.0 y v2.1, entornos, globales y el ZIP de exportación, y ejecuta los scripts con postman-runtime, el mismo motor que usa Postman.' },
+        { q: '¿Es realmente gratis?', a: 'Sí: es open source con licencia MIT y lo instalas en tu servidor. No hay planes, ni límites de ejecuciones, mocks, monitores o miembros.' },
+        { q: '¿Por qué las peticiones salen del servidor?', a: 'Así no hay problemas de CORS, funcionan todas las autenticaciones y certificados, y puedes probar APIs de tu red interna. En instancias públicas puedes bloquear las redes privadas.' },
+        { q: '¿Necesito una cuenta en la nube?', a: 'No. Todo vive en tu PostgreSQL. Nada sale de tu servidor salvo las peticiones que tú envías.' },
+        { q: '¿Puedo usarlo con mi equipo?', a: 'Sí: workspaces compartidos, roles, invitaciones, presencia en tiempo real, comentarios e historial de cambios.' },
+        { q: '¿Está en inglés?', a: 'La interfaz está ahora en español; la traducción al inglés está en camino. Esta web y el código están en ambos idiomas.' },
+      ],
+    },
+    final: { title: 'Deja de pagar por probar tus APIs', text: 'Instálalo hoy, importa tus colecciones y sigue trabajando como siempre.', cta: 'Empezar ahora' },
+    footer: { made: 'Hecho con cariño, en abierto.', license: 'Licencia MIT', manual: 'Manual', disclaimer: 'Cartero no está afiliado a Postman, Inc. ni a ninguna otra marca citada.' },
+  },
+  en: {
+    meta: {
+      title: 'Cartero — The open-source API client with everything included',
+      description:
+        'A web-based, self-hosted, MIT-licensed alternative to paid API clients. Runner, mock servers, monitors, published docs, teams and MCP for AI. Import from Postman losslessly.',
+    },
+    nav: { features: 'Features', ai: 'AI', selfhost: 'Install', docs: 'Docs', faq: 'FAQ', github: 'GitHub' },
+    hero: {
+      badge: 'Open source · MIT · Self-hosted',
+      title1: 'The API client',
+      title2: 'with everything included.',
+      subtitle:
+        'Requests, tests, collection runner, mock servers, monitors, public docs, real-time teams and an MCP server for your AI assistant. No limits, no cloud accounts, on your own server.',
+      cta: 'Install in one minute',
+      github: 'View on GitHub',
+      light: 'Light',
+      dark: 'Dark',
+      alt: 'Cartero request editor showing a JSON response',
+    },
+    imports: { title: 'Bring what you already have. Lose nothing.', note: 'Collections, environments, scripts, tests, examples and the full data-export ZIP.' },
+    features: {
+      kicker: 'Features',
+      title: 'Everything you need to work with APIs',
+      subtitle: 'What other tools keep behind paid plans comes standard here.',
+      items: [
+        { icon: 'send', title: 'Unlimited requests', text: 'REST and GraphQL, multipart file uploads, cookies, history and code snippets in 20+ languages. Paste a cURL and go.' },
+        { icon: 'key', title: 'Every auth method', text: 'Basic, Bearer, API Key, JWT, Digest, OAuth 1.0, OAuth 2.0 with PKCE, AWS SigV4, Hawk, NTLM and Akamai.' },
+        { icon: 'code', title: 'Postman-compatible scripts', text: 'The full pm.* API on the official engine: your tests and scripts run without changing a line.' },
+        { icon: 'play', title: 'Collection runner', text: 'Iterations, CSV/JSON data, flow control and live results. Run it as often as you like.' },
+        { icon: 'server', title: 'Mock servers', text: 'Simulate your API from saved examples: path params, x-mock-* headers and realistic fake data.' },
+        { icon: 'activity', title: 'Monitors', text: 'Cron-scheduled runs with alerts on Slack, Discord, Telegram, email or webhook.' },
+        { icon: 'book', title: 'Public documentation', text: 'Publish a collection as a web page with examples and cURL. Credentials are hidden automatically.' },
+        { icon: 'users', title: 'Real-time teams', text: 'Roles, presence, comments, change history with restore, fork and merge.' },
+        { icon: 'terminal', title: 'CLI for CI', text: 'cartero run with JUnit, HTML and JSON reports. Run files or collections from your server.' },
+      ],
+    },
+    showcase: [
+      {
+        key: 'scripts',
+        kicker: 'Tests',
+        title: 'Write tests the way you always have. With autocomplete.',
+        text: 'A code editor with the documented pm.* API, ready-to-insert snippets and instant results. Chain requests by saving variables from your scripts.',
+        points: ['pm.test, pm.expect and JSON Schema', 'pm.sendRequest and setNextRequest', 'Console and timing breakdown'],
+      },
+      {
+        key: 'runner',
+        kicker: 'Runner',
+        title: 'Run whole collections, live.',
+        text: 'Run a collection or folder with data from a CSV, watch every request and test as it arrives, and keep a history of every run.',
+        points: ['Data-driven testing', 'Stop on first failure', 'Export the report as JSON'],
+      },
+      {
+        key: 'mocks',
+        kicker: 'Mocks',
+        title: 'Your API, before it exists.',
+        text: 'A mock server that answers with your requests’ saved examples. Perfect so the frontend doesn’t wait for the backend, or for demos that never touch production.',
+        points: ['Pick an example with x-mock-response-code', 'Dynamic variables: {{$randomEmail}}', 'Call log and simulated latency'],
+      },
+      {
+        key: 'monitors',
+        kicker: 'Monitors',
+        title: 'Know before your users do.',
+        text: 'Schedule your collections with cron and get alerted when something breaks. Uptime, timings and the details of every run.',
+        points: ['Every 5 minutes or any cron', 'Slack, Discord, Telegram, email and webhook', 'Per-monitor time zone'],
+      },
+      {
+        key: 'collab',
+        kicker: 'Teams',
+        title: 'Real collaboration, on your server.',
+        text: 'See who is online and which request they have open, comment, review the change history and restore any version. Conflicts are detected on save.',
+        points: ['Viewer, editor, admin and owner', 'Live presence and updates', 'Fork, merge and restore'],
+      },
+      {
+        key: 'docs',
+        kicker: 'Docs',
+        title: 'Publish documentation in one click.',
+        text: 'Every collection becomes a public page with Markdown descriptions, response examples and copy-ready cURL. Password-protected if you want.',
+        points: ['Navigable index', 'Secrets and credentials hidden', 'Environment variables resolved'],
+      },
+    ],
+    ai: {
+      kicker: 'AI',
+      title: 'Your AI assistant already knows your APIs',
+      text: 'Cartero ships an MCP server. Connect Claude, Cursor or any compatible client and ask it to test your API, explain failures, create requests with tests or import an OpenAPI spec.',
+      prompts: ['“Run the Payments collection and tell me what’s failing”', '“Create a POST /users with a test that checks for 201”', '“Import this OpenAPI spec and test every GET”'],
+      safe: 'With your permissions. Never deletes. Never sees your secrets.',
+      tools: '18 tools',
+    },
+    palette: { title: 'Seriously fast', text: 'Ctrl+K finds any request, environment or action. Shortcuts for everything, light and dark themes, and a guided tour on first launch.' },
+    selfhost: {
+      kicker: 'Install',
+      title: 'On your server in a minute',
+      text: 'Docker Compose with PostgreSQL and Redis. Runs on a VPS, in your homelab or behind Tailscale.',
+      steps: ['Clone the repository', 'Set your secret key', 'Start it'],
+      open: 'Open http://localhost:3000 and create your account. You can load sample data built on real public APIs and remove it with one click.',
+      points: ['Your data never leaves your server', 'Secrets encrypted with AES-256-GCM', 'Optional SSRF protection', 'Automatic migrations'],
+    },
+    cli: { kicker: 'CLI', title: 'Your API tests, on every push', text: 'The same collection you use in the app, in your CI. Exits with code 1 when something fails and writes JUnit reports GitHub, GitLab and Jenkins understand.' },
+    oss: {
+      title: 'Truly open source',
+      text: 'MIT licensed. No locked features, no telemetry, no artificial limits. Read it, change it, contribute.',
+      stack: 'Built with',
+      star: 'Star it on GitHub',
+    },
+    faq: {
+      title: 'Frequently asked questions',
+      items: [
+        { q: 'Will my Postman collections and scripts work?', a: 'Yes. Cartero imports v1, v2.0 and v2.1 collections, environments, globals and the data-export ZIP, and runs scripts with postman-runtime — the same engine Postman uses.' },
+        { q: 'Is it really free?', a: 'Yes: it’s MIT-licensed open source that you install on your own server. No plans, no limits on runs, mocks, monitors or members.' },
+        { q: 'Why are requests sent from the server?', a: 'No CORS issues, every auth method and certificate works, and you can test APIs on your internal network. On public instances you can block private networks.' },
+        { q: 'Do I need a cloud account?', a: 'No. Everything lives in your PostgreSQL. Nothing leaves your server except the requests you send.' },
+        { q: 'Can I use it with my team?', a: 'Yes: shared workspaces, roles, invitations, real-time presence, comments and change history.' },
+        { q: 'Is the app available in English?', a: 'The interface is currently in Spanish, with an English translation on the way. This website and the codebase are bilingual.' },
+      ],
+    },
+    final: { title: 'Stop paying to test your APIs', text: 'Install it today, import your collections and keep working the way you always have.', cta: 'Get started' },
+    footer: { made: 'Made with care, in the open.', license: 'MIT License', manual: 'Docs', disclaimer: 'Cartero is not affiliated with Postman, Inc. or any other brand mentioned.' },
+  },
+} as const
+
+export type Dict = (typeof ui)[Lang]

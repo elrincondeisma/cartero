@@ -1,0 +1,55 @@
+---
+import { getRelativeLocaleUrl } from 'astro:i18n'
+import { type Lang, ui } from '../i18n/ui'
+import '../styles.css'
+
+interface Props { lang: Lang }
+const { lang } = Astro.props
+const t = ui[lang]
+const site = Astro.site!
+const url = (l: Lang) => new URL(getRelativeLocaleUrl(l, ''), site).href
+const og = new URL('/og.png', site).href
+---
+<!doctype html>
+<html lang={lang}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{t.meta.title}</title>
+    <meta name="description" content={t.meta.description} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="canonical" href={url(lang)} />
+    <link rel="alternate" hreflang="es" href={url('es')} />
+    <link rel="alternate" hreflang="en" href={url('en')} />
+    <link rel="alternate" hreflang="x-default" href={url('es')} />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={t.meta.title} />
+    <meta property="og:description" content={t.meta.description} />
+    <meta property="og:url" content={url(lang)} />
+    <meta property="og:image" content={og} />
+    <meta property="og:locale" content={lang === 'es' ? 'es_ES' : 'en_US'} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="theme-color" content="#0c0c0e" />
+    <script is:inline>document.documentElement.classList.add('js')</script>
+  </head>
+  <body>
+    <slot />
+    <script>
+      // Animación de entrada al hacer scroll
+      const io = new IntersectionObserver(
+        (entries) => entries.forEach((e) => e.isIntersecting && (e.target.classList.add('visible'), io.unobserve(e.target))),
+        { threshold: 0.12 },
+      )
+      document.querySelectorAll('.reveal').forEach((el) => io.observe(el))
+      // Botones de copiar
+      document.querySelectorAll<HTMLButtonElement>('[data-copy]').forEach((b) =>
+        b.addEventListener('click', async () => {
+          await navigator.clipboard.writeText(b.dataset.copy!)
+          const old = b.innerHTML
+          b.textContent = '✓'
+          setTimeout(() => (b.innerHTML = old), 1200)
+        }),
+      )
+    </script>
+  </body>
+</html>
