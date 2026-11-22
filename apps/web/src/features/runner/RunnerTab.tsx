@@ -46,7 +46,8 @@ export function RunnerTab({ collectionId, folderId }: { collectionId: string; fo
         if (!Array.isArray(rows)) throw new Error('El JSON debe ser un array de objetos')
       } else {
         const parsed = Papa.parse<Record<string, unknown>>(text, { header: true, skipEmptyLines: true, dynamicTyping: false })
-        if (parsed.errors.length) throw new Error(parsed.errors[0].message)
+        const errors = parsed.errors.filter((e) => e.code !== 'UndetectableDelimiter')
+        if (errors.length) throw new Error(errors[0].message)
         rows = parsed.data
       }
       setData({ name: file.name, rows })

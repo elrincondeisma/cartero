@@ -128,6 +128,25 @@ test('flujo completo: registro, importar, enviar, guardar, runner, mock', async 
   await page.getByRole('button', { name: 'Tokens de API' }).click()
   await shot(page, '11-ajustes')
 
+  // Documentación pública
+  await page.getByRole('button', { name: 'Colecciones' }).click()
+  await page.locator('aside').getByText('Demo API').hover()
+  await page.locator('aside').getByRole('button', { name: 'Acciones' }).first().click()
+  await page.getByRole('menuitem', { name: 'Configuración' }).click()
+  await page.getByRole('button', { name: 'Documentación' }).click()
+  await page.getByLabel('URL').fill(`demo-${Date.now()}`)
+  await page.getByRole('button', { name: 'Publicar' }).click()
+  await expect(page.getByText('Documentación actualizada')).toBeVisible()
+  const docsLink = await page.locator('a[href*="/docs/"]').first().getAttribute('href')
+  const docs = await page.context().newPage()
+  await docs.goto(docsLink!)
+  await expect(docs.getByRole('heading', { name: 'Demo API', level: 1 })).toBeVisible()
+  await expect(docs.getByText('Ejemplo cURL').first()).toBeVisible()
+  // La contraseña de Basic Auth de "Create user" nunca debe publicarse
+  expect(await docs.content()).not.toContain('s3cr3t')
+  if (shots) await docs.screenshot({ path: join(shots, '13-docs.png') })
+  await docs.close()
+
   // Tema oscuro
   await page.getByRole('button', { name: 'Colecciones' }).click()
   await page.getByRole('button', { name: 'Cambiar tema' }).click()

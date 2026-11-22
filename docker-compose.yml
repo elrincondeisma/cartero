@@ -1,0 +1,58 @@
+# Despliegue de Cartero con un solo comando:
+#   cp .env.example .env   # y cambia CARTERO_SECRET_KEY y la contraseña de Postgres
+#   docker compose up -d
+services:
+  cartero:
+    build: .
+    image: cartero:latest
+    restart: unless-stopped
+    ports:
+      - "${CARTERO_PORT:-3000}:3000"
+    environment:
+      DATABASE_URL: postgres://cartero:${POSTGRES_PASSWORD:-cartero}@postgres:5432/cartero
+      REDIS_URL: redis://redis:6379
+      CARTERO_SECRET_KEY: ${CARTERO_SECRET_KEY:?Define CARTERO_SECRET_KEY en .env}
+      PUBLIC_URL: ${PUBLIC_URL:-http://localhost:3000}
+      ALLOW_REGISTRATION: ${ALLOW_REGISTRATION:-true}
+      BLOCK_PRIVATE_NETWORKS: ${BLOCK_PRIVATE_NETWORKS:-false}
+      SMTP_URL: ${SMTP_URL:-}
+      SMTP_FROM: ${SMTP_FROM:-Cartero <no-reply@localhost>}
+    volumes:
+      - cartero-data:/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: cartero
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-cartero}
+      POSTGRES_DB: cartero
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cartero"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  cartero-data:
+  pg-data:
+  redis-data:
