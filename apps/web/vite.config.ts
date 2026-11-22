@@ -16,6 +16,7 @@ export default defineConfig({
       '/api/ws': { target: api.replace(/^http/, 'ws'), ws: true },
       '/api': api,
       '/mock': api,
+      '/mcp': api,
     },
   },
   build: { chunkSizeWarningLimit: 4000 },

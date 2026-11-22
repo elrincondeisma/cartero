@@ -1,0 +1,31 @@
+{
+  "name": "@cartero/mcp",
+  "version": "0.1.0",
+  "description": "Servidor MCP de Cartero: conecta asistentes de IA a tus colecciones",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "cartero-mcp": "./dist/stdio.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json && chmod +x dist/stdio.js",
+    "dev": "tsc -p tsconfig.json --watch --preserveWatchOutput",
+    "test": "pnpm build && vitest run",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.2",
+    "zod": "^4.6.7"
+  }
+}

@@ -17,6 +17,7 @@ import { collectionRoutes } from './routes/collections.js'
 import { docsRoutes } from './routes/docs.js'
 import { environmentRoutes } from './routes/environments.js'
 import { executeRoutes } from './routes/execute.js'
+import { mcpRoutes } from './routes/mcp.js'
 import { mockRoutes } from './routes/mocks.js'
 import { monitorRoutes } from './routes/monitors.js'
 import { toolRoutes } from './routes/tools.js'
@@ -59,6 +60,7 @@ export async function buildApp(opts: { logger?: boolean } = {}) {
   await app.register(monitorRoutes)
   await app.register(docsRoutes)
   await app.register(toolRoutes)
+  await app.register(mcpRoutes)
 
   // Tiempo real: presencia y avisos de cambios
   app.get('/api/ws', { websocket: true }, async (socket, req) => {
@@ -78,7 +80,7 @@ export async function buildApp(opts: { logger?: boolean } = {}) {
   if (webDist && existsSync(webDist)) {
     await app.register(fastifyStatic, { root: webDist, wildcard: false })
     app.setNotFoundHandler((req, reply) => {
-      if (req.url.startsWith('/api/') || req.url.startsWith('/mock/'))
+      if (req.url.startsWith('/api/') || req.url.startsWith('/mock/') || req.url.startsWith('/mcp'))
         return reply.code(404).send({ error: 'not_found', message: 'Ruta no encontrada' })
       return reply.sendFile('index.html')
     })

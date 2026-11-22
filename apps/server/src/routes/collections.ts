@@ -275,6 +275,15 @@ export async function collectionRoutes(app: FastifyInstance) {
     return row
   })
 
+  app.get('/api/items/:id', async (req) => {
+    const user = requireUser(req)
+    const { id } = req.params as { id: string }
+    const collectionId = await itemCollection(id)
+    const workspaceId = await assertCollection(collectionId, user.id)
+    const [row] = await db.select().from(schema.items).where(eq(schema.items.id, id))
+    return { ...row, workspaceId }
+  })
+
   app.patch('/api/items/:id', async (req) => {
     const user = requireUser(req)
     const { id } = req.params as { id: string }
