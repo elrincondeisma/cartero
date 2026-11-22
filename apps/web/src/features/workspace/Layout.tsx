@@ -14,7 +14,7 @@ import {
   Variable,
   Zap,
 } from 'lucide-react'
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router'
 import { toast } from 'sonner'
 import { api } from '@/api/client'
@@ -32,6 +32,11 @@ import { MocksPage } from '../mocks/MocksPage'
 import { MonitorsPage } from '../monitors/MonitorsPage'
 import { RunsPage } from '../runs/RunsPage'
 import { SettingsPage } from '../settings/SettingsPage'
+import { ImportDialog } from '../collections/ImportDialog'
+import { EnvQuickLook, HelpMenu } from '../help/HelpMenu'
+import { Tour } from '../onboarding/Tour'
+import { Welcome } from '../onboarding/Welcome'
+import { CommandPalette, usePalette } from '../palette/CommandPalette'
 import { TabsArea } from './TabsArea'
 import { WorkspaceContext, type WorkspaceCtx, useWs } from './context'
 
@@ -99,8 +104,20 @@ export function WorkspaceLayout() {
           </main>
         </div>
       </div>
+      <GlobalImport />
+      <CommandPalette />
+      <Welcome />
+      <Tour />
     </WorkspaceContext.Provider>
   )
+}
+
+/** Diálogo de importación accesible desde la paleta de comandos. */
+function GlobalImport() {
+  const [open, setOpen] = useState(false)
+  const register = usePalette((s) => s.register)
+  useEffect(() => register({ onImport: () => setOpen(true) }), [register])
+  return <ImportDialog open={open} onOpenChange={setOpen} />
 }
 
 function ResizableSidebar() {
@@ -127,7 +144,7 @@ function ResizableSidebar() {
   }, [setWidth])
 
   return (
-    <aside className="relative flex shrink-0 flex-col border-r border-app bg-soft" style={{ width }}>
+    <aside data-tour="collections" className="relative flex shrink-0 flex-col border-r border-app bg-soft" style={{ width }}>
       {section === 'collections' && <CollectionsSidebar />}
       {section === 'environments' && <EnvironmentsSidebar />}
       {section === 'history' && <HistorySidebar />}
@@ -146,7 +163,7 @@ function Rail() {
   const section = useUi((s) => s.section)
   const setSection = useUi((s) => s.setSection)
   return (
-    <nav className="flex w-[52px] shrink-0 flex-col items-center gap-1 border-r border-app bg-app py-2">
+    <nav data-tour="rail" className="flex w-[52px] shrink-0 flex-col items-center gap-1 border-r border-app bg-app py-2">
       {SECTIONS.map((s) => (
         <Tooltip key={s.id} content={s.label} side="right">
           <button
@@ -236,6 +253,8 @@ function TopBar() {
             ))}
         </div>
       )}
+      <HelpMenu />
+      <div data-tour="env" className="flex items-center gap-0.5">
       <Select
         value={activeEnv}
         onChange={(e) => setActiveEnv(ws, e.target.value || null)}
@@ -249,6 +268,8 @@ function TopBar() {
           </option>
         ))}
       </Select>
+      <EnvQuickLook />
+      </div>
       <Tooltip content={theme === 'dark' ? 'Tema claro' : 'Tema oscuro'}>
         <button onClick={toggleTheme} className="rounded-md p-1.5 text-muted hover:bg-muted hover:text-app" aria-label="Cambiar tema">
           {theme === 'dark' ? <Sun className="size-4" /> : <Moon className="size-4" />}

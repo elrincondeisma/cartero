@@ -19,6 +19,7 @@ import { useWs } from '../workspace/context'
 import { AuthEditor } from './AuthEditor'
 import { BodyEditor } from './BodyEditor'
 import { CollabPanel } from './CollabPanel'
+import { DescriptionEditor } from './DescriptionEditor'
 import { ExamplesEditor } from './ExamplesEditor'
 import { ResponsePane } from './ResponsePane'
 import { SaveDialog } from './SaveDialog'
@@ -27,7 +28,7 @@ import { SettingsEditor } from './SettingsEditor'
 import { SnippetDialog } from './SnippetDialog'
 
 type ReqTab = Extract<Tab, { kind: 'request' }>
-type Sub = 'params' | 'auth' | 'headers' | 'body' | 'scripts' | 'examples' | 'settings'
+type Sub = 'params' | 'auth' | 'headers' | 'body' | 'scripts' | 'examples' | 'docs' | 'settings'
 
 /** Datos del ítem que se guardan en la fila (todo menos id y name). */
 export function itemData(item: RequestItem): ItemRow['data'] {
@@ -301,6 +302,7 @@ export function RequestTab({ tab }: { tab: ReqTab }) {
                 { id: 'body', label: 'Body', dot: !!req.body?.mode && req.body.mode !== 'none' },
                 { id: 'scripts', label: 'Scripts', count: scriptCount(draft.event) },
                 { id: 'examples', label: 'Ejemplos', count: draft.response?.length ?? 0 },
+                { id: 'docs', label: 'Descripción', dot: !!req.description },
                 { id: 'settings', label: 'Ajustes', dot: !!draft.protocolProfileBehavior },
               ]}
             />
@@ -344,6 +346,12 @@ export function RequestTab({ tab }: { tab: ReqTab }) {
               {sub === 'body' && <BodyEditor body={req.body} onChange={(body) => setReq((r) => ({ ...r, body }))} known={known} />}
               {sub === 'scripts' && <ScriptsEditor events={draft.event} onChange={(event) => setItem({ event })} />}
               {sub === 'examples' && <ExamplesEditor examples={draft.response ?? []} onChange={(response) => setItem({ response })} />}
+              {sub === 'docs' && (
+                <DescriptionEditor
+                  value={typeof req.description === 'string' ? req.description : ((req.description as any)?.content ?? '')}
+                  onChange={(description) => setReq((r) => ({ ...r, description: description || undefined }))}
+                />
+              )}
               {sub === 'settings' && <SettingsEditor value={draft.protocolProfileBehavior} onChange={(protocolProfileBehavior) => setItem({ protocolProfileBehavior })} />}
             </div>
           </div>

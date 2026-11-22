@@ -14,6 +14,7 @@ import { HttpError } from './lib/errors.js'
 import { join } from './lib/realtime.js'
 import { authRoutes } from './routes/auth.js'
 import { collectionRoutes } from './routes/collections.js'
+import { demoRoutes } from './routes/demo.js'
 import { docsRoutes } from './routes/docs.js'
 import { environmentRoutes } from './routes/environments.js'
 import { executeRoutes } from './routes/execute.js'
@@ -61,6 +62,7 @@ export async function buildApp(opts: { logger?: boolean } = {}) {
   await app.register(docsRoutes)
   await app.register(toolRoutes)
   await app.register(mcpRoutes)
+  await app.register(demoRoutes)
 
   // Tiempo real: presencia y avisos de cambios
   app.get('/api/ws', { websocket: true }, async (socket, req) => {

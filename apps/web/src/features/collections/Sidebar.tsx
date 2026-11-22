@@ -55,7 +55,7 @@ export function CollectionsSidebar() {
         <span className="flex-1 text-[11px] font-semibold tracking-wide text-muted uppercase">Colecciones</span>
         {canEdit && (
           <>
-            <IconButton label="Importar" onClick={() => setImportOpen(true)}>
+            <IconButton label="Importar" data-tour="import" onClick={() => setImportOpen(true)}>
               <FileUp className="size-4" />
             </IconButton>
             <IconButton label="Nueva colección" onClick={create}>

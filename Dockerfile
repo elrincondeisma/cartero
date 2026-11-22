@@ -12,6 +12,7 @@ COPY packages/executor/package.json packages/executor/
 COPY packages/importers/package.json packages/importers/
 COPY packages/exporters/package.json packages/exporters/
 COPY packages/cli/package.json packages/cli/
+COPY packages/mcp/package.json packages/mcp/
 RUN pnpm install --frozen-lockfile
 
 COPY . .

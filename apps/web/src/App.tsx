@@ -4,6 +4,7 @@ import { Spinner } from './components/ui'
 import { InvitePage, LoginPage, RegisterPage } from './features/auth/AuthPages'
 import { OAuthCallback } from './features/auth/OAuthCallback'
 import { PublicDocs } from './features/docs/PublicDocs'
+import { ManualPage } from './features/manual/ManualPage'
 import { WorkspaceLayout } from './features/workspace/Layout'
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
@@ -38,6 +39,8 @@ export function App() {
       <Route path="/invite/:token" element={<InvitePage />} />
       <Route path="/docs/:slug" element={<PublicDocs />} />
       <Route path="/oauth/callback" element={<OAuthCallback />} />
+      <Route path="/ayuda" element={<ManualPage />} />
+      <Route path="/ayuda/:slug" element={<ManualPage />} />
       <Route
         path="/w/:ws/*"
         element={

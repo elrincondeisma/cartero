@@ -1,0 +1,157 @@
+import * as Popover from '@radix-ui/react-popover'
+import { BookOpen, Bot, CircleHelp, Eye, Keyboard, Search, Wand2 } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { useEnvironments, useGlobals } from '@/api/hooks'
+import { Dialog, Menu, Tooltip } from '@/components/ui'
+import { useUi } from '@/store/ui'
+import { useTour } from '../onboarding/Tour'
+import { usePalette } from '../palette/CommandPalette'
+import { useOpen } from '../workspace/actions'
+import { useWs } from '../workspace/context'
+
+const SHORTCUTS: [string, string][] = [
+  ['Ctrl + K', 'Buscar peticiones, entornos y acciones'],
+  ['Ctrl + T', 'Nueva petición'],
+  ['Ctrl + Enter', 'Enviar la petición'],
+  ['Ctrl + S', 'Guardar'],
+  ['Ctrl + Alt + W', 'Cerrar la pestaña'],
+  ['Clic central', 'Cerrar una pestaña'],
+  ['Clic derecho en pestaña', 'Cerrar las demás'],
+  ['Ctrl + Espacio', 'Autocompletar en scripts (API pm.*)'],
+  ['Ctrl + Enter (comentario)', 'Enviar un comentario'],
+  ['?', 'Ver estos atajos'],
+  ['Esc', 'Cerrar diálogos y el recorrido'],
+]
+
+export function ShortcutsDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange} title="Atajos de teclado" description="En Mac, usa ⌘ en lugar de Ctrl.">
+      <table className="w-full">
+        <tbody>
+          {SHORTCUTS.map(([k, v]) => (
+            <tr key={k} className="border-b border-app last:border-0">
+              <td className="py-2 pr-4">
+                {k.split(' + ').map((p, i) => (
+                  <span key={p}>
+                    {i > 0 && <span className="mx-1 text-muted">+</span>}
+                    <kbd className="rounded border border-app bg-soft px-1.5 py-0.5 font-mono text-[11px]">{p}</kbd>
+                  </span>
+                ))}
+              </td>
+              <td className="py-2 text-muted">{v}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </Dialog>
+  )
+}
+
+/** Botones de la barra superior: búsqueda (Ctrl+K) y ayuda. */
+export function HelpMenu() {
+  const [shortcuts, setShortcuts] = useState(false)
+  const startTour = useTour((s) => s.start)
+  const openSettings = useUi((s) => s.openSettings)
+  const setPalette = usePalette((s) => s.setOpen)
+  const register = usePalette((s) => s.register)
+
+  useEffect(() => {
+    register({ onShortcuts: () => setShortcuts(true) })
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement
+      if (e.key === '?' && !/INPUT|TEXTAREA|SELECT/.test(t.tagName) && !t.isContentEditable && !t.closest('.monaco-editor')) {
+        e.preventDefault()
+        setShortcuts(true)
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [register])
+
+  return (
+    <>
+      <button
+        data-tour="palette"
+        onClick={() => setPalette(true)}
+        className="flex h-7 w-56 items-center gap-2 rounded-md border border-app bg-soft px-2.5 text-xs text-muted hover:text-app"
+      >
+        <Search className="size-3.5" />
+        <span className="flex-1 text-left">Buscar…</span>
+        <kbd className="rounded border border-app bg-app px-1 font-mono text-[10px]">Ctrl K</kbd>
+      </button>
+      <Menu
+        trigger={
+          <button data-tour="help" className="rounded-md p-1.5 text-muted hover:bg-muted hover:text-app" aria-label="Ayuda">
+            <CircleHelp className="size-4" />
+          </button>
+        }
+        items={[
+          { label: 'Manual de uso', icon: <BookOpen />, onSelect: () => window.open('/ayuda', '_blank') },
+          { label: 'Recorrido guiado', icon: <Wand2 />, onSelect: startTour },
+          { label: 'Atajos de teclado', icon: <Keyboard />, shortcut: '?', onSelect: () => setShortcuts(true) },
+          'separator',
+          { label: 'Conectar con IA (MCP)', icon: <Bot />, onSelect: () => openSettings('ai') },
+        ]}
+      />
+      <ShortcutsDialog open={shortcuts} onOpenChange={setShortcuts} />
+    </>
+  )
+}
+
+/** Vistazo rápido a las variables activas (entorno + globales). */
+export function EnvQuickLook() {
+  const { ws } = useWs()
+  const activeEnv = useUi((s) => s.activeEnv[ws])
+  const { data: envs } = useEnvironments(ws)
+  const { data: globals } = useGlobals(ws)
+  const env = envs?.find((e) => e.id === activeEnv)
+  const open = useOpen()
+  const mask = (v: any) => (v.type === 'secret' ? '••••••' : String(v.value ?? ''))
+
+  const Table = ({ title, rows, onEdit }: { title: string; rows: any[]; onEdit: () => void }) => (
+    <div>
+      <div className="mb-1 flex items-center justify-between">
+        <span className="text-[11px] font-semibold text-muted uppercase">{title}</span>
+        <button onClick={onEdit} className="text-xs text-brand-700 hover:underline dark:text-brand-400">
+          Editar
+        </button>
+      </div>
+      {rows.length === 0 ? (
+        <div className="py-1 text-xs text-muted">Sin variables</div>
+      ) : (
+        <table className="w-full text-xs">
+          <tbody>
+            {rows.map((v) => (
+              <tr key={v.key} className={v.disabled ? 'opacity-40' : ''}>
+                <td className="py-0.5 pr-3 font-mono font-medium">{v.key}</td>
+                <td className="max-w-52 truncate py-0.5 font-mono text-muted">{mask(v)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+  )
+
+  return (
+    <Popover.Root>
+      <Tooltip content="Ver variables">
+        <Popover.Trigger asChild>
+          <button className="rounded-md p-1.5 text-muted hover:bg-muted hover:text-app" aria-label="Ver variables">
+            <Eye className="size-4" />
+          </button>
+        </Popover.Trigger>
+      </Tooltip>
+      <Popover.Portal>
+        <Popover.Content align="end" sideOffset={6} className="z-[60] max-h-[70vh] w-96 space-y-4 overflow-auto rounded-xl border border-app bg-app p-4 shadow-xl">
+          {env ? (
+            <Table title={env.name} rows={env.values} onEdit={() => open.environment(env.id, env.name)} />
+          ) : (
+            <div className="text-xs text-muted">No hay ningún entorno activo.</div>
+          )}
+          <Table title="Globales" rows={globals ?? []} onEdit={() => open.globals()} />
+        </Popover.Content>
+      </Popover.Portal>
+    </Popover.Root>
+  )
+}

@@ -108,7 +108,7 @@ export function TabsArea() {
             </div>
           ))}
         </div>
-        <button onClick={() => openTab.newRequest()} className="px-2.5 text-muted hover:bg-muted hover:text-app" aria-label="Nueva petición" title="Nueva petición (Ctrl+T)">
+        <button data-tour="new-tab" onClick={() => openTab.newRequest()} className="px-2.5 text-muted hover:bg-muted hover:text-app" aria-label="Nueva petición" title="Nueva petición (Ctrl+T)">
           <Plus className="size-4" />
         </button>
         {tabs.length > 1 && (

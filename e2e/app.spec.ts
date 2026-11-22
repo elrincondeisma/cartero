@@ -22,6 +22,7 @@ test('flujo completo: registro, importar, enviar, guardar, runner, mock', async 
   await page.getByLabel('Contraseña').fill('password123')
   await shot(page, '01-registro')
   await page.getByRole('button', { name: 'Crear cuenta' }).click()
+  await page.getByRole('button', { name: 'Saltar' }).click()
   await expect(page.getByText('Empieza a probar tu API')).toBeVisible()
   await shot(page, '02-vacio')
 

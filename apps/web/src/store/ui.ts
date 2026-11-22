@@ -12,6 +12,8 @@ interface UiState {
   sidebarWidth: number
   responseHeight: number
   expanded: Record<string, boolean>
+  settingsTab: string
+  openSettings: (tab?: string) => void
   toggleTheme: () => void
   setSection: (s: Section) => void
   setActiveEnv: (ws: string, envId: string | null) => void
@@ -29,6 +31,8 @@ export const useUi = create<UiState>()(
       sidebarWidth: 290,
       responseHeight: 0.5,
       expanded: {},
+      settingsTab: 'workspace',
+      openSettings: (tab = 'workspace') => set({ section: 'settings', settingsTab: tab }),
       toggleTheme: () => {
         const theme = get().theme === 'dark' ? 'light' : 'dark'
         document.documentElement.classList.toggle('dark', theme === 'dark')

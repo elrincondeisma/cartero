@@ -72,7 +72,11 @@ export async function authRoutes(app: FastifyInstance) {
     return { ok: true }
   })
 
-  app.get('/api/auth/me', async (req) => requireUser(req))
+  app.get('/api/auth/me', async (req) => {
+    const user = requireUser(req)
+    const [u] = await db.select({ settings: schema.users.settings }).from(schema.users).where(eq(schema.users.id, user.id))
+    return { ...user, settings: u?.settings ?? {} }
+  })
 
   app.patch('/api/auth/me', async (req) => {
     const user = requireUser(req)
@@ -81,10 +85,15 @@ export async function authRoutes(app: FastifyInstance) {
         name: z.string().min(1).max(100).optional(),
         currentPassword: z.string().optional(),
         newPassword: z.string().min(8).max(200).optional(),
+        settings: z.record(z.string(), z.unknown()).optional(),
       })
       .parse(req.body)
     const patch: Partial<typeof schema.users.$inferInsert> = {}
     if (body.name) patch.name = body.name
+    if (body.settings) {
+      const [u] = await db.select({ settings: schema.users.settings }).from(schema.users).where(eq(schema.users.id, user.id))
+      patch.settings = { ...(u?.settings ?? {}), ...body.settings }
+    }
     if (body.newPassword) {
       const [u] = await db.select().from(schema.users).where(eq(schema.users.id, user.id))
       if (!body.currentPassword || !(await verifyPassword(body.currentPassword, u.passwordHash)))

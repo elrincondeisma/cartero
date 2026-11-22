@@ -8,18 +8,24 @@ import { qk } from '@/api/hooks'
 import type { Role } from '@/api/types'
 import { confirm, prompt } from '@/components/dialogs'
 import { Badge, Button, Field, Input, Select, cx, timeAgo } from '@/components/ui'
+import { useUi } from '@/store/ui'
 import { useWs } from '../workspace/context'
+import { DemoSettings } from './DemoSettings'
+import { McpSettings } from './McpSettings'
 
-type Tab = 'workspace' | 'members' | 'tokens' | 'profile'
+type Tab = 'workspace' | 'members' | 'tokens' | 'ai' | 'profile'
 
 const ROLE_LABEL: Record<Role, string> = { owner: 'Propietario', admin: 'Administrador', editor: 'Editor', viewer: 'Lector' }
 
 export function SettingsPage() {
-  const [tab, setTab] = useState<Tab>('workspace')
+  const initial = useUi((s) => s.settingsTab) as Tab
+  const [tab, setTab] = useState<Tab>(initial)
+  useEffect(() => setTab(initial), [initial])
   const items: { id: Tab; label: string }[] = [
     { id: 'workspace', label: 'Workspace' },
     { id: 'members', label: 'Miembros' },
     { id: 'tokens', label: 'Tokens de API' },
+    { id: 'ai', label: 'Conectar IA (MCP)' },
     { id: 'profile', label: 'Mi perfil' },
   ]
   return (
@@ -37,6 +43,7 @@ export function SettingsPage() {
           {tab === 'workspace' && <WorkspaceSettings />}
           {tab === 'members' && <Members />}
           {tab === 'tokens' && <Tokens />}
+          {tab === 'ai' && <McpSettings />}
           {tab === 'profile' && <Profile />}
         </div>
       </div>
@@ -85,6 +92,7 @@ function WorkspaceSettings() {
           Tipo: {workspace.type === 'personal' ? 'personal' : 'equipo'} · Tu rol: {ROLE_LABEL[role]}
         </p>
       </Section>
+      <DemoSettings />
       <Section title="Copia de seguridad" description="Exporta todas las colecciones, entornos y globales en un único JSON compatible con Postman (v2.1). Puedes reimportarlo en Cartero.">
         <Button icon={<Download className="size-3.5" />} variant="outline" onClick={() => download(`/api/workspaces/${ws}/export`, 'cartero-export.json')}>
           Exportar workspace

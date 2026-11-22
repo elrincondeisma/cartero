@@ -10,6 +10,8 @@ export const users = pgTable('users', {
   email: text('email').notNull().unique(),
   name: text('name').notNull(),
   passwordHash: text('password_hash').notNull(),
+  /** Preferencias de la interfaz: tour completado, etc. */
+  settings: jsonb('settings').$type<Record<string, unknown>>().notNull().default({}),
   createdAt: createdAt(),
 })
 

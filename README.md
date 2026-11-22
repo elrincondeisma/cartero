@@ -18,6 +18,8 @@
 | **Mock servers** | Responden con los ejemplos guardados: rutas con parámetros, cabeceras `x-mock-response-*`, variables dinámicas (`{{$randomEmail}}`…), retardo simulado, mocks privados y log de llamadas |
 | **Monitores** | Ejecuciones programadas con cron y zona horaria; avisos por Slack, Discord, Telegram, email o webhook; historial con disponibilidad y tiempos |
 | **Documentación** | Página pública por colección con descripciones en Markdown, ejemplos y cURL. Opcionalmente con contraseña. Las credenciales se ocultan solas |
+| **IA (MCP)** | Servidor MCP integrado (`/mcp`) con 18 herramientas: Claude, Cursor y otros asistentes pueden explorar, enviar, ejecutar, crear peticiones e importar con tus permisos |
+| **Ayuda** | Asistente de bienvenida, recorrido guiado, paleta de comandos (Ctrl+K), [manual completo](docs/manual/README.md) en `/ayuda` y datos de ejemplo con APIs reales que se quitan con un clic |
 | **Equipos** | Workspaces, invitaciones, roles (propietario, admin, editor, lector), presencia en tiempo real, comentarios, historial de cambios con restauración, fork y merge, tokens de API |
 
 ## Puesta en marcha
@@ -47,6 +49,16 @@ Para desactivar el registro abierto, pon `ALLOW_REGISTRATION=false`: el primer u
 
 > **Detrás de un proxy (Traefik, Caddy, Nginx):** reenvía también las conexiones WebSocket de `/api/ws`, que se usan para la presencia y los cambios en vivo.
 
+## Conectar asistentes de IA (MCP)
+
+En **Ajustes → Conectar IA (MCP)** creas un token y copias la configuración para tu cliente. Por ejemplo, en Claude Code:
+
+```bash
+claude mcp add --transport http cartero https://cartero.ejemplo.com/mcp --header "Authorization: Bearer crt_xxx"
+```
+
+Más detalles en el [manual](docs/manual/13-ia-mcp.md).
+
 ## CLI
 
 ```bash
@@ -72,6 +84,8 @@ packages/
   importers/  Postman, Insomnia, OpenAPI, cURL
   exporters/  Postman v2.1 y snippets de código
   cli/        cartero run
+  mcp/        Servidor MCP (stdio y Streamable HTTP)
+docs/manual/  Manual de uso (también en /ayuda)
 ```
 
 Las peticiones se envían **desde el servidor**. Así no hay problemas de CORS y puedes probar APIs de tu red local. Los scripts de usuario se ejecutan en un proceso hijo con límites de tiempo y memoria.

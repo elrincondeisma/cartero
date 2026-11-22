@@ -8,6 +8,7 @@ async function register(browser: Browser, name: string, email: string, path = '/
   if (path === '/register') await page.getByLabel('Email').fill(email)
   await page.getByLabel('Contraseña').fill('password123')
   await page.getByRole('button', { name: 'Crear cuenta' }).click()
+  await page.getByRole('button', { name: 'Saltar' }).click()
   return page
 }
 
