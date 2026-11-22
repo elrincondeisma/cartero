@@ -26,6 +26,7 @@ import { SaveDialog } from './SaveDialog'
 import { ScriptsEditor, scriptCount } from './ScriptsEditor'
 import { SettingsEditor } from './SettingsEditor'
 import { SnippetDialog } from './SnippetDialog'
+import { t } from "@/i18n";
 
 type ReqTab = Extract<Tab, { kind: 'request' }>
 type Sub = 'params' | 'auth' | 'headers' | 'body' | 'scripts' | 'examples' | 'docs' | 'settings'
@@ -73,7 +74,7 @@ export function RequestTab({ tab }: { tab: ReqTab }) {
 
   // --- Enviar ---
   const send = async () => {
-    if (!url.raw.trim()) return toast.error('Escribe una URL')
+    if (!url.raw.trim()) return toast.error(t("Escribe una URL"))
     const abort = new AbortController()
     setResult(tab.key, { loading: true, abort })
     try {
@@ -97,7 +98,7 @@ export function RequestTab({ tab }: { tab: ReqTab }) {
 
   // --- Guardar ---
   const save = async (force = false) => {
-    if (!canEdit) return toast.error('Tienes acceso de solo lectura')
+    if (!canEdit) return toast.error(t("Tienes acceso de solo lectura"))
     if (!tab.itemId) return setSaveOpen(true)
     try {
       const saved = await api.patch<ItemRow>(`/api/items/${tab.itemId}`, {
@@ -109,10 +110,10 @@ export function RequestTab({ tab }: { tab: ReqTab }) {
       qc.invalidateQueries({ queryKey: qk.collection(saved.collectionId) })
     } catch (e) {
       if (e instanceof ApiError && e.status === 409) {
-        toast.error('Otra persona ha guardado cambios en esta petición', {
+        toast.error(t("Otra persona ha guardado cambios en esta petición"), {
           duration: 15_000,
-          action: { label: 'Sobrescribir', onClick: () => save(true) },
-          cancel: { label: 'Ver la suya', onClick: () => reloadFromServer() },
+          action: { label: t("Sobrescribir"), onClick: () => save(true) },
+          cancel: { label: t("Ver la suya"), onClick: () => reloadFromServer() },
         })
       } else toast.error((e as Error).message)
     }
@@ -142,7 +143,7 @@ export function RequestTab({ tab }: { tab: ReqTab }) {
     if (target.parentId) useUi.getState().toggleExpanded(target.parentId, true)
     qc.invalidateQueries({ queryKey: qk.collection(created.collectionId) })
     qc.invalidateQueries({ queryKey: qk.collections(ws) })
-    toast.success('Petición guardada')
+    toast.success(t("Petición guardada"))
   }
 
   const reloadFromServer = () => {
@@ -152,7 +153,7 @@ export function RequestTab({ tab }: { tab: ReqTab }) {
   const saveExample = async () => {
     const ex = result?.result?.execution
     if (!ex?.response) return
-    const name = await prompt('Guardar como ejemplo', { label: 'Los ejemplos documentan la API y alimentan los mock servers', value: `${ex.response.code} ${ex.response.status}`, confirm: 'Guardar' })
+    const name = await prompt(t("Guardar como ejemplo"), { label: t("Los ejemplos documentan la API y alimentan los mock servers"), value: `${ex.response.code} ${ex.response.status}`, confirm: t("Guardar") })
     if (!name) return
     const example: ResponseExample = {
       id: crypto.randomUUID(),
@@ -167,7 +168,7 @@ export function RequestTab({ tab }: { tab: ReqTab }) {
       responseTime: Math.round(ex.response.time),
     }
     update({ draft: { ...draft, response: [...(draft.response ?? []), example] }, dirty: true })
-    toast.success(tab.itemId ? 'Ejemplo añadido. Guarda la petición para conservarlo.' : 'Ejemplo añadido')
+    toast.success(tab.itemId ? t("Ejemplo añadido. Guarda la petición para conservarlo.") : t("Ejemplo añadido"))
   }
 
   // Atajos de teclado
@@ -209,7 +210,7 @@ export function RequestTab({ tab }: { tab: ReqTab }) {
       const parsed = await api.post<RequestItem>('/api/tools/curl', { text })
       update({ draft: { ...draft, request: parsed.request }, dirty: true })
       if (parsed.request.body) setSub('body')
-      toast.success('cURL importado')
+      toast.success(t("cURL importado"))
     } catch (err) {
       toast.error((err as Error).message)
     }
@@ -241,21 +242,19 @@ export function RequestTab({ tab }: { tab: ReqTab }) {
           </div>
           {tab.remoteChanged && (
             <Button size="sm" variant="outline" icon={<RefreshCw className="size-3.5" />} onClick={reloadFromServer} className="border-amber-500 text-amber-700 dark:text-amber-400">
-              Hay cambios de otra persona
-            </Button>
+              {t("Hay cambios de otra persona")}</Button>
           )}
           {tab.itemId && tab.collectionId && (
-            <IconButton label="Comentarios y cambios" active={!!panel} onClick={() => setPanel(panel ? false : 'comments')}>
+            <IconButton label={t("Comentarios y cambios")} active={!!panel} onClick={() => setPanel(panel ? false : 'comments')}>
               <MessageSquare className="size-4" />
             </IconButton>
           )}
-          <IconButton label="Código" onClick={() => setSnippetOpen(true)}>
+          <IconButton label={t("Código")} onClick={() => setSnippetOpen(true)}>
             <Code2 className="size-4" />
           </IconButton>
           {canEdit && (
-            <Button size="sm" variant={tab.dirty ? 'outline' : 'ghost'} icon={<Save className="size-3.5" />} onClick={() => save()} title="Guardar (Ctrl+S)">
-              Guardar
-            </Button>
+            <Button size="sm" variant={tab.dirty ? 'outline' : 'ghost'} icon={<Save className="size-3.5" />} onClick={() => save()} title={t("Guardar (Ctrl+S)")}>
+              {t("Guardar")}</Button>
           )}
         </div>
 
@@ -266,7 +265,7 @@ export function RequestTab({ tab }: { tab: ReqTab }) {
               value={req.method}
               onChange={(e) => setReq((r) => ({ ...r, method: e.target.value }))}
               className={cx('w-28 rounded-l-lg border-r border-app bg-soft pl-2.5 font-mono text-[12.5px] font-semibold outline-none', `method-${req.method}`)}
-              aria-label="Método"
+              aria-label={t("Método")}
             >
               {METHODS.includes(req.method) ? null : <option value={req.method}>{req.method}</option>}
               {METHODS.map((m) => (
@@ -280,13 +279,12 @@ export function RequestTab({ tab }: { tab: ReqTab }) {
               onChange={(v) => setReq((r) => ({ ...r, url: setRawUrl(r.url, v) }))}
               onPaste={onPasteUrl}
               known={known}
-              placeholder="https://api.ejemplo.com/v1/recurso  — o pega un comando cURL"
+              placeholder={t("https://api.ejemplo.com/v1/recurso  — o pega un comando cURL")}
               className="h-full"
             />
           </div>
-          <Button variant="primary" className="h-9 px-5" icon={<Send className="size-3.5" />} onClick={send} loading={result?.loading} title="Enviar (Ctrl+Enter)">
-            Enviar
-          </Button>
+          <Button variant="primary" className="h-9 px-5" icon={<Send className="size-3.5" />} onClick={send} loading={result?.loading} title={t("Enviar (Ctrl+Enter)")}>
+            {t("Enviar")}</Button>
         </div>
 
         {/* Editor + respuesta */}
@@ -296,21 +294,21 @@ export function RequestTab({ tab }: { tab: ReqTab }) {
               value={sub}
               onChange={setSub}
               tabs={[
-                { id: 'params', label: 'Params', count: paramsCount },
-                { id: 'auth', label: 'Autorización', dot: !!draft.request.auth && draft.request.auth.type !== 'noauth' },
-                { id: 'headers', label: 'Cabeceras', count: headersCount },
-                { id: 'body', label: 'Body', dot: !!req.body?.mode && req.body.mode !== 'none' },
-                { id: 'scripts', label: 'Scripts', count: scriptCount(draft.event) },
-                { id: 'examples', label: 'Ejemplos', count: draft.response?.length ?? 0 },
-                { id: 'docs', label: 'Descripción', dot: !!req.description },
-                { id: 'settings', label: 'Ajustes', dot: !!draft.protocolProfileBehavior },
+                { id: 'params', label: t("Params"), count: paramsCount },
+                { id: 'auth', label: t("Autorización"), dot: !!draft.request.auth && draft.request.auth.type !== 'noauth' },
+                { id: 'headers', label: t("Cabeceras"), count: headersCount },
+                { id: 'body', label: t("Body"), dot: !!req.body?.mode && req.body.mode !== 'none' },
+                { id: 'scripts', label: t("Scripts"), count: scriptCount(draft.event) },
+                { id: 'examples', label: t("Ejemplos"), count: draft.response?.length ?? 0 },
+                { id: 'docs', label: t("Descripción"), dot: !!req.description },
+                { id: 'settings', label: t("Ajustes"), dot: !!draft.protocolProfileBehavior },
               ]}
             />
             <div className="min-h-0 flex-1 overflow-hidden">
               {sub === 'params' && (
                 <div className="h-full space-y-4 overflow-auto p-3">
                   <section>
-                    <h4 className="mb-1.5 text-xs font-medium text-muted">Query params</h4>
+                    <h4 className="mb-1.5 text-xs font-medium text-muted">{t("Query params")}</h4>
                     <KeyValueEditor
                       rows={(url.query ?? []).map((q) => ({ ...q, key: q.key ?? '', value: q.value ?? '' })) as KVRow[]}
                       onChange={(rows) => setReq((r) => ({ ...r, url: setQueryParams(r.url, rows as QueryParam[]) }))}
@@ -319,7 +317,7 @@ export function RequestTab({ tab }: { tab: ReqTab }) {
                   </section>
                   {(url.variable?.length ?? 0) > 0 && (
                     <section>
-                      <h4 className="mb-1.5 text-xs font-medium text-muted">Variables de ruta</h4>
+                      <h4 className="mb-1.5 text-xs font-medium text-muted">{t("Variables de ruta")}</h4>
                       <KeyValueEditor
                         rows={url.variable as KVRow[]}
                         onChange={(rows) => setReq((r) => ({ ...r, url: { ...urlObject(r.url), variable: rows.filter((x) => url.variable!.some((v) => v.key === x.key)) } }))}
@@ -339,8 +337,7 @@ export function RequestTab({ tab }: { tab: ReqTab }) {
                 <div className="h-full overflow-auto p-3">
                   <KeyValueEditor rows={(req.header ?? []) as KVRow[]} onChange={(rows) => setReq((r) => ({ ...r, header: rows }))} known={known} />
                   <p className="mt-2 text-[11px] text-muted">
-                    Cartero añade automáticamente User-Agent, Accept, Host, Content-Length y la cabecera de autorización. Puedes sobrescribirlas aquí.
-                  </p>
+                    {t("Cartero añade automáticamente User-Agent, Accept, Host, Content-Length y la cabecera de autorización. Puedes sobrescribirlas aquí.")}</p>
                 </div>
               )}
               {sub === 'body' && <BodyEditor body={req.body} onChange={(body) => setReq((r) => ({ ...r, body }))} known={known} />}

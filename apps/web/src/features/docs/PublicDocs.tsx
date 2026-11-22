@@ -8,6 +8,7 @@ import { toast } from 'sonner'
 import { Logo } from '@/components/Logo'
 import { Badge, Button, Input, MethodBadge, Spinner, cx, statusTone } from '@/components/ui'
 import { useUi } from '@/store/ui'
+import { t, tj } from "@/i18n";
 
 interface DocData {
   collection: Collection
@@ -40,16 +41,16 @@ export function PublicDocs() {
     setLoading(false)
     if (res.status === 401) {
       setNeedsPassword(true)
-      if (pw) setError('Contraseña incorrecta')
+      if (pw) setError(t('Contraseña incorrecta'))
       return
     }
-    if (!res.ok) return setError('Esta documentación no existe o no está publicada.')
+    if (!res.ok) return setError(t('Esta documentación no existe o no está publicada.'))
     sessionStorage.setItem(`docs-pw-${docSlug}`, pw ?? '')
     setNeedsPassword(false)
     setError('')
     const d = (await res.json()) as DocData
     setData(d)
-    document.title = `${d.collection.info.name} · Documentación`
+    document.title = `${d.collection.info.name} · ${t('Documentación')}`
   }
 
   useEffect(() => {
@@ -81,13 +82,12 @@ export function PublicDocs() {
           }}
         >
           <Lock className="mb-3 size-6 text-muted" />
-          <h1 className="mb-1 font-semibold">Documentación protegida</h1>
-          <p className="mb-4 text-muted">Introduce la contraseña para verla.</p>
+          <h1 className="mb-1 font-semibold">{t("Documentación protegida")}</h1>
+          <p className="mb-4 text-muted">{t("Introduce la contraseña para verla.")}</p>
           <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoFocus />
           {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
           <Button type="submit" variant="primary" className="mt-3 w-full">
-            Ver documentación
-          </Button>
+            {t("Ver documentación")}</Button>
         </form>
       </div>
     )
@@ -100,16 +100,15 @@ export function PublicDocs() {
       <aside className="flex w-72 shrink-0 flex-col border-r border-app bg-soft">
         <div className="border-b border-app p-4">
           <div className="font-semibold">{col.info.name}</div>
-          <div className="text-xs text-muted">Documentación de la API</div>
+          <div className="text-xs text-muted">{t("Documentación de la API")}</div>
         </div>
         <nav className="min-h-0 flex-1 overflow-y-auto p-2">
           <NavTree items={col.item} />
         </nav>
         <div className="flex items-center justify-between border-t border-app px-4 py-2 text-xs text-muted">
           <span className="flex items-center gap-1.5">
-            Hecho con <Logo size={14} withText={false} /> Cartero
-          </span>
-          <button onClick={toggleTheme} aria-label="Cambiar tema" className="rounded p-1 hover:bg-muted">
+            {tj('Hecho con {logo} Cartero', { logo: <Logo size={14} withText={false} /> })}</span>
+          <button onClick={toggleTheme} aria-label={t("Cambiar tema")} className="rounded p-1 hover:bg-muted">
             {theme === 'dark' ? <Sun className="size-3.5" /> : <Moon className="size-3.5" />}
           </button>
         </div>
@@ -120,7 +119,7 @@ export function PublicDocs() {
           {col.info.description && <div className="prose-docs mt-4" dangerouslySetInnerHTML={{ __html: md(col.info.description) }} />}
           {col.auth && col.auth.type !== 'noauth' && (
             <p className="mt-4 text-muted">
-              Autenticación: <Badge>{col.auth.type}</Badge>
+              {t("Autenticación:")}{' '}<Badge>{col.auth.type}</Badge>
             </p>
           )}
           <ItemsDocs items={col.item} vars={vars} depth={0} />
@@ -213,38 +212,37 @@ function RequestDoc({ item, vars }: { item: RequestItem; vars: Record<string, st
       {r.description && <div className="prose-docs mt-3" dangerouslySetInnerHTML={{ __html: md(r.description as any) }} />}
       <div className="mt-4 grid gap-6 lg:grid-cols-2">
         <div className="space-y-4">
-          {query.length > 0 && <ParamTable title="Query params" rows={query.map((q) => ({ key: q.key ?? '', value: q.value ?? '', description: q.description }))} />}
-          {!!r.header?.filter((h) => !h.disabled).length && <ParamTable title="Cabeceras" rows={r.header.filter((h) => !h.disabled)} />}
+          {query.length > 0 && <ParamTable title={t("Query params")} rows={query.map((q) => ({ key: q.key ?? '', value: q.value ?? '', description: q.description }))} />}
+          {!!r.header?.filter((h) => !h.disabled).length && <ParamTable title={t("Cabeceras")} rows={r.header.filter((h) => !h.disabled)} />}
           {r.body?.mode === 'raw' && r.body.raw && (
             <div>
-              <h4 className="mb-1 text-xs font-semibold text-muted uppercase">Body</h4>
+              <h4 className="mb-1 text-xs font-semibold text-muted uppercase">{t("Body")}</h4>
               <pre className="max-h-72 overflow-auto rounded-md bg-soft p-3 font-mono text-xs">{r.body.raw}</pre>
             </div>
           )}
           {(r.body?.mode === 'urlencoded' || r.body?.mode === 'formdata') && (
-            <ParamTable title="Body" rows={((r.body.urlencoded ?? r.body.formdata) as any[]).filter((p) => !p.disabled).map((p) => ({ key: p.key, value: p.type === 'file' ? '(fichero)' : (p.value ?? ''), description: p.description }))} />
+            <ParamTable title={t("Body")} rows={((r.body.urlencoded ?? r.body.formdata) as any[]).filter((p) => !p.disabled).map((p) => ({ key: p.key, value: p.type === 'file' ? '(fichero)' : (p.value ?? ''), description: p.description }))} />
           )}
         </div>
         <div className="space-y-4">
           <div>
             <div className="mb-1 flex items-center justify-between">
-              <h4 className="text-xs font-semibold text-muted uppercase">Ejemplo cURL</h4>
+              <h4 className="text-xs font-semibold text-muted uppercase">{t("Ejemplo cURL")}</h4>
               <button
                 className="flex items-center gap-1 text-xs text-muted hover:text-app"
                 onClick={() => {
                   navigator.clipboard.writeText(curl)
-                  toast.success('Copiado')
+                  toast.success(t("Copiado"))
                 }}
               >
-                <Copy className="size-3" /> Copiar
-              </button>
+                <Copy className="size-3" /> {t("Copiar")}</button>
             </div>
             <pre className="max-h-64 overflow-auto rounded-md bg-zinc-900 p-3 font-mono text-xs text-zinc-100">{curl}</pre>
           </div>
           {examples.length > 0 && (
             <div>
               <div className="mb-1 flex flex-wrap items-center gap-1">
-                <h4 className="mr-2 text-xs font-semibold text-muted uppercase">Respuestas de ejemplo</h4>
+                <h4 className="mr-2 text-xs font-semibold text-muted uppercase">{t("Respuestas de ejemplo")}</h4>
                 {examples.map((e, i) => (
                   <button key={e.id ?? i} onClick={() => setEx(i)} className={cx('rounded px-1.5 py-0.5 text-xs', i === ex ? 'bg-muted font-medium' : 'text-muted')}>
                     <Badge tone={statusTone(e.code)}>{e.code}</Badge> {e.name}

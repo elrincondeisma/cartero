@@ -20,7 +20,7 @@ Convierte una colección en una página de documentación que puedes compartir c
 
 Nunca se publican:
 - los valores de las variables **secretas**;
-- las contraseñas, tokens y claves escritos directamente en la autenticación (se muestran como `<oculto>`).
+- las contraseñas, tokens y claves escritos directamente en la autenticación (se muestran como `••••••`).
 
 Las variables normales del entorno elegido sí se muestran. Para retirarla, pulsa **Retirar** o desmarca **Publicada**.
 

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { create } from 'zustand'
 import { Button, Dialog, Input } from './ui'
+import { t } from "@/i18n";
 
 type Pending =
   | { kind: 'prompt'; title: string; label?: string; value: string; confirm: string; resolve: (v: string | null) => void }
@@ -10,13 +11,13 @@ const useDialogs = create<{ pending?: Pending; set: (p?: Pending) => void }>((se
 
 export function prompt(title: string, opts: { label?: string; value?: string; confirm?: string } = {}): Promise<string | null> {
   return new Promise((resolve) =>
-    useDialogs.getState().set({ kind: 'prompt', title, label: opts.label, value: opts.value ?? '', confirm: opts.confirm ?? 'Aceptar', resolve }),
+    useDialogs.getState().set({ kind: 'prompt', title, label: opts.label, value: opts.value ?? '', confirm: opts.confirm ?? t("Aceptar"), resolve }),
   )
 }
 
 export function confirm(title: string, message: string, opts: { confirm?: string; danger?: boolean } = {}): Promise<boolean> {
   return new Promise((resolve) =>
-    useDialogs.getState().set({ kind: 'confirm', title, message, confirm: opts.confirm ?? 'Aceptar', danger: opts.danger, resolve }),
+    useDialogs.getState().set({ kind: 'confirm', title, message, confirm: opts.confirm ?? t("Aceptar"), danger: opts.danger, resolve }),
   )
 }
 
@@ -48,8 +49,7 @@ export function DialogHost() {
         footer={
           <>
             <Button variant="ghost" onClick={() => close(null)}>
-              Cancelar
-            </Button>
+              {t("Cancelar")}</Button>
             <Button variant="primary" disabled={!value.trim()} onClick={() => close(value.trim())}>
               {pending.confirm}
             </Button>
@@ -77,8 +77,7 @@ export function DialogHost() {
       footer={
         <>
           <Button variant="ghost" onClick={() => close(false)}>
-            Cancelar
-          </Button>
+            {t("Cancelar")}</Button>
           <Button variant={pending.danger ? 'danger' : 'primary'} onClick={() => close(true)} autoFocus>
             {pending.confirm}
           </Button>

@@ -1,0 +1,18 @@
+# Cartero user guide
+
+- [Getting started](01-primeros-pasos.md)
+- [Requests](02-peticiones.md)
+- [Variables and environments](03-variables-y-entornos.md)
+- [Authentication](04-autenticacion.md)
+- [Scripts and tests](05-scripts-y-tests.md)
+- [Collections and import](06-colecciones-e-importacion.md)
+- [Collection runner](07-runner.md)
+- [Mock servers](08-mock-servers.md)
+- [Monitors](09-monitores.md)
+- [Public documentation](10-documentacion-publica.md)
+- [Teams and collaboration](11-equipos-y-colaboracion.md)
+- [CLI: cartero run](12-cli.md)
+- [Connecting AI assistants (MCP)](13-ia-mcp.md)
+- [Keyboard shortcuts](14-atajos.md)
+- [Installation and administration](15-autoalojamiento.md)
+- [FAQ](16-preguntas-frecuentes.md)

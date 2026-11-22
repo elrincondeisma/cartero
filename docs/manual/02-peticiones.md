@@ -34,6 +34,9 @@ Código JavaScript que se ejecuta **antes** de enviar (*Pre-request*) o **despu�
 ### Ejemplos
 Respuestas guardadas. Sirven para documentar la API y son lo que devuelven los [mock servers](08-mock-servers.md). Para crear uno con una respuesta real, envía la petición y pulsa el icono de guardar del panel de respuesta.
 
+### Descripción
+Texto en Markdown que explica la petición. Aparece en la [documentación publicada](10-documentacion-publica.md).
+
 ### Ajustes
 - Seguir redirecciones (sí por defecto) y mantener el método al redirigir.
 - Verificar certificados SSL (no por defecto, para que funcionen los certificados autofirmados de tu red).

@@ -7,22 +7,23 @@ import { CodeEditor } from '@/components/CodeEditor'
 import { KeyValueEditor, type KVRow } from '@/components/KeyValueEditor'
 import { Button, Select, cx } from '@/components/ui'
 import { useWs } from '../workspace/context'
+import { t } from "@/i18n";
 
 const MODES: { id: NonNullable<Body['mode']>; label: string }[] = [
-  { id: 'none', label: 'ninguno' },
+  { id: 'none', label: t('ninguno') },
   { id: 'raw', label: 'raw' },
   { id: 'formdata', label: 'form-data' },
   { id: 'urlencoded', label: 'x-www-form-urlencoded' },
-  { id: 'file', label: 'binario' },
-  { id: 'graphql', label: 'GraphQL' },
+  { id: 'file', label: t('binario') },
+  { id: 'graphql', label: t("GraphQL") },
 ]
 
 const LANGS = [
   { id: 'json', label: 'JSON' },
-  { id: 'text', label: 'Texto' },
+  { id: 'text', label: t("Texto") },
   { id: 'xml', label: 'XML' },
   { id: 'html', label: 'HTML' },
-  { id: 'javascript', label: 'JavaScript' },
+  { id: 'javascript', label: t("JavaScript") },
 ]
 
 function monacoLang(l?: string) {
@@ -54,7 +55,7 @@ export function BodyEditor({ body, onChange, known, readOnly }: { body?: Body; o
     try {
       onChange({ ...body, raw: JSON.stringify(JSON.parse(body?.raw ?? ''), null, 2) })
     } catch {
-      toast.error('El JSON no es válido')
+      toast.error(t("El JSON no es válido"))
     }
   }
 
@@ -83,14 +84,13 @@ export function BodyEditor({ body, onChange, known, readOnly }: { body?: Body; o
             </Select>
             {language === 'json' && (
               <Button size="sm" variant="ghost" icon={<Wand2 className="size-3.5" />} onClick={beautify} disabled={readOnly}>
-                Formatear
-              </Button>
+                {t("Formatear")}</Button>
             )}
           </div>
         )}
       </div>
       <div className="min-h-0 flex-1">
-        {mode === 'none' && <div className="p-6 text-center text-muted">Esta petición no tiene cuerpo.</div>}
+        {mode === 'none' && <div className="p-6 text-center text-muted">{t("Esta petición no tiene cuerpo.")}</div>}
         {mode === 'raw' && (
           <div className="h-full border-t border-app">
             <CodeEditor value={body?.raw ?? ''} onChange={(raw) => onChange({ ...body, raw })} language={monacoLang(language)} readOnly={readOnly} />
@@ -109,7 +109,7 @@ export function BodyEditor({ body, onChange, known, readOnly }: { body?: Body; o
               known={known}
               readOnly={readOnly}
               extraColumn={{
-                header: 'Tipo',
+                header: t("Tipo"),
                 width: 'w-24',
                 render: (row, update) => (
                   <select
@@ -118,8 +118,8 @@ export function BodyEditor({ body, onChange, known, readOnly }: { body?: Body; o
                     className="h-7 w-full bg-transparent text-xs outline-none"
                     disabled={readOnly}
                   >
-                    <option value="text">Texto</option>
-                    <option value="file">Fichero</option>
+                    <option value="text">{t("Texto")}</option>
+                    <option value="file">{t("Fichero")}</option>
                   </select>
                 ),
               }}
@@ -146,9 +146,8 @@ export function BodyEditor({ body, onChange, known, readOnly }: { body?: Body; o
           <div className="p-4">
             <div className="flex items-center gap-3">
               <Button icon={<Paperclip className="size-3.5" />} variant="outline" onClick={() => fileInput.current?.click()} disabled={readOnly}>
-                Elegir fichero
-              </Button>
-              <span className="truncate text-muted">{body?.file?.src ? fileName(body.file.src) : 'Ningún fichero seleccionado'}</span>
+                {t("Elegir fichero")}</Button>
+              <span className="truncate text-muted">{body?.file?.src ? fileName(body.file.src) : t("Ningún fichero seleccionado")}</span>
               <input
                 ref={fileInput}
                 type="file"
@@ -170,7 +169,7 @@ export function BodyEditor({ body, onChange, known, readOnly }: { body?: Body; o
         {mode === 'graphql' && (
           <div className="grid h-full grid-cols-[3fr_2fr] border-t border-app">
             <div className="flex min-h-0 flex-col border-r border-app">
-              <div className="px-3 py-1.5 text-[11px] font-medium text-muted uppercase">Query</div>
+              <div className="px-3 py-1.5 text-[11px] font-medium text-muted uppercase">{t("Query")}</div>
               <div className="min-h-0 flex-1">
                 <CodeEditor
                   value={body?.graphql?.query ?? ''}
@@ -181,7 +180,7 @@ export function BodyEditor({ body, onChange, known, readOnly }: { body?: Body; o
               </div>
             </div>
             <div className="flex min-h-0 flex-col">
-              <div className="px-3 py-1.5 text-[11px] font-medium text-muted uppercase">Variables (JSON)</div>
+              <div className="px-3 py-1.5 text-[11px] font-medium text-muted uppercase">{t("Variables (JSON)")}</div>
               <div className="min-h-0 flex-1">
                 <CodeEditor
                   value={body?.graphql?.variables ?? ''}
@@ -212,7 +211,7 @@ function FilePicker({ src, onPick, disabled }: { src?: string; onPick: (f: File)
       className={cx('flex h-8 w-full items-center gap-1.5 px-2.5 text-left text-[12.5px]', !src && 'text-muted')}
     >
       <Paperclip className="size-3.5 shrink-0" />
-      <span className="truncate">{src ? fileName(src) : 'Elegir fichero…'}</span>
+      <span className="truncate">{src ? fileName(src) : t("Elegir fichero…")}</span>
       <input
         ref={ref}
         type="file"

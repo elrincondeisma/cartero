@@ -1,3 +1,4 @@
+import { Fragment, createElement } from 'react'
 /**
  * i18n mínimo: el texto en español es la clave y en.ts lo traduce al inglés.
  * Si falta una traducción se muestra el español (nunca una clave rara).
@@ -51,4 +52,19 @@ export function tServer(message: string): string {
 export function setLang(l: Lang, opts: { reload?: boolean } = {}) {
   localStorage.setItem(KEY, l)
   if (opts.reload !== false) location.reload()
+}
+
+/**
+ * Traduce una frase entera que lleva elementos dentro (negritas, <kbd>, <code>…):
+ *   tj('Pulsa {btn} para enviar', { btn: <b>Enviar</b> })
+ * Así el orden de las palabras puede cambiar entre idiomas.
+ */
+export function tj(text: string, parts: Record<string, import('react').ReactNode>): import('react').ReactNode[] {
+  return t(text)
+    .split(/(\{\w+\})/)
+    .filter(Boolean)
+    .map((chunk, i) => {
+      const m = chunk.match(/^\{(\w+)\}$/)
+      return createElement(Fragment, { key: i }, m && m[1] in parts ? parts[m[1]] : chunk)
+    })
 }

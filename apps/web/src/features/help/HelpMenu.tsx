@@ -8,24 +8,25 @@ import { useTour } from '../onboarding/Tour'
 import { usePalette } from '../palette/CommandPalette'
 import { useOpen } from '../workspace/actions'
 import { useWs } from '../workspace/context'
+import { t } from "@/i18n";
 
 const SHORTCUTS: [string, string][] = [
-  ['Ctrl + K', 'Buscar peticiones, entornos y acciones'],
-  ['Ctrl + T', 'Nueva petición'],
-  ['Ctrl + Enter', 'Enviar la petición'],
-  ['Ctrl + S', 'Guardar'],
-  ['Ctrl + Alt + W', 'Cerrar la pestaña'],
-  ['Clic central', 'Cerrar una pestaña'],
-  ['Clic derecho en pestaña', 'Cerrar las demás'],
-  ['Ctrl + Espacio', 'Autocompletar en scripts (API pm.*)'],
-  ['Ctrl + Enter (comentario)', 'Enviar un comentario'],
-  ['?', 'Ver estos atajos'],
-  ['Esc', 'Cerrar diálogos y el recorrido'],
+  [t("Ctrl + K"), t("Buscar peticiones, entornos y acciones")],
+  [t("Ctrl + T"), t("Nueva petición")],
+  [t("Ctrl + Enter"), t("Enviar la petición")],
+  [t("Ctrl + S"), t('Guardar')],
+  [t("Ctrl + Alt + W"), t("Cerrar la pestaña")],
+  [t("Clic central"), t("Cerrar una pestaña")],
+  [t("Clic derecho en pestaña"), t("Cerrar las demás")],
+  [t("Ctrl + Espacio"), t("Autocompletar en scripts (API pm.*)")],
+  [t("Ctrl + Enter (comentario)"), t("Enviar un comentario")],
+  ['?', t("Ver estos atajos")],
+  ['Esc', t("Cerrar diálogos y el recorrido")],
 ]
 
 export function ShortcutsDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange} title="Atajos de teclado" description="En Mac, usa ⌘ en lugar de Ctrl.">
+    <Dialog open={open} onOpenChange={onOpenChange} title={t("Atajos de teclado")} description={t("En Mac, usa ⌘ en lugar de Ctrl.")}>
       <table className="w-full">
         <tbody>
           {SHORTCUTS.map(([k, v]) => (
@@ -58,8 +59,8 @@ export function HelpMenu() {
   useEffect(() => {
     register({ onShortcuts: () => setShortcuts(true) })
     const onKey = (e: KeyboardEvent) => {
-      const t = e.target as HTMLElement
-      if (e.key === '?' && !/INPUT|TEXTAREA|SELECT/.test(t.tagName) && !t.isContentEditable && !t.closest('.monaco-editor')) {
+      const tItem = e.target as HTMLElement
+      if (e.key === '?' && !/INPUT|TEXTAREA|SELECT/.test(tItem.tagName) && !tItem.isContentEditable && !tItem.closest('.monaco-editor')) {
         e.preventDefault()
         setShortcuts(true)
       }
@@ -76,21 +77,21 @@ export function HelpMenu() {
         className="flex h-7 w-56 items-center gap-2 rounded-md border border-app bg-soft px-2.5 text-xs text-muted hover:text-app"
       >
         <Search className="size-3.5" />
-        <span className="flex-1 text-left">Buscar…</span>
-        <kbd className="rounded border border-app bg-app px-1 font-mono text-[10px]">Ctrl K</kbd>
+        <span className="flex-1 text-left">{t("Buscar…")}</span>
+        <kbd className="rounded border border-app bg-app px-1 font-mono text-[10px]">{t("Ctrl K")}</kbd>
       </button>
       <Menu
         trigger={
-          <button data-tour="help" className="rounded-md p-1.5 text-muted hover:bg-muted hover:text-app" aria-label="Ayuda">
+          <button data-tour="help" className="rounded-md p-1.5 text-muted hover:bg-muted hover:text-app" aria-label={t("Ayuda")}>
             <CircleHelp className="size-4" />
           </button>
         }
         items={[
-          { label: 'Manual de uso', icon: <BookOpen />, onSelect: () => window.open('/ayuda', '_blank') },
-          { label: 'Recorrido guiado', icon: <Wand2 />, onSelect: startTour },
-          { label: 'Atajos de teclado', icon: <Keyboard />, shortcut: '?', onSelect: () => setShortcuts(true) },
+          { label: t("Manual de uso"), icon: <BookOpen />, onSelect: () => window.open('/ayuda', '_blank') },
+          { label: t("Recorrido guiado"), icon: <Wand2 />, onSelect: startTour },
+          { label: t("Atajos de teclado"), icon: <Keyboard />, shortcut: '?', onSelect: () => setShortcuts(true) },
           'separator',
-          { label: 'Conectar con IA (MCP)', icon: <Bot />, onSelect: () => openSettings('ai') },
+          { label: t("Conectar con IA (MCP)"), icon: <Bot />, onSelect: () => openSettings('ai') },
         ]}
       />
       <ShortcutsDialog open={shortcuts} onOpenChange={setShortcuts} />
@@ -113,11 +114,10 @@ export function EnvQuickLook() {
       <div className="mb-1 flex items-center justify-between">
         <span className="text-[11px] font-semibold text-muted uppercase">{title}</span>
         <button onClick={onEdit} className="text-xs text-brand-700 hover:underline dark:text-brand-400">
-          Editar
-        </button>
+          {t("Editar")}</button>
       </div>
       {rows.length === 0 ? (
-        <div className="py-1 text-xs text-muted">Sin variables</div>
+        <div className="py-1 text-xs text-muted">{t("Sin variables")}</div>
       ) : (
         <table className="w-full text-xs">
           <tbody>
@@ -135,9 +135,9 @@ export function EnvQuickLook() {
 
   return (
     <Popover.Root>
-      <Tooltip content="Ver variables">
+      <Tooltip content={t("Ver variables")}>
         <Popover.Trigger asChild>
-          <button className="rounded-md p-1.5 text-muted hover:bg-muted hover:text-app" aria-label="Ver variables">
+          <button className="rounded-md p-1.5 text-muted hover:bg-muted hover:text-app" aria-label={t("Ver variables")}>
             <Eye className="size-4" />
           </button>
         </Popover.Trigger>
@@ -147,9 +147,9 @@ export function EnvQuickLook() {
           {env ? (
             <Table title={env.name} rows={env.values} onEdit={() => open.environment(env.id, env.name)} />
           ) : (
-            <div className="text-xs text-muted">No hay ningún entorno activo.</div>
+            <div className="text-xs text-muted">{t("No hay ningún entorno activo.")}</div>
           )}
-          <Table title="Globales" rows={globals ?? []} onEdit={() => open.globals()} />
+          <Table title={t("Globales")} rows={globals ?? []} onEdit={() => open.globals()} />
         </Popover.Content>
       </Popover.Portal>
     </Popover.Root>

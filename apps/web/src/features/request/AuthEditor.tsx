@@ -6,108 +6,109 @@ import { api } from '@/api/client'
 import { Button, Field, Select } from '@/components/ui'
 import { VarInput } from '@/components/VarInput'
 import { useWs } from '../workspace/context'
+import { t } from "@/i18n";
 
 const TYPES: { id: AuthType; label: string }[] = [
-  { id: 'inherit', label: 'Heredar del padre' },
-  { id: 'noauth', label: 'Sin autenticación' },
-  { id: 'basic', label: 'Basic Auth' },
-  { id: 'bearer', label: 'Bearer Token' },
+  { id: 'inherit', label: t("Heredar del padre") },
+  { id: 'noauth', label: t("Sin autenticación") },
+  { id: 'basic', label: t("Basic Auth") },
+  { id: 'bearer', label: t("Bearer Token") },
   { id: 'apikey', label: 'API Key' },
   { id: 'jwt', label: 'JWT Bearer' },
-  { id: 'digest', label: 'Digest Auth' },
+  { id: 'digest', label: t("Digest Auth") },
   { id: 'oauth1', label: 'OAuth 1.0' },
   { id: 'oauth2', label: 'OAuth 2.0' },
-  { id: 'hawk', label: 'Hawk' },
+  { id: 'hawk', label: t("Hawk") },
   { id: 'awsv4', label: 'AWS Signature' },
   { id: 'ntlm', label: 'NTLM' },
-  { id: 'edgegrid', label: 'Akamai EdgeGrid' },
+  { id: 'edgegrid', label: t("Akamai EdgeGrid") },
 ]
 
 type FieldDef = { key: string; label: string; secret?: boolean; placeholder?: string; options?: { value: string; label: string }[]; hint?: string }
 
 const FIELDS: Partial<Record<AuthType, FieldDef[]>> = {
   basic: [
-    { key: 'username', label: 'Usuario' },
-    { key: 'password', label: 'Contraseña', secret: true },
+    { key: 'username', label: t("Usuario") },
+    { key: 'password', label: t("Contraseña"), secret: true },
   ],
-  bearer: [{ key: 'token', label: 'Token', secret: true }],
+  bearer: [{ key: 'token', label: t("Token"), secret: true }],
   apikey: [
-    { key: 'key', label: 'Clave', placeholder: 'X-API-Key' },
-    { key: 'value', label: 'Valor', secret: true },
-    { key: 'in', label: 'Añadir a', options: [{ value: 'header', label: 'Cabecera' }, { value: 'query', label: 'Query params' }] },
+    { key: 'key', label: t("Clave"), placeholder: 'X-API-Key' },
+    { key: 'value', label: t("Valor"), secret: true },
+    { key: 'in', label: t("Añadir a"), options: [{ value: 'header', label: t("Cabecera") }, { value: 'query', label: t("Query params") }] },
   ],
   jwt: [
-    { key: 'algorithm', label: 'Algoritmo', options: ['HS256', 'HS384', 'HS512', 'RS256', 'RS384', 'RS512', 'ES256', 'ES384', 'ES512', 'PS256'].map((v) => ({ value: v, label: v })) },
-    { key: 'secret', label: 'Secreto / clave privada', secret: true },
-    { key: 'payload', label: 'Payload (JSON)', placeholder: '{"sub":"123"}' },
-    { key: 'headerPrefix', label: 'Prefijo de cabecera', placeholder: 'Bearer' },
-    { key: 'addTokenTo', label: 'Añadir a', options: [{ value: 'header', label: 'Cabecera' }, { value: 'queryParam', label: 'Query param' }] },
+    { key: 'algorithm', label: t("Algoritmo"), options: ['HS256', 'HS384', 'HS512', 'RS256', 'RS384', 'RS512', 'ES256', 'ES384', 'ES512', 'PS256'].map((v) => ({ value: v, label: v })) },
+    { key: 'secret', label: t("Secreto / clave privada"), secret: true },
+    { key: 'payload', label: t("Payload (JSON)"), placeholder: '{"sub":"123"}' },
+    { key: 'headerPrefix', label: t("Prefijo de cabecera"), placeholder: t("Bearer") },
+    { key: 'addTokenTo', label: t("Añadir a"), options: [{ value: 'header', label: t("Cabecera") }, { value: 'queryParam', label: t("Query param") }] },
   ],
   digest: [
-    { key: 'username', label: 'Usuario' },
-    { key: 'password', label: 'Contraseña', secret: true },
-    { key: 'realm', label: 'Realm' },
-    { key: 'nonce', label: 'Nonce' },
-    { key: 'algorithm', label: 'Algoritmo', options: ['MD5', 'MD5-sess', 'SHA-256', 'SHA-256-sess', 'SHA-512-256', 'SHA-512-256-sess'].map((v) => ({ value: v, label: v })) },
+    { key: 'username', label: t("Usuario") },
+    { key: 'password', label: t("Contraseña"), secret: true },
+    { key: 'realm', label: t("Realm") },
+    { key: 'nonce', label: t("Nonce") },
+    { key: 'algorithm', label: t("Algoritmo"), options: ['MD5', 'MD5-sess', 'SHA-256', 'SHA-256-sess', 'SHA-512-256', 'SHA-512-256-sess'].map((v) => ({ value: v, label: v })) },
     { key: 'qop', label: 'qop' },
-    { key: 'opaque', label: 'Opaque' },
+    { key: 'opaque', label: t("Opaque") },
   ],
   oauth1: [
-    { key: 'signatureMethod', label: 'Método de firma', options: ['HMAC-SHA1', 'HMAC-SHA256', 'HMAC-SHA512', 'RSA-SHA1', 'RSA-SHA256', 'RSA-SHA512', 'PLAINTEXT'].map((v) => ({ value: v, label: v })) },
-    { key: 'consumerKey', label: 'Consumer key' },
-    { key: 'consumerSecret', label: 'Consumer secret', secret: true },
-    { key: 'token', label: 'Access token' },
-    { key: 'tokenSecret', label: 'Token secret', secret: true },
-    { key: 'callback', label: 'Callback URL' },
-    { key: 'verifier', label: 'Verifier' },
-    { key: 'realm', label: 'Realm' },
-    { key: 'addParamsToHeader', label: 'Añadir a', options: [{ value: 'true', label: 'Cabecera' }, { value: 'false', label: 'Body / URL' }] },
+    { key: 'signatureMethod', label: t("Método de firma"), options: ['HMAC-SHA1', 'HMAC-SHA256', 'HMAC-SHA512', 'RSA-SHA1', 'RSA-SHA256', 'RSA-SHA512', 'PLAINTEXT'].map((v) => ({ value: v, label: v })) },
+    { key: 'consumerKey', label: t("Consumer key") },
+    { key: 'consumerSecret', label: t("Consumer secret"), secret: true },
+    { key: 'token', label: t("Access token") },
+    { key: 'tokenSecret', label: t("Token secret"), secret: true },
+    { key: 'callback', label: t("Callback URL") },
+    { key: 'verifier', label: t("Verifier") },
+    { key: 'realm', label: t("Realm") },
+    { key: 'addParamsToHeader', label: t("Añadir a"), options: [{ value: 'true', label: t("Cabecera") }, { value: 'false', label: t("Body / URL") }] },
   ],
   hawk: [
-    { key: 'authId', label: 'Hawk Auth ID' },
-    { key: 'authKey', label: 'Hawk Auth Key', secret: true },
-    { key: 'algorithm', label: 'Algoritmo', options: [{ value: 'sha256', label: 'SHA256' }, { value: 'sha1', label: 'SHA1' }] },
-    { key: 'user', label: 'Usuario' },
+    { key: 'authId', label: t("Hawk Auth ID") },
+    { key: 'authKey', label: t("Hawk Auth Key"), secret: true },
+    { key: 'algorithm', label: t("Algoritmo"), options: [{ value: 'sha256', label: 'SHA256' }, { value: 'sha1', label: 'SHA1' }] },
+    { key: 'user', label: t("Usuario") },
     { key: 'ext', label: 'ext' },
     { key: 'app', label: 'app' },
   ],
   awsv4: [
-    { key: 'accessKey', label: 'Access key' },
-    { key: 'secretKey', label: 'Secret key', secret: true },
-    { key: 'region', label: 'Región', placeholder: 'eu-west-1' },
-    { key: 'service', label: 'Servicio', placeholder: 's3, execute-api…' },
-    { key: 'sessionToken', label: 'Session token', secret: true },
-    { key: 'addAuthDataToQuery', label: 'Añadir a', options: [{ value: 'false', label: 'Cabeceras' }, { value: 'true', label: 'Query params' }] },
+    { key: 'accessKey', label: t("Access key") },
+    { key: 'secretKey', label: t("Secret key"), secret: true },
+    { key: 'region', label: t("Región"), placeholder: 'eu-west-1' },
+    { key: 'service', label: t("Servicio"), placeholder: t("s3, execute-api…") },
+    { key: 'sessionToken', label: t("Session token"), secret: true },
+    { key: 'addAuthDataToQuery', label: t("Añadir a"), options: [{ value: 'false', label: t("Cabeceras") }, { value: 'true', label: t("Query params") }] },
   ],
   ntlm: [
-    { key: 'username', label: 'Usuario' },
-    { key: 'password', label: 'Contraseña', secret: true },
-    { key: 'domain', label: 'Dominio' },
-    { key: 'workstation', label: 'Workstation' },
+    { key: 'username', label: t("Usuario") },
+    { key: 'password', label: t("Contraseña"), secret: true },
+    { key: 'domain', label: t("Dominio") },
+    { key: 'workstation', label: t("Workstation") },
   ],
   edgegrid: [
-    { key: 'accessToken', label: 'Access token' },
-    { key: 'clientToken', label: 'Client token' },
-    { key: 'clientSecret', label: 'Client secret', secret: true },
-    { key: 'baseURL', label: 'Base URL' },
-    { key: 'nonce', label: 'Nonce' },
-    { key: 'timestamp', label: 'Timestamp' },
-    { key: 'headersToSign', label: 'Cabeceras a firmar' },
+    { key: 'accessToken', label: t("Access token") },
+    { key: 'clientToken', label: t("Client token") },
+    { key: 'clientSecret', label: t("Client secret"), secret: true },
+    { key: 'baseURL', label: t("Base URL") },
+    { key: 'nonce', label: t("Nonce") },
+    { key: 'timestamp', label: t("Timestamp") },
+    { key: 'headersToSign', label: t("Cabeceras a firmar") },
   ],
 }
 
 const OAUTH2_FIELDS: FieldDef[] = [
-  { key: 'accessToken', label: 'Access token', secret: true, hint: 'Este es el token que se envía. Puedes pegarlo o pedir uno nuevo abajo.' },
-  { key: 'headerPrefix', label: 'Prefijo', placeholder: 'Bearer' },
-  { key: 'addTokenTo', label: 'Añadir a', options: [{ value: 'header', label: 'Cabecera' }, { value: 'queryParams', label: 'Query params' }] },
+  { key: 'accessToken', label: t("Access token"), secret: true, hint: t("Este es el token que se envía. Puedes pegarlo o pedir uno nuevo abajo.") },
+  { key: 'headerPrefix', label: t("Prefijo"), placeholder: t("Bearer") },
+  { key: 'addTokenTo', label: t("Añadir a"), options: [{ value: 'header', label: t("Cabecera") }, { value: 'queryParams', label: t("Query params") }] },
 ]
 
 const GRANTS = [
-  { value: 'authorization_code', label: 'Authorization Code' },
-  { value: 'authorization_code_with_pkce', label: 'Authorization Code (con PKCE)' },
-  { value: 'client_credentials', label: 'Client Credentials' },
-  { value: 'password_credentials', label: 'Password Credentials' },
-  { value: 'implicit', label: 'Implicit' },
+  { value: 'authorization_code', label: t("Authorization Code") },
+  { value: 'authorization_code_with_pkce', label: t("Authorization Code (con PKCE)") },
+  { value: 'client_credentials', label: t("Client Credentials") },
+  { value: 'password_credentials', label: t("Password Credentials") },
+  { value: 'implicit', label: t("Implicit") },
 ]
 
 export function getAttr(auth: Auth | null | undefined, key: string): string {
@@ -142,29 +143,29 @@ export function AuthEditor({
   const type: AuthType = auth?.type ?? (allowInherit ? 'inherit' : 'noauth')
   const fields = type === 'oauth2' ? OAUTH2_FIELDS : (FIELDS[type] ?? [])
 
-  const changeType = (t: AuthType) => {
-    if (t === 'inherit') return onChange(null)
-    if (t === 'noauth') return onChange({ type: 'noauth' })
-    const base: Auth = { type: t, [t]: [] }
-    onChange(t === 'apikey' ? setAttr(base, 'in', 'header') : t === 'oauth2' ? setAttr(setAttr(base, 'addTokenTo', 'header'), 'headerPrefix', 'Bearer') : base)
+  const changeType = (tItem: AuthType) => {
+    if (tItem === 'inherit') return onChange(null)
+    if (tItem === 'noauth') return onChange({ type: 'noauth' })
+    const base: Auth = { type: tItem, [tItem]: [] }
+    onChange(tItem === 'apikey' ? setAttr(base, 'in', 'header') : tItem === 'oauth2' ? setAttr(setAttr(base, 'addTokenTo', 'header'), 'headerPrefix', 'Bearer') : base)
   }
 
   return (
     <div className="flex gap-8 p-4">
       <div className="w-64 shrink-0 space-y-2">
-        <Field label="Tipo">
+        <Field label={t("Tipo")}>
           <Select value={type} onChange={(e) => changeType(e.target.value as AuthType)} className="w-full" disabled={readOnly}>
-            {TYPES.filter((t) => allowInherit || t.id !== 'inherit').map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.label}
+            {TYPES.filter((tItem) => allowInherit || tItem.id !== 'inherit').map((tItem) => (
+              <option key={tItem.id} value={tItem.id}>
+                {tItem.label}
               </option>
             ))}
           </Select>
         </Field>
         <p className="text-xs leading-relaxed text-muted">
-          {type === 'inherit' && 'Se usa la autenticación de la carpeta o colección que la contiene.'}
-          {type === 'noauth' && 'La petición se envía sin autenticación.'}
-          {type !== 'inherit' && type !== 'noauth' && 'Los valores admiten {{variables}}. Guarda los secretos en variables de tipo secreto del entorno.'}
+          {type === 'inherit' && t("Se usa la autenticación de la carpeta o colección que la contiene.")}
+          {type === 'noauth' && t("La petición se envía sin autenticación.")}
+          {type !== 'inherit' && type !== 'noauth' && t("Los valores admiten {{variables}}. Guarda los secretos en variables de tipo secreto del entorno.")}
         </p>
       </div>
       <div className="max-w-xl min-w-0 flex-1 space-y-3">
@@ -199,7 +200,7 @@ function AuthField({ def, value, onChange, known, readOnly }: { def: FieldDef; v
           )}
           {def.secret && (
             <button type="button" onClick={() => setShow(!show)} className="px-2 text-[11px] text-muted hover:text-app">
-              {show ? 'Ocultar' : 'Ver'}
+              {show ? t("Ocultar") : t("Ver")}
             </button>
           )}
         </div>
@@ -222,17 +223,17 @@ function OAuth2Token({ auth, onChange, known, readOnly }: { auth: Auth; onChange
   const callback = `${location.origin}/oauth/callback`
 
   const fields: FieldDef[] = [
-    { key: 'grant_type', label: 'Tipo de concesión (grant)', options: GRANTS },
-    ...(needsBrowser ? [{ key: 'redirect_uri', label: 'Callback URL', placeholder: callback, hint: `Regístrala en tu proveedor. Por defecto: ${callback}` }] : []),
-    ...(needsBrowser ? [{ key: 'authUrl', label: 'Auth URL' }] : []),
-    ...(grant !== 'implicit' ? [{ key: 'accessTokenUrl', label: 'Access Token URL' }] : []),
-    { key: 'clientId', label: 'Client ID' },
-    ...(grant !== 'implicit' ? [{ key: 'clientSecret', label: 'Client Secret', secret: true }] : []),
-    ...(grant === 'password_credentials' ? [{ key: 'username', label: 'Usuario' }, { key: 'password', label: 'Contraseña', secret: true }] : []),
-    { key: 'scope', label: 'Scope', placeholder: 'read write' },
-    { key: 'state', label: 'State' },
+    { key: 'grant_type', label: t("Tipo de concesión (grant)"), options: GRANTS },
+    ...(needsBrowser ? [{ key: 'redirect_uri', label: t("Callback URL"), placeholder: callback, hint: t("Regístrala en tu proveedor. Por defecto: {0}", [callback]) }] : []),
+    ...(needsBrowser ? [{ key: 'authUrl', label: t("Auth URL") }] : []),
+    ...(grant !== 'implicit' ? [{ key: 'accessTokenUrl', label: t("Access Token URL") }] : []),
+    { key: 'clientId', label: t("Client ID") },
+    ...(grant !== 'implicit' ? [{ key: 'clientSecret', label: t("Client Secret"), secret: true }] : []),
+    ...(grant === 'password_credentials' ? [{ key: 'username', label: t("Usuario") }, { key: 'password', label: t("Contraseña"), secret: true }] : []),
+    { key: 'scope', label: t("Scope"), placeholder: t("read write") },
+    { key: 'state', label: t("State") },
     ...(grant !== 'implicit'
-      ? [{ key: 'client_authentication', label: 'Autenticación del cliente', options: [{ value: 'header', label: 'Basic Auth en cabecera' }, { value: 'body', label: 'Credenciales en el body' }] }]
+      ? [{ key: 'client_authentication', label: t("Autenticación del cliente"), options: [{ value: 'header', label: t("Basic Auth en cabecera") }, { value: 'body', label: t("Credenciales en el body") }] }]
       : []),
   ]
 
@@ -252,7 +253,7 @@ function OAuth2Token({ auth, onChange, known, readOnly }: { auth: Auth; onChange
     if (data.refresh_token) next = setAttr(next, 'refreshToken', data.refresh_token)
     if (data.token_type && data.token_type.toLowerCase() === 'bearer') next = setAttr(next, 'headerPrefix', 'Bearer')
     onChange(next)
-    toast.success(`Token obtenido${data.expires_in ? ` (caduca en ${data.expires_in}s)` : ''}`)
+    toast.success(data.expires_in ? t('Token obtenido (caduca en {0} s)', [data.expires_in]) : t('Token obtenido'))
   }
 
   const getToken = async () => {
@@ -280,7 +281,7 @@ function OAuth2Token({ auth, onChange, known, readOnly }: { auth: Auth; onChange
       }
       const authUrl = g('authUrl')
       const popup = window.open(`${authUrl}${authUrl.includes('?') ? '&' : '?'}${params}`, 'cartero-oauth', 'width=520,height=720')
-      if (!popup) throw new Error('El navegador ha bloqueado la ventana emergente')
+      if (!popup) throw new Error(t("El navegador ha bloqueado la ventana emergente"))
       const result = await new Promise<Record<string, string>>((resolve, reject) => {
         const onMsg = (ev: MessageEvent) => {
           if (ev.origin !== location.origin || ev.data?.type !== 'cartero-oauth') return
@@ -293,15 +294,15 @@ function OAuth2Token({ auth, onChange, known, readOnly }: { auth: Auth; onChange
           if (popup.closed) {
             clearInterval(timer)
             window.removeEventListener('message', onMsg)
-            reject(new Error('Se cerró la ventana sin completar el login'))
+            reject(new Error(t("Se cerró la ventana sin completar el login")))
           }
         }, 500)
       })
       if (result.error) throw new Error(result.error_description ?? result.error)
-      if (result.state && result.state !== state) throw new Error('El parámetro state no coincide')
+      if (result.state && result.state !== state) throw new Error(t("El parámetro state no coincide"))
       if (grant === 'implicit') {
         onChange(setAttr(auth, 'accessToken', result.access_token))
-        toast.success('Token obtenido')
+        toast.success(t("Token obtenido"))
       } else {
         await exchange({ code: result.code, redirect_uri: redirect, ...(verifier ? { code_verifier: verifier } : {}) })
       }
@@ -327,19 +328,16 @@ function OAuth2Token({ auth, onChange, known, readOnly }: { auth: Auth; onChange
     <div className="mt-5 space-y-3 rounded-lg border border-app p-4">
       <div className="flex items-center gap-2 font-medium">
         <KeyRound className="size-4 text-muted" />
-        Obtener un token nuevo
-      </div>
+        {t("Obtener un token nuevo")}</div>
       {fields.map((f) => (
         <AuthField key={f.key} def={f} value={getAttr(auth, f.key)} onChange={(v) => onChange(setAttr(auth, f.key, v))} known={known} readOnly={readOnly} />
       ))}
       <div className="flex gap-2 pt-1">
         <Button variant="primary" onClick={getToken} loading={loading} disabled={readOnly}>
-          Pedir token
-        </Button>
+          {t("Pedir token")}</Button>
         {getAttr(auth, 'refreshToken') && (
           <Button variant="outline" onClick={refresh} disabled={loading || readOnly}>
-            Refrescar token
-          </Button>
+            {t("Refrescar token")}</Button>
         )}
       </div>
     </div>

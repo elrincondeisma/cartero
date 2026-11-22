@@ -10,6 +10,7 @@ import { useUi } from '@/store/ui'
 import { useOpen } from '../workspace/actions'
 import { useWs } from '../workspace/context'
 import { RunStatusBadge } from './RunView'
+import { t } from "@/i18n";
 
 export function RunnerTab({ collectionId, folderId }: { collectionId: string; folderId?: string }) {
   const { ws, canEdit } = useWs()
@@ -43,7 +44,7 @@ export function RunnerTab({ collectionId, folderId }: { collectionId: string; fo
       let rows: Record<string, unknown>[]
       if (/\.json$/i.test(file.name) || text.trim().startsWith('[')) {
         rows = JSON.parse(text)
-        if (!Array.isArray(rows)) throw new Error('El JSON debe ser un array de objetos')
+        if (!Array.isArray(rows)) throw new Error(t("El JSON debe ser un array de objetos"))
       } else {
         const parsed = Papa.parse<Record<string, unknown>>(text, { header: true, skipEmptyLines: true, dynamicTyping: false })
         const errors = parsed.errors.filter((e) => e.code !== 'UndetectableDelimiter')
@@ -53,7 +54,7 @@ export function RunnerTab({ collectionId, folderId }: { collectionId: string; fo
       setData({ name: file.name, rows })
       setIterations(rows.length)
     } catch (e) {
-      toast.error(`No se pudo leer el fichero: ${(e as Error).message}`)
+      toast.error(t("No se pudo leer el fichero: {0}", [(e as Error).message]))
     }
   }
 
@@ -95,14 +96,12 @@ export function RunnerTab({ collectionId, folderId }: { collectionId: string; fo
             {col.name}
             {folder && <span className="text-muted"> / {folder.name}</span>}
           </span>
-          <Badge>{requests.length} peticiones</Badge>
+          <Badge>{t('{0} peticiones', [requests.length])}</Badge>
           <div className="ml-auto flex gap-3 text-xs">
             <button className="text-brand-700 hover:underline dark:text-brand-400" onClick={() => setSelected(new Set(requests.map((r) => r.id)))}>
-              Todas
-            </button>
+              {t("Todas")}</button>
             <button className="text-brand-700 hover:underline dark:text-brand-400" onClick={() => setSelected(new Set())}>
-              Ninguna
-            </button>
+              {t("Ninguna")}</button>
           </div>
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto p-2">
@@ -125,10 +124,10 @@ export function RunnerTab({ collectionId, folderId }: { collectionId: string; fo
       </div>
       <div className="flex w-[360px] shrink-0 flex-col">
         <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4">
-          <h3 className="font-semibold">Configuración</h3>
-          <Field label="Entorno">
+          <h3 className="font-semibold">{t("Configuración")}</h3>
+          <Field label={t("Entorno")}>
             <Select value={envId} onChange={(e) => setEnvId(e.target.value)} className="w-full">
-              <option value="">Sin entorno</option>
+              <option value="">{t("Sin entorno")}</option>
               {envs?.map((e) => (
                 <option key={e.id} value={e.id}>
                   {e.name}
@@ -137,27 +136,26 @@ export function RunnerTab({ collectionId, folderId }: { collectionId: string; fo
             </Select>
           </Field>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Iteraciones">
+            <Field label={t("Iteraciones")}>
               <Input type="number" min={1} max={10000} value={iterations} onChange={(e) => setIterations(Math.max(1, Number(e.target.value) || 1))} />
             </Field>
-            <Field label="Retardo (ms)">
+            <Field label={t("Retardo (ms)")}>
               <Input type="number" min={0} value={delay} onChange={(e) => setDelay(Math.max(0, Number(e.target.value) || 0))} />
             </Field>
           </div>
-          <Field label="Datos (CSV o JSON)" hint="Cada fila es una iteración. Accede a los valores con {{columna}} o pm.iterationData.get('columna').">
+          <Field label={t("Datos (CSV o JSON)")} hint={t("Cada fila es una iteración. Accede a los valores con {{columna}} o pm.iterationData.get('columna').")}>
             {data ? (
               <div className="flex items-center gap-2 rounded-md border border-app px-2.5 py-1.5">
                 <FileSpreadsheet className="size-4 text-muted" />
                 <span className="flex-1 truncate">{data.name}</span>
-                <Badge>{data.rows.length} filas</Badge>
-                <button onClick={() => setData(null)} className="text-muted hover:text-app" aria-label="Quitar">
+                <Badge>{t('{0} filas', [data.rows.length])}</Badge>
+                <button onClick={() => setData(null)} className="text-muted hover:text-app" aria-label={t("Quitar")}>
                   <X className="size-3.5" />
                 </button>
               </div>
             ) : (
               <Button variant="outline" className="w-full" icon={<FileSpreadsheet className="size-3.5" />} onClick={() => fileRef.current?.click()}>
-                Elegir fichero
-              </Button>
+                {t("Elegir fichero")}</Button>
             )}
             <input ref={fileRef} type="file" accept=".csv,.json,.txt" className="hidden" onChange={(e) => e.target.files?.[0] && loadData(e.target.files[0])} />
           </Field>
@@ -188,19 +186,19 @@ export function RunnerTab({ collectionId, folderId }: { collectionId: string; fo
             </div>
           )}
           <div className="space-y-2">
-            <Checkbox checked={bail} onChange={setBail} label="Parar al primer fallo" />
-            <Checkbox checked={persist && canEdit} onChange={setPersist} label="Guardar las variables que cambien los scripts" />
+            <Checkbox checked={bail} onChange={setBail} label={t("Parar al primer fallo")} />
+            <Checkbox checked={persist && canEdit} onChange={setPersist} label={t("Guardar las variables que cambien los scripts")} />
           </div>
         </div>
         <div className="border-t border-app p-4">
           <Button variant="primary" className="h-9 w-full" icon={<Play className="size-4" />} onClick={start} loading={starting} disabled={selected.size === 0}>
-            Ejecutar {selected.size} {selected.size === 1 ? 'petición' : 'peticiones'}
+            {selected.size === 1 ? t('Ejecutar 1 petición') : t('Ejecutar {0} peticiones', [selected.size])}
             {iterations > 1 ? ` × ${iterations}` : ''}
           </Button>
         </div>
         {!!runs?.length && (
           <div className="max-h-56 overflow-y-auto border-t border-app p-2">
-            <div className="px-2 pb-1 text-[11px] font-semibold text-muted uppercase">Ejecuciones anteriores</div>
+            <div className="px-2 pb-1 text-[11px] font-semibold text-muted uppercase">{t("Ejecuciones anteriores")}</div>
             {runs.slice(0, 15).map((r) => (
               <button key={r.id} onClick={() => open.run(r.id, `Run · ${r.name}`)} className={cx('flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left hover:bg-soft')}>
                 <RunStatusBadge status={r.status} />

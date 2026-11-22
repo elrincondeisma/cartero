@@ -27,6 +27,7 @@ import { useUi } from '@/store/ui'
 import { useTour } from '../onboarding/Tour'
 import { useOpen } from '../workspace/actions'
 import { useWs } from '../workspace/context'
+import { t } from "@/i18n";
 
 interface PaletteState {
   open: boolean
@@ -99,27 +100,27 @@ export function CommandPalette() {
 
   const entries = useMemo<Entry[]>(() => {
     const out: Entry[] = [
-      { id: 'a-new', group: 'Acciones', label: 'Nueva petición', hint: 'Ctrl+T', icon: <Plus />, run: () => go.newRequest() },
-      { id: 'a-import', group: 'Acciones', label: 'Importar (Postman, Insomnia, OpenAPI, cURL)', icon: <FileUp />, run: () => onImport?.() },
-      { id: 'a-theme', group: 'Acciones', label: ui.theme === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro', icon: <Moon />, run: ui.toggleTheme },
-      { id: 'a-tour', group: 'Acciones', label: 'Repetir el recorrido guiado', icon: <Wand2 />, run: startTour },
-      { id: 'a-keys', group: 'Acciones', label: 'Atajos de teclado', hint: '?', icon: <Keyboard />, run: () => onShortcuts?.() },
-      { id: 'a-manual', group: 'Acciones', label: 'Abrir el manual', icon: <BookOpen />, run: () => window.open('/ayuda', '_blank') },
-      { id: 'a-mcp', group: 'Acciones', label: 'Conectar con un asistente de IA (MCP)', icon: <Bot />, keywords: 'claude cursor ia ai', run: () => ui.openSettings('ai') },
-      { id: 's-col', group: 'Ir a', label: 'Colecciones', icon: <FolderTree />, run: () => ui.setSection('collections') },
-      { id: 's-env', group: 'Ir a', label: 'Entornos', icon: <Variable />, run: () => ui.setSection('environments') },
-      { id: 's-his', group: 'Ir a', label: 'Historial', icon: <Clock />, run: () => ui.setSection('history') },
-      { id: 's-run', group: 'Ir a', label: 'Ejecuciones', icon: <Zap />, run: () => ui.setSection('runs') },
-      { id: 's-mock', group: 'Ir a', label: 'Mock servers', icon: <Server />, run: () => ui.setSection('mocks') },
-      { id: 's-mon', group: 'Ir a', label: 'Monitores', icon: <Activity />, run: () => ui.setSection('monitors') },
-      { id: 's-set', group: 'Ir a', label: 'Ajustes', icon: <Settings />, run: () => ui.setSection('settings') },
+      { id: 'a-new', group: 'Acciones', label: t("Nueva petición"), hint: t("Ctrl+T"), icon: <Plus />, run: () => go.newRequest() },
+      { id: 'a-import', group: 'Acciones', label: t("Importar (Postman, Insomnia, OpenAPI, cURL)"), icon: <FileUp />, run: () => onImport?.() },
+      { id: 'a-theme', group: 'Acciones', label: ui.theme === 'dark' ? t("Cambiar a tema claro") : t("Cambiar a tema oscuro"), icon: <Moon />, run: ui.toggleTheme },
+      { id: 'a-tour', group: 'Acciones', label: t("Repetir el recorrido guiado"), icon: <Wand2 />, run: startTour },
+      { id: 'a-keys', group: 'Acciones', label: t("Atajos de teclado"), hint: '?', icon: <Keyboard />, run: () => onShortcuts?.() },
+      { id: 'a-manual', group: 'Acciones', label: t("Abrir el manual"), icon: <BookOpen />, run: () => window.open('/ayuda', '_blank') },
+      { id: 'a-mcp', group: 'Acciones', label: t("Conectar con un asistente de IA (MCP)"), icon: <Bot />, keywords: 'claude cursor ia ai', run: () => ui.openSettings('ai') },
+      { id: 's-col', group: 'Ir a', label: t("Colecciones"), icon: <FolderTree />, run: () => ui.setSection('collections') },
+      { id: 's-env', group: 'Ir a', label: t("Entornos"), icon: <Variable />, run: () => ui.setSection('environments') },
+      { id: 's-his', group: 'Ir a', label: t("Historial"), icon: <Clock />, run: () => ui.setSection('history') },
+      { id: 's-run', group: 'Ir a', label: t("Ejecuciones"), icon: <Zap />, run: () => ui.setSection('runs') },
+      { id: 's-mock', group: 'Ir a', label: t("Mock servers"), icon: <Server />, run: () => ui.setSection('mocks') },
+      { id: 's-mon', group: 'Ir a', label: t("Monitores"), icon: <Activity />, run: () => ui.setSection('monitors') },
+      { id: 's-set', group: 'Ir a', label: t("Ajustes"), icon: <Settings />, run: () => ui.setSection('settings') },
     ]
-    out.push({ id: 'e-none', group: 'Entornos', label: 'Sin entorno', icon: <Variable />, keywords: 'desactivar entorno', run: () => ui.setActiveEnv(ws, null) })
+    out.push({ id: 'e-none', group: 'Entornos', label: t("Sin entorno"), icon: <Variable />, keywords: 'desactivar entorno', run: () => ui.setActiveEnv(ws, null) })
     for (const e of envs ?? [])
       out.push({
         id: `e-${e.id}`,
         group: 'Entornos',
-        label: `Activar «${e.name}»`,
+        label: t("Activar «{0}»", [e.name]),
         hint: ui.activeEnv[ws] === e.id ? 'activo' : undefined,
         icon: <Variable />,
         keywords: e.name,
@@ -129,7 +130,7 @@ export function CommandPalette() {
       const col = d.data
       if (!col) continue
       out.push({ id: `c-${col.id}`, group: 'Colecciones', label: col.name, icon: <FolderTree />, run: () => go.collection(col.id, col.name) })
-      out.push({ id: `r-${col.id}`, group: 'Colecciones', label: `Ejecutar «${col.name}»`, icon: <Zap />, keywords: 'runner run', run: () => go.runner(col.id, col.name) })
+      out.push({ id: `r-${col.id}`, group: 'Colecciones', label: t("Ejecutar «{0}»", [col.name]), icon: <Zap />, keywords: 'runner run', run: () => go.runner(col.id, col.name) })
       const folders = new Map(col.items.filter((i) => i.type === 'folder').map((f) => [f.id, f.name]))
       for (const i of col.items) {
         if (i.type !== 'request') continue
@@ -154,7 +155,7 @@ export function CommandPalette() {
     const scored = entries
       .map((e) => {
         const hay = normalize(`${e.label} ${e.hint ?? ''} ${e.keywords ?? ''}`)
-        if (!tokens.every((t) => hay.includes(t))) return null
+        if (!tokens.every((tItem) => hay.includes(tItem))) return null
         const label = normalize(e.label)
         const score = (label.startsWith(tokens[0]) ? 3 : 0) + (label.includes(tokens.join(' ')) ? 2 : 0) + (e.group === 'Peticiones' ? 1 : 0)
         return { e, score }
@@ -180,7 +181,7 @@ export function CommandPalette() {
       <DialogPrimitive.Portal>
         <DialogPrimitive.Overlay className="fixed inset-0 z-[150] bg-black/30" />
         <DialogPrimitive.Content className="fixed top-[14vh] left-1/2 z-[150] w-[min(640px,calc(100vw-2rem))] -translate-x-1/2 overflow-hidden rounded-xl border border-app bg-app shadow-2xl outline-none">
-          <DialogPrimitive.Title className="sr-only">Buscar</DialogPrimitive.Title>
+          <DialogPrimitive.Title className="sr-only">{t("Buscar")}</DialogPrimitive.Title>
           <div className="flex items-center gap-2 border-b border-app px-4">
             <Search className="size-4 text-muted" />
             <input
@@ -199,19 +200,19 @@ export function CommandPalette() {
                   run(results[sel])
                 }
               }}
-              placeholder="Busca peticiones, colecciones, entornos o acciones…"
+              placeholder={t("Busca peticiones, colecciones, entornos o acciones…")}
               className="h-12 flex-1 bg-transparent text-[14px] outline-none placeholder:text-muted"
             />
-            <kbd className="rounded border border-app px-1.5 font-mono text-[10px] text-muted">Esc</kbd>
+            <kbd className="rounded border border-app px-1.5 font-mono text-[10px] text-muted">{t("Esc")}</kbd>
           </div>
           <div ref={listRef} className="max-h-[52vh] overflow-y-auto p-1.5">
-            {results.length === 0 && <div className="p-6 text-center text-muted">Sin resultados para «{q}»</div>}
+            {results.length === 0 && <div className="p-6 text-center text-muted">{t('Sin resultados para «{0}»', [q])}</div>}
             {results.map((e, i) => {
               const header = e.group !== lastGroup
               lastGroup = e.group
               return (
                 <div key={e.id}>
-                  {header && <div className="px-2.5 pt-2 pb-1 text-[11px] font-semibold text-muted uppercase">{e.group}</div>}
+                  {header && <div className="px-2.5 pt-2 pb-1 text-[11px] font-semibold text-muted uppercase">{t(e.group)}</div>}
                   <button
                     data-index={i}
                     onMouseMove={() => setSel(i)}
@@ -227,9 +228,9 @@ export function CommandPalette() {
             })}
           </div>
           <div className="flex gap-4 border-t border-app px-4 py-2 text-[11px] text-muted">
-            <span>↑↓ moverse</span>
-            <span>↵ abrir</span>
-            <span>Ctrl+K abrir/cerrar</span>
+            <span>{t("↑↓ moverse")}</span>
+            <span>{t("↵ abrir")}</span>
+            <span>{t("Ctrl+K abrir/cerrar")}</span>
           </div>
         </DialogPrimitive.Content>
       </DialogPrimitive.Portal>

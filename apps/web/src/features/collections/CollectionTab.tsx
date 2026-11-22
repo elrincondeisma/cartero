@@ -19,6 +19,7 @@ import { CollabPanel } from '../request/CollabPanel'
 import { ScriptsEditor } from '../request/ScriptsEditor'
 import { useOpen } from '../workspace/actions'
 import { useWs } from '../workspace/context'
+import { t } from "@/i18n";
 
 type Sub = 'overview' | 'auth' | 'scripts' | 'variables' | 'docs' | 'activity'
 
@@ -80,10 +81,10 @@ export function CollectionTab({ collectionId, folderId, tabKey }: { collectionId
       setDirty(false)
       useTabs.getState().update(ws, tabKey, { title: draft.name })
       await qc.invalidateQueries({ queryKey: qk.collection(collectionId) })
-      toast.success('Guardado')
+      toast.success(t("Guardado"))
     } catch (e) {
       if (e instanceof ApiError && e.status === 409) {
-        toast.error('Otra persona ha cambiado esto. Se recarga su versión.')
+        toast.error(t("Otra persona ha cambiado esto. Se recarga su versión."))
         setDirty(false)
         qc.invalidateQueries({ queryKey: qk.collection(collectionId) })
       } else toast.error((e as Error).message)
@@ -107,15 +108,15 @@ export function CollectionTab({ collectionId, folderId, tabKey }: { collectionId
         <Spinner />
       </div>
     )
-  if (folderId && !folder) return <Empty title="Esta carpeta ya no existe" />
+  if (folderId && !folder) return <Empty title={t("Esta carpeta ya no existe")} />
 
   const tabs: { id: Sub; label: string; dot?: boolean; count?: number }[] = [
-    { id: 'overview', label: 'Resumen' },
-    { id: 'auth', label: 'Autorización', dot: !!draft.auth },
-    { id: 'scripts', label: 'Scripts', dot: !!draft.event?.length },
-    { id: 'variables', label: 'Variables', count: draft.variable.length },
-    ...(!folderId ? [{ id: 'docs' as const, label: 'Documentación' }] : []),
-    { id: 'activity', label: 'Actividad' },
+    { id: 'overview', label: t("Resumen") },
+    { id: 'auth', label: t("Autorización"), dot: !!draft.auth },
+    { id: 'scripts', label: t("Scripts"), dot: !!draft.event?.length },
+    { id: 'variables', label: t("Variables"), count: draft.variable.length },
+    ...(!folderId ? [{ id: 'docs' as const, label: t("Documentación") }] : []),
+    { id: 'activity', label: t("Actividad") },
   ]
 
   return (
@@ -128,14 +129,12 @@ export function CollectionTab({ collectionId, folderId, tabKey }: { collectionId
           readOnly={!canEdit}
           className="min-w-0 flex-1 rounded bg-transparent px-1 py-0.5 text-[15px] font-semibold outline-none hover:bg-muted focus:bg-muted"
         />
-        {folder ? <Badge>Carpeta</Badge> : <Badge tone="brand">Colección</Badge>}
+        {folder ? <Badge>{t("Carpeta")}</Badge> : <Badge tone="brand">{t("Colección")}</Badge>}
         <Button size="sm" variant="outline" icon={<Play className="size-3.5" />} onClick={() => open.runner(collectionId, folder ? `${col.name} / ${folder.name}` : col.name, folderId)}>
-          Ejecutar
-        </Button>
+          {t("Ejecutar")}</Button>
         {canEdit && (
           <Button size="sm" variant={dirty ? 'primary' : 'ghost'} icon={<Save className="size-3.5" />} onClick={save} disabled={!dirty}>
-            Guardar
-          </Button>
+            {t("Guardar")}</Button>
         )}
       </div>
       <SubTabs value={sub} onChange={setSub} tabs={tabs} />
@@ -146,20 +145,20 @@ export function CollectionTab({ collectionId, folderId, tabKey }: { collectionId
             <AuthEditor auth={draft.auth} onChange={(auth) => change({ auth })} known={known} allowInherit={!!folderId} readOnly={!canEdit} />
             <p className="px-4 pb-4 text-xs text-muted">
               {folderId
-                ? 'Las peticiones de esta carpeta con «Heredar del padre» usarán esta autenticación.'
-                : 'Todas las peticiones con «Heredar del padre» usarán esta autenticación.'}
+                ? t("Las peticiones de esta carpeta con «Heredar del padre» usarán esta autenticación.")
+                : t("Todas las peticiones con «Heredar del padre» usarán esta autenticación.")}
             </p>
           </div>
         )}
         {sub === 'scripts' && (
           <div className="flex h-full flex-col">
-            <p className="border-b border-app px-4 py-2 text-xs text-muted">Estos scripts se ejecutan antes/después de cada petición de {folderId ? 'la carpeta' : 'la colección'}.</p>
+            <p className="border-b border-app px-4 py-2 text-xs text-muted">{folderId ? t('Estos scripts se ejecutan antes/después de cada petición de la carpeta.') : t('Estos scripts se ejecutan antes/después de cada petición de la colección.')}</p>
             <div className="min-h-0 flex-1">
               <ScriptsEditor events={draft.event} onChange={(event) => change({ event })} readOnly={!canEdit} />
             </div>
           </div>
         )}
-        {sub === 'variables' && <VariablesTable values={draft.variable} onChange={(variable) => change({ variable })} readOnly={!canEdit} hint={folderId ? 'Variables de carpeta: solo las ven las peticiones de esta carpeta.' : 'Variables de colección: accesibles desde cualquier petición con {{nombre}} y con pm.collectionVariables.'} />}
+        {sub === 'variables' && <VariablesTable values={draft.variable} onChange={(variable) => change({ variable })} readOnly={!canEdit} hint={folderId ? t("Variables de carpeta: solo las ven las peticiones de esta carpeta.") : t("Variables de colección: accesibles desde cualquier petición con {{nombre}} y con pm.collectionVariables.")} />}
         {sub === 'docs' && <DocsPublisher collectionId={collectionId} collectionName={col.name} />}
         {sub === 'activity' && (
           <div className="flex h-full justify-end">
@@ -185,21 +184,21 @@ function Overview({ description, onChange, readOnly, items, folderId }: { descri
     <div className="h-full overflow-auto">
       <div className="mx-auto max-w-3xl p-6">
         <div className="mb-2 flex items-center justify-between">
-          <h3 className="text-xs font-semibold text-muted uppercase">Descripción</h3>
+          <h3 className="text-xs font-semibold text-muted uppercase">{t("Descripción")}</h3>
           {!readOnly && (
             <button onClick={() => setEditing(!editing)} className="text-xs text-brand-700 hover:underline dark:text-brand-400">
-              {editing ? 'Ver' : 'Editar'}
+              {editing ? t("Ver") : t("Editar")}
             </button>
           )}
         </div>
         {editing ? (
-          <Textarea value={description} onChange={(e) => onChange(e.target.value)} rows={14} className="font-mono text-xs" placeholder="Describe la API en Markdown…" autoFocus />
+          <Textarea value={description} onChange={(e) => onChange(e.target.value)} rows={14} className="font-mono text-xs" placeholder={t("Describe la API en Markdown…")} autoFocus />
         ) : description ? (
           <div className="prose-docs" dangerouslySetInnerHTML={{ __html: html }} />
         ) : (
-          <p className="text-muted">Sin descripción. {readOnly ? '' : 'Añade una en Markdown: aparecerá en la documentación publicada.'}</p>
+          <p className="text-muted">{t("Sin descripción.")}{' '}{readOnly ? '' : t("Añade una en Markdown: aparecerá en la documentación publicada.")}</p>
         )}
-        <h3 className="mt-8 mb-2 text-xs font-semibold text-muted uppercase">Peticiones ({requests.length})</h3>
+        <h3 className="mt-8 mb-2 text-xs font-semibold text-muted uppercase">{t('Peticiones ({0})', [requests.length])}</h3>
         <div className="divide-y divide-[var(--border)] rounded-lg border border-app">
           {requests.map((r) => (
             <button key={r.id} onClick={() => open.request(r)} className="flex w-full items-center gap-3 px-3 py-2 text-left hover:bg-soft">
@@ -235,7 +234,7 @@ export function VariablesTable({ values, onChange, readOnly, hint }: { values: V
         keyPlaceholder="Variable"
         valuePlaceholder="Valor"
         extraColumn={{
-          header: 'Tipo',
+          header: t("Tipo"),
           width: 'w-28',
           render: (row, update) => (
             <select
@@ -244,8 +243,8 @@ export function VariablesTable({ values, onChange, readOnly, hint }: { values: V
               className="h-7 w-full bg-transparent text-xs outline-none"
               disabled={readOnly}
             >
-              <option value="default">Normal</option>
-              <option value="secret">Secreto</option>
+              <option value="default">{t("Normal")}</option>
+              <option value="secret">{t("Secreto")}</option>
             </select>
           ),
         }}
@@ -256,8 +255,8 @@ export function VariablesTable({ values, onChange, readOnly, hint }: { values: V
         }
       />
       <div className="mt-3 flex items-center gap-4">
-        <Checkbox checked={reveal} onChange={setReveal} label={<span className="text-xs text-muted">Mostrar secretos</span>} />
-        <span className="text-xs text-muted">Los secretos se guardan cifrados (AES-256-GCM) en la base de datos.</span>
+        <Checkbox checked={reveal} onChange={setReveal} label={<span className="text-xs text-muted">{t("Mostrar secretos")}</span>} />
+        <span className="text-xs text-muted">{t("Los secretos se guardan cifrados (AES-256-GCM) en la base de datos.")}</span>
       </div>
     </div>
   )
@@ -296,7 +295,7 @@ function DocsPublisher({ collectionId, collectionName }: { collectionId: string;
       })
       setPassword('')
       await refetch()
-      toast.success('Documentación actualizada')
+      toast.success(t("Documentación actualizada"))
     } catch (e) {
       toast.error((e as Error).message)
     }
@@ -306,25 +305,25 @@ function DocsPublisher({ collectionId, collectionName }: { collectionId: string;
     <div className="h-full overflow-auto">
       <div className="mx-auto max-w-xl space-y-4 p-6">
         <div>
-          <h3 className="text-[15px] font-semibold">Documentación pública</h3>
-          <p className="mt-1 text-muted">Publica una página con todas las peticiones, descripciones, ejemplos y fragmentos de código. Las credenciales se ocultan automáticamente.</p>
+          <h3 className="text-[15px] font-semibold">{t("Documentación pública")}</h3>
+          <p className="mt-1 text-muted">{t("Publica una página con todas las peticiones, descripciones, ejemplos y fragmentos de código. Las credenciales se ocultan automáticamente.")}</p>
         </div>
         {doc && (
           <a href={url} target="_blank" rel="noreferrer" className="flex items-center gap-2 rounded-lg border border-app bg-soft px-3 py-2 font-mono text-xs text-brand-700 hover:underline dark:text-brand-400">
             <ExternalLink className="size-3.5" />
             {url}
-            {!doc.published && <Badge tone="amber">No publicada</Badge>}
+            {!doc.published && <Badge tone="amber">{t("No publicada")}</Badge>}
           </a>
         )}
-        <Field label="URL" hint="Solo minúsculas, números y guiones.">
+        <Field label="URL" hint={t("Solo minúsculas, números y guiones.")}>
           <div className="flex items-center rounded-md border border-app">
             <span className="pl-2.5 text-xs text-muted">{location.origin}/docs/</span>
             <input value={slug} onChange={(e) => setSlug(e.target.value)} className="h-8 flex-1 bg-transparent pr-2 font-mono text-xs outline-none" disabled={!canEdit} />
           </div>
         </Field>
-        <Field label="Entorno para resolver variables" hint="Las variables secretas nunca se publican.">
+        <Field label={t("Entorno para resolver variables")} hint={t("Las variables secretas nunca se publican.")}>
           <Select value={envId} onChange={(e) => setEnvId(e.target.value)} className="w-full" disabled={!canEdit}>
-            <option value="">Ninguno (mostrar {'{{variables}}'})</option>
+            <option value="">{t('Ninguno (mostrar {0})', ['{{variables}}'])}</option>
             {envs?.map((e) => (
               <option key={e.id} value={e.id}>
                 {e.name}
@@ -332,15 +331,15 @@ function DocsPublisher({ collectionId, collectionName }: { collectionId: string;
             ))}
           </Select>
         </Field>
-        <Checkbox checked={published} onChange={setPublished} label="Publicada" />
+        <Checkbox checked={published} onChange={setPublished} label={t("Publicada")} />
         <div className="space-y-2">
-          <Checkbox checked={protect} onChange={setProtect} label="Proteger con contraseña" />
-          {protect && <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={doc?.hasPassword ? '(sin cambios)' : 'Contraseña'} />}
+          <Checkbox checked={protect} onChange={setProtect} label={t("Proteger con contraseña")} />
+          {protect && <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={doc?.hasPassword ? t("(sin cambios)") : t("Contraseña")} />}
         </div>
         {canEdit && (
           <div className="flex gap-2 pt-2">
             <Button variant="primary" onClick={save} disabled={slug.length < 3 || (protect && !doc?.hasPassword && password.length < 4)}>
-              {doc ? 'Guardar cambios' : 'Publicar'}
+              {doc ? t("Guardar cambios") : t("Publicar")}
             </Button>
             {doc && (
               <Button
@@ -348,11 +347,10 @@ function DocsPublisher({ collectionId, collectionName }: { collectionId: string;
                 onClick={async () => {
                   await api.del(`/api/collections/${collectionId}/docs`)
                   await refetch()
-                  toast.success('Documentación retirada')
+                  toast.success(t("Documentación retirada"))
                 }}
               >
-                Retirar
-              </Button>
+                {t("Retirar")}</Button>
             )}
           </div>
         )}
@@ -367,11 +365,10 @@ function MockShortcut({ collectionId }: { collectionId: string }) {
   return (
     <div className="mx-auto max-w-md rounded-lg border border-app p-5 text-center">
       <Server className="mx-auto mb-2 size-6" />
-      <div className="font-medium text-app">¿Necesitas un mock de esta API?</div>
-      <p className="mt-1 text-xs">Crea un mock server que responde con los ejemplos guardados en las peticiones.</p>
+      <div className="font-medium text-app">{t("¿Necesitas un mock de esta API?")}</div>
+      <p className="mt-1 text-xs">{t("Crea un mock server que responde con los ejemplos guardados en las peticiones.")}</p>
       <Button size="sm" variant="outline" className="mt-3" onClick={() => setSection('mocks')}>
-        Ir a mock servers
-      </Button>
+        {t("Ir a mock servers")}</Button>
     </div>
   )
 }

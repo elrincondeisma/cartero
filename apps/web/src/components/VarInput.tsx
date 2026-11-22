@@ -1,3 +1,4 @@
+import { t } from '@/i18n'
 import { type KeyboardEvent, useMemo, useRef } from 'react'
 import { cx } from './ui'
 
@@ -41,7 +42,7 @@ export function VarInput({
 
   const title = parts
     .filter((p) => p.var)
-    .map((p) => `${p.var} = ${p.var!.startsWith('$') ? '(dinámica)' : (known?.[p.var!] ?? '(no definida)')}`)
+    .map((p) => `${p.var} = ${p.var!.startsWith('$') ? t('(dinámica)') : (known?.[p.var!] ?? t('(no definida)'))}`)
     .join('\n')
 
   return (

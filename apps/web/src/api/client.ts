@@ -1,3 +1,4 @@
+import { tServer } from '@/i18n'
 export class ApiError extends Error {
   constructor(
     public status: number,
@@ -20,7 +21,7 @@ async function request<T>(method: string, url: string, body?: unknown, init: Req
   const text = await res.text()
   const data = text ? safeJson(text) : undefined
   if (!res.ok) {
-    const msg = (data as any)?.message ?? `Error ${res.status}`
+    const msg = tServer((data as any)?.message ?? `Error ${res.status}`)
     throw new ApiError(res.status, msg, (data as any)?.error)
   }
   return data as T

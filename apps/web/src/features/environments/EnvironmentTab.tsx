@@ -10,6 +10,7 @@ import { useTabs } from '@/store/tabs'
 import { useUi } from '@/store/ui'
 import { VariablesTable } from '../collections/CollectionTab'
 import { useWs } from '../workspace/context'
+import { t } from "@/i18n";
 
 export function EnvironmentTab({ envId, globals, tabKey }: { envId?: string; globals?: boolean; tabKey: string }) {
   const { ws, canEdit } = useWs()
@@ -40,10 +41,10 @@ export function EnvironmentTab({ envId, globals, tabKey }: { envId?: string; glo
       setDirty(false)
       useTabs.getState().update(ws, tabKey, { title: name })
       qc.invalidateQueries({ queryKey: globals ? qk.globals(ws) : qk.environments(ws) })
-      toast.success('Guardado')
+      toast.success(t("Guardado"))
     } catch (e) {
       if (e instanceof ApiError && e.status === 409) {
-        toast.error('Otra persona ha modificado este entorno. Se ha recargado.')
+        toast.error(t("Otra persona ha modificado este entorno. Se ha recargado."))
         setDirty(false)
         qc.invalidateQueries({ queryKey: qk.environments(ws) })
       } else toast.error((e as Error).message)
@@ -67,7 +68,7 @@ export function EnvironmentTab({ envId, globals, tabKey }: { envId?: string; glo
         <Spinner />
       </div>
     )
-  if (!globals && !env) return <Empty title="Este entorno ya no existe" />
+  if (!globals && !env) return <Empty title={t("Este entorno ya no existe")} />
 
   return (
     <div className="flex h-full flex-col">
@@ -84,16 +85,14 @@ export function EnvironmentTab({ envId, globals, tabKey }: { envId?: string; glo
         />
         {!globals &&
           (activeEnv === envId ? (
-            <Badge tone="brand">Activo</Badge>
+            <Badge tone="brand">{t("Activo")}</Badge>
           ) : (
             <Button size="sm" variant="outline" onClick={() => setActiveEnv(ws, envId!)}>
-              Activar
-            </Button>
+              {t("Activar")}</Button>
           ))}
         {canEdit && (
           <Button size="sm" variant={dirty ? 'primary' : 'ghost'} icon={<Save className="size-3.5" />} onClick={save} disabled={!dirty}>
-            Guardar
-          </Button>
+            {t("Guardar")}</Button>
         )}
       </div>
       <div className="min-h-0 flex-1">
@@ -106,8 +105,8 @@ export function EnvironmentTab({ envId, globals, tabKey }: { envId?: string; glo
           readOnly={!canEdit}
           hint={
             globals
-              ? 'Variables globales del workspace: disponibles en todas las colecciones, con la prioridad más baja.'
-              : 'Úsalas con {{nombre}} en URLs, cabeceras y bodies, o desde scripts con pm.environment. Los scripts que las modifican se guardan aquí automáticamente.'
+              ? t("Variables globales del workspace: disponibles en todas las colecciones, con la prioridad más baja.")
+              : t("Úsalas con {{nombre}} en URLs, cabeceras y bodies, o desde scripts con pm.environment. Los scripts que las modifican se guardan aquí automáticamente.")
           }
         />
       </div>

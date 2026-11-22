@@ -20,6 +20,12 @@ pnpm --filter @cartero/web dev
 - Si tocas la API, añade el caso a `apps/server/src/server.test.ts`.
 - Si cambias el esquema de la base de datos, genera la migración con `pnpm --filter @cartero/server db:generate` y súbela con el PR.
 
+## Idiomas (español e inglés)
+
+- Todo texto visible va en `t('Texto en español')` (o `tj()` si lleva elementos dentro, como `<code>`). La traducción va en `apps/web/src/i18n/en.ts`, con el texto español como clave.
+- `pnpm i18n:extract` envuelve en `t()` los textos nuevos que se te escapen, y `pnpm i18n:check` falla si falta alguna traducción (también corre en la CI).
+- El manual vive en `docs/manual/` (español) y `docs/manual/en/` (inglés), con los mismos nombres de fichero.
+
 ## Convenciones
 
 - TypeScript estricto. Formato con Biome: `pnpm format`.

@@ -17,7 +17,9 @@
     "lint": "biome check .",
     "format": "biome format --write .",
     "db:up": "docker compose -f docker/docker-compose.dev.yml up -d",
-    "db:down": "docker compose -f docker/docker-compose.dev.yml down"
+    "db:down": "docker compose -f docker/docker-compose.dev.yml down",
+    "i18n:check": "tsx scripts/i18n-keys.ts",
+    "i18n:extract": "tsx scripts/i18n-codemod.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.6.8",

@@ -16,6 +16,10 @@ La primera vez verás un asistente con tres opciones:
 
 Después te ofrece un **recorrido guiado** por la interfaz. Puedes repetirlo cuando quieras desde el botón de ayuda **(?)**.
 
+## Idioma
+
+Cartero está en **español** e **inglés**. Cámbialo desde el menú de tu cuenta (arriba a la derecha), en **Ajustes → Mi perfil** o con los enlaces bajo el formulario de inicio de sesión. La elección se guarda en tu cuenta.
+
 ## La pantalla
 
 | Zona | Para qué sirve |

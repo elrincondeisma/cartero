@@ -5,6 +5,7 @@ import type { ConsoleEntry, Execution, ExecResponse } from '@/api/types'
 import { CodeEditor } from '@/components/CodeEditor'
 import { Badge, Button, Empty, IconButton, Spinner, SubTabs, Tooltip, cx, formatBytes, formatMs, statusTone } from '@/components/ui'
 import { languageForContentType, prettyBody } from '@/lib/request'
+import { locale, t, tj } from "@/i18n";
 
 type View = 'body' | 'headers' | 'cookies' | 'tests' | 'console' | 'timeline'
 
@@ -26,28 +27,26 @@ export function ResponsePane({
   const [view, setView] = useState<View>('body')
   const res = execution?.response
   const tests = execution?.tests ?? []
-  const passed = tests.filter((t) => t.passed).length
+  const passed = tests.filter((tItem) => tItem.passed).length
 
   if (loading)
     return (
       <div className="flex h-full flex-col items-center justify-center gap-3 text-muted">
         <Spinner className="size-6" />
-        Enviando petición…
-        {onCancel && (
+        {t("Enviando petición…")}{onCancel && (
           <Button size="sm" variant="outline" onClick={onCancel}>
-            Cancelar
-          </Button>
+            {t("Cancelar")}</Button>
         )}
       </div>
     )
   if (!execution && !error)
     return (
-      <Empty title="Respuesta">
-        Pulsa <b>Enviar</b> (Ctrl+Enter) para ver aquí la respuesta.
+      <Empty title={t("Respuesta")}>
+        {tj('Pulsa {enviar} (Ctrl+Enter) para ver aquí la respuesta.', { enviar: <b>{t('Enviar')}</b> })}
       </Empty>
     )
 
-  const scriptErrors = [execution?.prerequestError && `Error en el script pre-request: ${execution.prerequestError}`, execution?.testScriptError && `Error en el script post-response: ${execution.testScriptError}`].filter(Boolean)
+  const scriptErrors = [execution?.prerequestError && t("Error en el script pre-request: {0}", [execution.prerequestError]), execution?.testScriptError && t("Error en el script post-response: {0}", [execution.testScriptError])].filter(Boolean)
 
   return (
     <div className="flex h-full flex-col">
@@ -55,12 +54,12 @@ export function ResponsePane({
         value={view}
         onChange={setView}
         tabs={[
-          { id: 'body', label: 'Body' },
-          { id: 'headers', label: 'Cabeceras', count: res?.headers.length },
-          { id: 'cookies', label: 'Cookies', count: res?.cookies.length },
-          { id: 'tests', label: tests.length ? `Tests (${passed}/${tests.length})` : 'Tests' },
-          { id: 'console', label: 'Consola', count: logs?.length },
-          { id: 'timeline', label: 'Detalles' },
+          { id: 'body', label: t("Body") },
+          { id: 'headers', label: t("Cabeceras"), count: res?.headers.length },
+          { id: 'cookies', label: t("Cookies"), count: res?.cookies.length },
+          { id: 'tests', label: tests.length ? t("Tests ({0}/{1})", [passed, tests.length]) : t("Tests") },
+          { id: 'console', label: t("Consola"), count: logs?.length },
+          { id: 'timeline', label: t("Detalles") },
         ]}
         right={
           res && (
@@ -73,13 +72,13 @@ export function ResponsePane({
                   <b className="text-app">{formatMs(res.time)}</b>
                 </span>
               </Tooltip>
-              <Tooltip content={`Cuerpo ${formatBytes(res.size.body)} · Cabeceras ${formatBytes(res.size.header)}`}>
+              <Tooltip content={t("Cuerpo {0} · Cabeceras {1}", [formatBytes(res.size.body), formatBytes(res.size.header)])}>
                 <span className="text-muted">
                   <b className="text-app">{formatBytes(res.size.total || res.size.body)}</b>
                 </span>
               </Tooltip>
               {onSaveExample && (
-                <IconButton label="Guardar como ejemplo" onClick={onSaveExample}>
+                <IconButton label={t("Guardar como ejemplo")} onClick={onSaveExample}>
                   <Save className="size-3.5" />
                 </IconButton>
               )}
@@ -91,7 +90,7 @@ export function ResponsePane({
         <div className="flex items-start gap-2 border-b border-app bg-red-500/8 px-4 py-2.5 text-red-700 dark:text-red-400">
           <XCircle className="mt-0.5 size-4 shrink-0" />
           <div>
-            <div className="font-medium">No se pudo completar la petición</div>
+            <div className="font-medium">{t("No se pudo completar la petición")}</div>
             <div className="font-mono text-xs">{error || execution?.error}</div>
           </div>
         </div>
@@ -108,7 +107,7 @@ export function ResponsePane({
         {view === 'cookies' && res && (
           <div className="h-full overflow-auto p-3">
             {res.cookies.length === 0 ? (
-              <div className="p-4 text-center text-muted">La respuesta no ha guardado cookies.</div>
+              <div className="p-4 text-center text-muted">{t("La respuesta no ha guardado cookies.")}</div>
             ) : (
               <table className="w-full text-[12.5px]">
                 <thead>
@@ -127,9 +126,9 @@ export function ResponsePane({
                       <td className="max-w-80 truncate px-2 py-1.5">{c.value}</td>
                       <td className="px-2 py-1.5">{c.domain}</td>
                       <td className="px-2 py-1.5">{c.path}</td>
-                      <td className="px-2 py-1.5">{c.expires ? new Date(c.expires).toLocaleString() : 'Sesión'}</td>
-                      <td className="px-2 py-1.5">{c.httpOnly ? 'sí' : 'no'}</td>
-                      <td className="px-2 py-1.5">{c.secure ? 'sí' : 'no'}</td>
+                      <td className="px-2 py-1.5">{c.expires ? new Date(c.expires).toLocaleString(locale) : t("Sesión")}</td>
+                      <td className="px-2 py-1.5">{c.httpOnly ? t("sí") : 'no'}</td>
+                      <td className="px-2 py-1.5">{c.secure ? t("sí") : 'no'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -140,7 +139,7 @@ export function ResponsePane({
         {view === 'tests' && (
           <div className="h-full overflow-auto p-3">
             {tests.length === 0 ? (
-              <div className="p-4 text-center text-muted">No hay tests. Añádelos en la pestaña Scripts → Post-response.</div>
+              <div className="p-4 text-center text-muted">{t("No hay tests. Añádelos en la pestaña Scripts → Post-response.")}</div>
             ) : (
               <TestList tests={tests} />
             )}
@@ -156,18 +155,18 @@ export function ResponsePane({
 export function TestList({ tests }: { tests: Execution['tests'] }) {
   return (
     <div className="space-y-1">
-      {tests.map((t, i) => (
+      {tests.map((tItem, i) => (
         <div key={i} className="flex items-start gap-2 rounded-md px-2 py-1.5 hover:bg-soft">
-          {t.skipped ? (
-            <Badge>OMITIDO</Badge>
-          ) : t.passed ? (
+          {tItem.skipped ? (
+            <Badge>{t('OMITIDO')}</Badge>
+          ) : tItem.passed ? (
             <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-green-600" />
           ) : (
             <XCircle className="mt-0.5 size-4 shrink-0 text-red-600" />
           )}
           <div className="min-w-0">
-            <div>{t.name}</div>
-            {t.error && <div className="font-mono text-xs text-red-600 dark:text-red-400">{t.error}</div>}
+            <div>{tItem.name}</div>
+            {tItem.error && <div className="font-mono text-xs text-red-600 dark:text-red-400">{tItem.error}</div>}
           </div>
         </div>
       ))}
@@ -185,7 +184,7 @@ function BodyView({ res }: { res: ExecResponse }) {
 
   const copy = () => {
     navigator.clipboard.writeText(res.body ?? '')
-    toast.success('Copiado')
+    toast.success(t("Copiado"))
   }
   const downloadBody = () => {
     const blob = res.bodyBase64
@@ -206,18 +205,18 @@ function BodyView({ res }: { res: ExecResponse }) {
             onClick={() => setMode(m)}
             className={cx('rounded px-2 py-0.5 text-xs', mode === m ? 'bg-muted font-medium' : 'text-muted hover:text-app')}
           >
-            {m === 'pretty' ? 'Bonito' : m === 'raw' ? 'Raw' : 'Vista previa'}
+            {m === 'pretty' ? t("Bonito") : m === 'raw' ? t("Raw") : t("Vista previa")}
           </button>
         ))}
         {mode === 'pretty' && res.body !== undefined && <span className="ml-2 text-[11px] text-muted uppercase">{lang === 'plaintext' ? 'texto' : lang}</span>}
-        {res.truncated && <Badge tone="amber" className="ml-2">Cuerpo truncado</Badge>}
+        {res.truncated && <Badge tone="amber" className="ml-2">{t("Cuerpo truncado")}</Badge>}
         <div className="ml-auto flex">
           {res.body !== undefined && (
-            <IconButton label="Copiar" onClick={copy}>
+            <IconButton label={t("Copiar")} onClick={copy}>
               <Copy className="size-3.5" />
             </IconButton>
           )}
-          <IconButton label="Descargar" onClick={downloadBody}>
+          <IconButton label={t("Descargar")} onClick={downloadBody}>
             <Download className="size-3.5" />
           </IconButton>
         </div>
@@ -226,22 +225,22 @@ function BodyView({ res }: { res: ExecResponse }) {
         {mode === 'preview' ? (
           isImage && res.bodyBase64 ? (
             <div className="flex h-full items-center justify-center overflow-auto bg-[repeating-conic-gradient(var(--bg-muted)_0_25%,transparent_0_50%)] bg-[length:16px_16px] p-4">
-              <img src={`data:${res.contentType};base64,${res.bodyBase64}`} alt="Respuesta" className="max-h-full max-w-full" />
+              <img src={`data:${res.contentType};base64,${res.bodyBase64}`} alt={t("Respuesta")} className="max-h-full max-w-full" />
             </div>
           ) : isImage && res.body ? (
             <div className="flex h-full items-center justify-center p-4">
-              <img src={`data:${res.contentType};charset=utf-8,${encodeURIComponent(res.body)}`} alt="Respuesta" className="max-h-full max-w-full" />
+              <img src={`data:${res.contentType};charset=utf-8,${encodeURIComponent(res.body)}`} alt={t("Respuesta")} className="max-h-full max-w-full" />
             </div>
           ) : isPdf && res.bodyBase64 ? (
             <iframe title="PDF" className="h-full w-full" src={`data:application/pdf;base64,${res.bodyBase64}`} />
           ) : (
-            <iframe title="Vista previa" sandbox="" className="h-full w-full bg-white" srcDoc={isHtml ? res.body : `<pre style="white-space:pre-wrap;font:12px monospace">${escapeHtml(res.body ?? '')}</pre>`} />
+            <iframe title={t("Vista previa")} sandbox="" className="h-full w-full bg-white" srcDoc={isHtml ? res.body : `<pre style="white-space:pre-wrap;font:12px monospace">${escapeHtml(res.body ?? '')}</pre>`} />
           )
         ) : res.body !== undefined ? (
           <CodeEditor value={mode === 'pretty' ? pretty : res.body} language={mode === 'pretty' ? lang : 'plaintext'} readOnly path={`response-${mode}`} />
         ) : (
-          <Empty title="Respuesta binaria">
-            {formatBytes(res.size.body)} de tipo {res.contentType ?? 'desconocido'}. Usa «Vista previa» o descárgala.
+          <Empty title={t("Respuesta binaria")}>
+            {t('{0} de tipo {1}. Usa «Vista previa» o descárgala.', [formatBytes(res.size.body), res.contentType ?? t('desconocido')])}
           </Empty>
         )}
       </div>
@@ -282,7 +281,7 @@ export function HeaderTable({ rows }: { rows: { key: string; value: string }[] }
 }
 
 export function ConsoleView({ logs }: { logs: ConsoleEntry[] }) {
-  if (!logs.length) return <div className="p-6 text-center text-muted">Sin mensajes. Usa console.log() en tus scripts.</div>
+  if (!logs.length) return <div className="p-6 text-center text-muted">{t("Sin mensajes. Usa console.log() en tus scripts.")}</div>
   return (
     <div className="h-full overflow-auto p-2 font-mono text-xs">
       {logs.map((l, i) => (
@@ -303,14 +302,14 @@ export function ConsoleView({ logs }: { logs: ConsoleEntry[] }) {
 }
 
 const PHASES: [string, string][] = [
-  ['prepare', 'Preparación'],
-  ['wait', 'Socket'],
-  ['dns', 'DNS'],
-  ['tcp', 'Conexión TCP'],
-  ['secureHandshake', 'TLS'],
-  ['firstByte', 'Primer byte'],
-  ['download', 'Descarga'],
-  ['process', 'Proceso'],
+  ['prepare', t('Preparación')],
+  ['wait', t('Socket')],
+  ['dns', t('DNS')],
+  ['tcp', t('Conexión TCP')],
+  ['secureHandshake', t('TLS')],
+  ['firstByte', t('Primer byte')],
+  ['download', t('Descarga')],
+  ['process', t('Proceso')],
 ]
 
 function Timings({ timings, total }: { timings?: Record<string, number>; total: number }) {
@@ -324,7 +323,7 @@ function Timings({ timings, total }: { timings?: Record<string, number>; total: 
         </div>
       ))}
       <div className="flex justify-between gap-6 border-t border-white/20 pt-0.5 font-semibold">
-        <span>Total</span>
+        <span>{t("Total")}</span>
         <span className="font-mono">{formatMs(timings.total ?? total)}</span>
       </div>
     </div>
@@ -333,19 +332,19 @@ function Timings({ timings, total }: { timings?: Record<string, number>; total: 
 
 function Timeline({ execution }: { execution: Execution }) {
   const req = execution.request
-  const t = execution.response?.timings
-  const total = t?.total ?? execution.response?.time ?? 0
+  const tItem = execution.response?.timings
+  const total = tItem?.total ?? execution.response?.time ?? 0
   return (
     <div className="h-full space-y-5 overflow-auto p-4">
-      {t && (
+      {tItem && (
         <section>
-          <h4 className="mb-2 text-xs font-semibold text-muted uppercase">Tiempos</h4>
+          <h4 className="mb-2 text-xs font-semibold text-muted uppercase">{t("Tiempos")}</h4>
           <div className="space-y-1">
-            {PHASES.filter(([k]) => t[k] !== undefined && !Number.isNaN(t[k])).map(([k, label]) => {
+            {PHASES.filter(([k]) => tItem[k] !== undefined && !Number.isNaN(tItem[k])).map(([k, label]) => {
               let offset = 0
               for (const [pk] of PHASES) {
                 if (pk === k) break
-                offset += t[pk] && !Number.isNaN(t[pk]) ? t[pk] : 0
+                offset += tItem[pk] && !Number.isNaN(tItem[pk]) ? tItem[pk] : 0
               }
               return (
                 <div key={k} className="grid grid-cols-[110px_1fr_70px] items-center gap-2 text-xs">
@@ -353,10 +352,10 @@ function Timeline({ execution }: { execution: Execution }) {
                   <div className="relative h-3 rounded bg-muted">
                     <div
                       className="absolute h-3 rounded bg-brand-500"
-                      style={{ left: `${(offset / total) * 100}%`, width: `${Math.max(0.5, (t[k] / total) * 100)}%` }}
+                      style={{ left: `${(offset / total) * 100}%`, width: `${Math.max(0.5, (tItem[k] / total) * 100)}%` }}
                     />
                   </div>
-                  <span className="text-right font-mono">{formatMs(t[k])}</span>
+                  <span className="text-right font-mono">{formatMs(tItem[k])}</span>
                 </div>
               )
             })}
@@ -365,7 +364,7 @@ function Timeline({ execution }: { execution: Execution }) {
       )}
       {req && (
         <section>
-          <h4 className="mb-2 text-xs font-semibold text-muted uppercase">Petición enviada</h4>
+          <h4 className="mb-2 text-xs font-semibold text-muted uppercase">{t("Petición enviada")}</h4>
           <div className="mb-2 font-mono text-xs break-all">
             <b>{req.method}</b> {req.url}
           </div>

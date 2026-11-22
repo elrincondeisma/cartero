@@ -3,6 +3,7 @@ import { useCollection, useCollections } from '@/api/hooks'
 import { Button, Dialog, Field, Input, Select } from '@/components/ui'
 import { buildTree, type TreeNode } from '@/lib/tree'
 import { useWs } from '../workspace/context'
+import { t } from "@/i18n";
 
 export function SaveDialog({
   open,
@@ -46,12 +47,11 @@ export function SaveDialog({
     <Dialog
       open={open}
       onOpenChange={onOpenChange}
-      title="Guardar petición"
+      title={t("Guardar petición")}
       footer={
         <>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
-            Cancelar
-          </Button>
+            {t("Cancelar")}</Button>
           <Button
             variant="primary"
             loading={saving}
@@ -66,19 +66,18 @@ export function SaveDialog({
               }
             }}
           >
-            Guardar
-          </Button>
+            {t("Guardar")}</Button>
         </>
       }
     >
       {collections?.length === 0 ? (
-        <p className="text-muted">Primero crea una colección desde la barra lateral.</p>
+        <p className="text-muted">{t("Primero crea una colección desde la barra lateral.")}</p>
       ) : (
         <div className="space-y-3">
-          <Field label="Nombre">
+          <Field label={t("Nombre")}>
             <Input value={name} onChange={(e) => setName(e.target.value)} autoFocus />
           </Field>
-          <Field label="Colección">
+          <Field label={t("Colección")}>
             <Select
               value={collectionId}
               onChange={(e) => {
@@ -94,9 +93,9 @@ export function SaveDialog({
               ))}
             </Select>
           </Field>
-          <Field label="Carpeta">
+          <Field label={t("Carpeta")}>
             <Select value={parentId} onChange={(e) => setParentId(e.target.value)} className="w-full">
-              <option value="">(raíz de la colección)</option>
+              <option value="">{t("(raíz de la colección)")}</option>
               {folders.map((f) => (
                 <option key={f.id} value={f.id}>
                   {f.label}

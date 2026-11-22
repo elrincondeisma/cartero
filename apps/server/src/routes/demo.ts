@@ -39,7 +39,10 @@ export async function demoRoutes(app: FastifyInstance) {
     if (await demoWorkspace(user.id)) throw conflict(`Ya tienes el workspace «${WORKSPACE_NAME}»`)
     const state: DemoState = { status: 'running', log: [] }
     states.set(user.id, state)
-    void seedDemo(user.email, (l) => state.log.push(l.replace(/^• /, '')))
+    const [u] = await db.select({ settings: schema.users.settings }).from(schema.users).where(eq(schema.users.id, user.id))
+    const bodyLang = (req.body as { lang?: string } | undefined)?.lang
+    const lang = bodyLang === 'en' || bodyLang === 'es' ? bodyLang : (u?.settings as any)?.lang === 'en' ? 'en' : 'es'
+    void seedDemo(user.email, (l) => state.log.push(l.replace(/^• /, '')), lang)
       .then(({ workspaceId }) => {
         state.status = 'done'
         state.workspaceId = workspaceId

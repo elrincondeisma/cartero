@@ -11,6 +11,7 @@ import {
   type TextareaHTMLAttributes,
   forwardRef,
 } from 'react'
+import { locale, t } from "@/i18n";
 
 export const cx = clsx
 
@@ -240,7 +241,7 @@ export function Dialog({
               <DialogPrimitive.Title className="text-[15px] font-semibold">{title}</DialogPrimitive.Title>
               {description && <DialogPrimitive.Description className="mt-0.5 text-muted">{description}</DialogPrimitive.Description>}
             </div>
-            <DialogPrimitive.Close className="rounded p-1 text-muted hover:bg-muted hover:text-app" aria-label="Cerrar">
+            <DialogPrimitive.Close className="rounded p-1 text-muted hover:bg-muted hover:text-app" aria-label={t("Cerrar")}>
               <X className="size-4" />
             </DialogPrimitive.Close>
           </div>
@@ -323,18 +324,18 @@ export function SubTabs<T extends string>({
 }) {
   return (
     <div className={cx('flex items-center gap-1 border-b border-app px-3', className)}>
-      {tabs.map((t) => (
+      {tabs.map((tItem) => (
         <button
-          key={t.id}
-          onClick={() => onChange(t.id)}
+          key={tItem.id}
+          onClick={() => onChange(tItem.id)}
           className={cx(
             '-mb-px flex items-center gap-1.5 border-b-2 px-2 py-2 text-[12.5px] transition-colors',
-            value === t.id ? 'border-brand-600 font-medium text-app' : 'border-transparent text-muted hover:text-app',
+            value === tItem.id ? 'border-brand-600 font-medium text-app' : 'border-transparent text-muted hover:text-app',
           )}
         >
-          {t.label}
-          {t.count !== undefined && t.count !== 0 && <span className="text-[11px] text-brand-600 dark:text-brand-400">{t.count}</span>}
-          {t.dot && <span className="size-1.5 rounded-full bg-brand-500" />}
+          {tItem.label}
+          {tItem.count !== undefined && tItem.count !== 0 && <span className="text-[11px] text-brand-600 dark:text-brand-400">{tItem.count}</span>}
+          {tItem.dot && <span className="size-1.5 rounded-full bg-brand-500" />}
         </button>
       ))}
       <div className="ml-auto flex items-center gap-1">{right}</div>
@@ -349,16 +350,16 @@ export function formatBytes(n: number) {
 }
 
 export function formatMs(n: number) {
-  if (n < 1000) return `${Math.round(n)} ms`
-  return `${(n / 1000).toFixed(2)} s`
+  if (n < 1000) return t("{0} ms", [Math.round(n)])
+  return t("{0} s", [(n / 1000).toFixed(2)])
 }
 
 export function timeAgo(date: string | number | Date) {
   const d = new Date(date).getTime()
   const s = Math.round((Date.now() - d) / 1000)
-  if (s < 60) return 'ahora mismo'
-  if (s < 3600) return `hace ${Math.floor(s / 60)} min`
-  if (s < 86400) return `hace ${Math.floor(s / 3600)} h`
-  if (s < 86400 * 30) return `hace ${Math.floor(s / 86400)} d`
-  return new Date(date).toLocaleDateString()
+  if (s < 60) return t("ahora mismo")
+  if (s < 3600) return t("hace {0} min", [Math.floor(s / 60)])
+  if (s < 86400) return t("hace {0} h", [Math.floor(s / 3600)])
+  if (s < 86400 * 30) return t("hace {0} d", [Math.floor(s / 86400)])
+  return new Date(date).toLocaleDateString(locale)
 }

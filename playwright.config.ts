@@ -10,6 +10,8 @@ export default defineConfig({
   use: {
     baseURL: process.env.E2E_URL ?? 'http://localhost:5173',
     viewport: { width: 1440, height: 900 },
+    // La app detecta el idioma del navegador: los tests base van en español
+    locale: 'es-ES',
     screenshot: 'only-on-failure',
     trace: 'retain-on-failure',
     // Permite reutilizar un Chromium ya instalado (PW_CHROMIUM=/ruta/a/chrome)

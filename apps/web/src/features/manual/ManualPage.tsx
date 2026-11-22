@@ -6,9 +6,12 @@ import { Link, useNavigate, useParams } from 'react-router'
 import { Logo } from '@/components/Logo'
 import { cx } from '@/components/ui'
 import { useUi } from '@/store/ui'
+import { lang, t } from "@/i18n";
 
 // Misma fuente que docs/manual en el repositorio
-const files = import.meta.glob('../../../../../docs/manual/[0-9]*.md', { query: '?raw', import: 'default', eager: true }) as Record<string, string>
+const esFiles = import.meta.glob('../../../../../docs/manual/[0-9]*.md', { query: '?raw', import: 'default', eager: true }) as Record<string, string>
+const enFiles = import.meta.glob('../../../../../docs/manual/en/[0-9]*.md', { query: '?raw', import: 'default', eager: true }) as Record<string, string>
+const files = lang === 'en' ? enFiles : esFiles
 
 interface Chapter {
   slug: string
@@ -35,7 +38,7 @@ const CHAPTERS: Chapter[] = Object.entries(files)
     const headings: Chapter['headings'] = []
     const renderer = new marked.Renderer()
     renderer.heading = ({ tokens, depth }) => {
-      const text = tokens.map((t: any) => t.raw ?? t.text).join('')
+      const text = tokens.map((tItem: any) => tItem.raw ?? tItem.text).join('')
       const id = slugify(text)
       if (depth === 2) headings.push({ id, text })
       return `<h${depth} id="${id}">${marked.parseInline(text)}</h${depth}>`
@@ -43,7 +46,7 @@ const CHAPTERS: Chapter[] = Object.entries(files)
     renderer.link = ({ href, text }) => {
       const internal = /^\d{2}-[a-z0-9-]+\.md(#.*)?$/.test(href)
       const url = internal ? `/ayuda/${href.replace(/\.md/, '')}` : href
-      return `<a href="${url}"${internal ? ' data-internal' : ' target="_blank" rel="noreferrer"'}>${text}</a>`
+      return `<a href="${url}"${internal ? ' data-internal' : " target=\"_blank\" rel=\"noreferrer\""}>${text}</a>`
     }
     const html = DOMPurify.sanitize(marked.parse(md.replace(/^# .+$/m, ''), { renderer, async: false }) as string, { ADD_ATTR: ['target', 'data-internal'] })
     return { slug, title, md, html, headings }
@@ -68,13 +71,13 @@ export function ManualPage() {
   const chapter = CHAPTERS[idx]
 
   const results = useMemo(() => {
-    const t = q.trim().toLowerCase()
-    if (t.length < 2) return null
-    return CHAPTERS.filter((c) => c.md.toLowerCase().includes(t)).map((c) => ({ c, snip: snippet(c.md, t) }))
+    const tItem = q.trim().toLowerCase()
+    if (tItem.length < 2) return null
+    return CHAPTERS.filter((c) => c.md.toLowerCase().includes(tItem)).map((c) => ({ c, snip: snippet(c.md, tItem) }))
   }, [q])
 
   useEffect(() => {
-    document.title = `${chapter.title} · Manual de Cartero`
+    document.title = `${chapter.title} · ${t('Manual de Cartero')}`
     const hash = location.hash.slice(1)
     if (hash) document.getElementById(hash)?.scrollIntoView()
     else content.current?.scrollTo(0, 0)
@@ -95,15 +98,13 @@ export function ManualPage() {
           <Logo />
         </Link>
         <span className="flex items-center gap-1.5 text-muted">
-          <BookOpen className="size-4" /> Manual
-        </span>
+          <BookOpen className="size-4" /> {t("Manual")}</span>
         <div className="flex-1" />
-        <button onClick={toggleTheme} className="rounded-md p-1.5 text-muted hover:bg-muted hover:text-app" aria-label="Cambiar tema">
+        <button onClick={toggleTheme} className="rounded-md p-1.5 text-muted hover:bg-muted hover:text-app" aria-label={t("Cambiar tema")}>
           {theme === 'dark' ? <Sun className="size-4" /> : <Moon className="size-4" />}
         </button>
         <Link to="/" className="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-muted hover:bg-muted hover:text-app">
-          <ArrowLeft className="size-3.5" /> Volver a Cartero
-        </Link>
+          <ArrowLeft className="size-3.5" /> {t("Volver a Cartero")}</Link>
       </header>
       <div className="flex min-h-0 flex-1">
         <aside className="flex w-72 shrink-0 flex-col border-r border-app bg-soft">
@@ -113,7 +114,7 @@ export function ManualPage() {
               <input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
-                placeholder="Buscar en el manual"
+                placeholder={t("Buscar en el manual")}
                 className="h-8 w-full rounded-md border border-app bg-app pr-2 pl-8 text-[13px] outline-none focus:border-brand-500"
               />
             </div>
@@ -121,7 +122,7 @@ export function ManualPage() {
           <nav className="min-h-0 flex-1 overflow-y-auto px-2 pb-4">
             {results
               ? results.length === 0
-                ? <p className="px-2 text-muted">Sin resultados.</p>
+                ? <p className="px-2 text-muted">{t("Sin resultados.")}</p>
                 : results.map(({ c, snip }) => (
                     <Link key={c.slug} to={`/ayuda/${c.slug}`} className="mb-1 block rounded-md px-2.5 py-2 hover:bg-muted">
                       <div className="font-medium">{c.title}</div>
@@ -143,7 +144,7 @@ export function ManualPage() {
         <main ref={content} className="min-w-0 flex-1 overflow-y-auto" onClick={onClick}>
           <div className="mx-auto flex max-w-5xl gap-10 px-10 py-10">
             <article className="min-w-0 flex-1">
-              <div className="mb-1 text-xs font-medium text-brand-600">Capítulo {idx + 1}</div>
+              <div className="mb-1 text-xs font-medium text-brand-600">{t('Capítulo {0}', [idx + 1])}</div>
               <h1 className="mb-6 text-3xl font-bold tracking-tight">{chapter.title}</h1>
               <div className="prose-docs prose-manual" dangerouslySetInnerHTML={{ __html: chapter.html }} />
               <div className="mt-12 flex justify-between border-t border-app pt-5">
@@ -151,7 +152,7 @@ export function ManualPage() {
                   <Link to={`/ayuda/${CHAPTERS[idx - 1].slug}`} className="group flex items-center gap-2 text-muted hover:text-app">
                     <ChevronLeft className="size-4" />
                     <span>
-                      <span className="block text-[11px]">Anterior</span>
+                      <span className="block text-[11px]">{t("Anterior")}</span>
                       <span className="font-medium text-app group-hover:text-brand-600">{CHAPTERS[idx - 1].title}</span>
                     </span>
                   </Link>
@@ -161,7 +162,7 @@ export function ManualPage() {
                 {idx < CHAPTERS.length - 1 && (
                   <Link to={`/ayuda/${CHAPTERS[idx + 1].slug}`} className="group flex items-center gap-2 text-right text-muted hover:text-app">
                     <span>
-                      <span className="block text-[11px]">Siguiente</span>
+                      <span className="block text-[11px]">{t("Siguiente")}</span>
                       <span className="font-medium text-app group-hover:text-brand-600">{CHAPTERS[idx + 1].title}</span>
                     </span>
                     <ChevronRight className="size-4" />
@@ -171,7 +172,7 @@ export function ManualPage() {
             </article>
             {chapter.headings.length > 1 && (
               <nav className="sticky top-10 hidden w-48 shrink-0 self-start xl:block">
-                <div className="mb-2 text-[11px] font-semibold text-muted uppercase">En esta página</div>
+                <div className="mb-2 text-[11px] font-semibold text-muted uppercase">{t("En esta página")}</div>
                 {chapter.headings.map((h) => (
                   <a key={h.id} href={`#${h.id}`} className="block py-1 text-xs text-muted hover:text-app">
                     {h.text}

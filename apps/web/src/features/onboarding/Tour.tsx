@@ -7,6 +7,7 @@ import { api } from '@/api/client'
 import { qk } from '@/api/hooks'
 import { Button } from '@/components/ui'
 import { type Section, useUi } from '@/store/ui'
+import { t, tj } from "@/i18n";
 
 export interface TourStep {
   /** Selector del elemento a resaltar (data-tour="…"). Sin target: tarjeta centrada. */
@@ -20,64 +21,68 @@ export interface TourStep {
 
 export const TOUR: TourStep[] = [
   {
-    title: 'Bienvenido a Cartero 👋',
-    body: 'En un minuto te enseño dónde está cada cosa. Puedes salir cuando quieras con Esc y repetir el recorrido desde el botón de ayuda (?).',
+    title: t("Bienvenido a Cartero 👋"),
+    body: t("En un minuto te enseño dónde está cada cosa. Puedes salir cuando quieras con Esc y repetir el recorrido desde el botón de ayuda (?)."),
   },
   {
     target: '[data-tour="rail"]',
     placement: 'right',
-    title: 'Secciones',
-    body: 'Colecciones, entornos, historial, ejecuciones, mock servers, monitores y ajustes. Todo lo que en otros clientes es de pago, aquí es gratis y sin límites.',
+    title: t("Secciones"),
+    body: t("Colecciones, entornos, historial, ejecuciones, mock servers, monitores y ajustes. Todo lo que en otros clientes es de pago, aquí es gratis y sin límites."),
   },
   {
     target: '[data-tour="collections"]',
     section: 'collections',
     placement: 'right',
-    title: 'Tus colecciones',
-    body: 'Organiza las peticiones en colecciones y carpetas. Arrastra para reordenar y usa el menú ··· para ejecutar, hacer fork, exportar o configurar la autenticación y los scripts comunes.',
+    title: t("Tus colecciones"),
+    body: t("Organiza las peticiones en colecciones y carpetas. Arrastra para reordenar y usa el menú ··· para ejecutar, hacer fork, exportar o configurar la autenticación y los scripts comunes."),
   },
   {
     target: '[data-tour="import"]',
     section: 'collections',
     placement: 'right',
-    title: 'Trae lo que ya tienes',
-    body: 'Importa colecciones y entornos de Postman (también el ZIP de exportación completo), Insomnia, OpenAPI/Swagger o un cURL. El formato se detecta solo.',
+    title: t("Trae lo que ya tienes"),
+    body: t("Importa colecciones y entornos de Postman (también el ZIP de exportación completo), Insomnia, OpenAPI/Swagger o un cURL. El formato se detecta solo."),
   },
   {
     target: '[data-tour="new-tab"]',
     placement: 'bottom',
-    title: 'Peticiones en pestañas',
+    title: t("Peticiones en pestañas"),
     body: (
       <>
-        Abre una petición nueva con <kbd>Ctrl</kbd>+<kbd>T</kbd>. Envía con <kbd>Ctrl</kbd>+<kbd>Enter</kbd> y guarda con <kbd>Ctrl</kbd>+<kbd>S</kbd>. Puedes pegar un cURL directamente en la barra de URL.
+        {tj('Abre una petición nueva con {nueva}. Envía con {enviar} y guarda con {guardar}. Puedes pegar un cURL directamente en la barra de URL.', {
+          nueva: <><kbd>{t("Ctrl")}</kbd>+<kbd>T</kbd></>,
+          enviar: <><kbd>{t("Ctrl")}</kbd>+<kbd>Enter</kbd></>,
+          guardar: <><kbd>{t("Ctrl")}</kbd>+<kbd>S</kbd></>,
+        })}
       </>
     ),
   },
   {
     target: '[data-tour="env"]',
     placement: 'bottom',
-    title: 'Entornos',
-    body: 'Cambia entre Local, Staging y Producción sin tocar las peticiones: usa {{variables}} en URLs, cabeceras y bodies. El ojo te enseña los valores actuales.',
+    title: t("Entornos"),
+    body: t("Cambia entre Local, Staging y Producción sin tocar las peticiones: usa {{variables}} en URLs, cabeceras y bodies. El ojo te enseña los valores actuales."),
   },
   {
     target: '[data-tour="palette"]',
     placement: 'bottom',
-    title: 'Búscalo todo',
+    title: t("Búscalo todo"),
     body: (
       <>
-        Con <kbd>Ctrl</kbd>+<kbd>K</kbd> encuentras cualquier petición, entorno o acción al instante.
+        {tj('Con {atajo} encuentras cualquier petición, entorno o acción al instante.', { atajo: <><kbd>{t("Ctrl")}</kbd>+<kbd>K</kbd></> })}
       </>
     ),
   },
   {
     target: '[data-tour="help"]',
     placement: 'bottom',
-    title: 'Ayuda',
-    body: 'Aquí tienes el manual completo, los atajos de teclado, cómo conectar Cartero con tu asistente de IA (MCP) y este recorrido.',
+    title: t("Ayuda"),
+    body: t("Aquí tienes el manual completo, los atajos de teclado, cómo conectar Cartero con tu asistente de IA (MCP) y este recorrido."),
   },
   {
-    title: '¡Listo!',
-    body: 'Ya conoces lo básico. Si quieres trastear sin miedo, carga los datos de ejemplo desde Ajustes → Workspace: usan APIs públicas reales y se quitan con un clic.',
+    title: t("¡Listo!"),
+    body: t("Ya conoces lo básico. Si quieres trastear sin miedo, carga los datos de ejemplo desde Ajustes → Workspace: usan APIs públicas reales y se quitan con un clic."),
   },
 ]
 
@@ -116,10 +121,10 @@ export function Tour() {
       setRect(el ? el.getBoundingClientRect() : null)
     }
     measure()
-    const t = setTimeout(measure, 60) // tras cambiar de sección
+    const tItem = setTimeout(measure, 60) // tras cambiar de sección
     window.addEventListener('resize', measure)
     return () => {
-      clearTimeout(t)
+      clearTimeout(tItem)
       window.removeEventListener('resize', measure)
     }
   }, [current])
@@ -153,7 +158,7 @@ export function Tour() {
   const last = step === TOUR.length - 1
 
   return createPortal(
-    <div className="fixed inset-0 z-[200]" role="dialog" aria-label="Recorrido guiado">
+    <div className="fixed inset-0 z-[200]" role="dialog" aria-label={t("Recorrido guiado")}>
       {hole ? (
         <div
           className="pointer-events-none absolute rounded-lg ring-2 ring-brand-500 transition-all duration-300"
@@ -165,7 +170,7 @@ export function Tour() {
       <div className="absolute rounded-xl border border-app bg-app p-4 shadow-2xl transition-all duration-300" style={{ ...pos, width: W }}>
         <div className="mb-1 flex items-start justify-between gap-2">
           <h3 className="text-[15px] font-semibold">{current.title}</h3>
-          <button onClick={finish} className="rounded p-0.5 text-muted hover:bg-muted hover:text-app" aria-label="Cerrar el recorrido">
+          <button onClick={finish} className="rounded p-0.5 text-muted hover:bg-muted hover:text-app" aria-label={t("Cerrar el recorrido")}>
             <X className="size-4" />
           </button>
         </div>
@@ -178,11 +183,10 @@ export function Tour() {
           </div>
           {step > 0 && (
             <Button size="sm" variant="ghost" icon={<ArrowLeft className="size-3.5" />} onClick={() => set(step - 1)}>
-              Atrás
-            </Button>
+              {t("Atrás")}</Button>
           )}
           <Button size="sm" variant="primary" onClick={() => (last ? finish() : set(step + 1))}>
-            {last ? 'Empezar' : 'Siguiente'} {!last && <ArrowRight className="size-3.5" />}
+            {last ? t("Empezar") : t("Siguiente")} {!last && <ArrowRight className="size-3.5" />}
           </Button>
         </div>
       </div>

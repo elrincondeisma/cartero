@@ -1,0 +1,50 @@
+# Collections and import
+
+## Collections and folders
+
+A **collection** groups requests and can contain nested folders. Each collection and folder has its own settings (double-click a folder, or ··· menu → *Settings*):
+
+- **Overview**: Markdown description (shown in the published documentation) and the list of requests.
+- **Authorization**: inherited by the requests inside.
+- **Scripts**: run for every request inside.
+- **Variables**: collection or folder variables.
+- **Documentation** (collections only): see [Public documentation](10-documentacion-publica.md).
+- **Activity**: change history and comments.
+
+In the tree:
+- **Drag** requests and folders to reorder them or move them into another folder (the orange line shows where it will land; over a folder, inside it).
+- **···** menu: new request or folder, run, rename, duplicate, fork, export and delete.
+- **Filter requests**: search by name or URL.
+
+## Import
+
+Click the import icon in the Collections sidebar (or Ctrl+K → *Import*). There are three ways: **files** (drag or choose), **paste text** or **URL**. The format is detected automatically.
+
+| Format | What gets imported |
+|---|---|
+| **Postman** v1, v2.0 and v2.1 collections | Everything: folders, requests, auth, scripts, variables, examples and descriptions |
+| **Postman** environments and globals | Variables (secret ones stay secret) |
+| **Postman** data-export ZIP | Every collection and environment in your account at once |
+| **Insomnia** v4 (JSON) and v5 (YAML) | Folders, requests, auth, scripts; the base environment becomes collection variables and sub-environments become environments |
+| **OpenAPI** 3.0/3.1 and **Swagger** 2.0 (JSON or YAML) | One request per operation, grouped by *tags*, with examples |
+| **cURL** | One request |
+| Cartero workspace export | The whole workspace |
+
+## Migrating from Postman, step by step
+
+1. In Postman: **Settings → Data → Export data**, select collections and environments. You'll get an email with a ZIP.
+2. In Cartero: **Import → Files** and drop the ZIP as-is.
+3. Check the environments in the **Environments** section and activate the one you use.
+
+If you'd rather go step by step, export each collection from Postman (··· → *Export* → *Collection v2.1*) and import it.
+
+## Export
+
+- A collection: ··· menu → **Export (Postman v2.1)**. The file can be imported into Postman and any compatible tool. The round trip is **lossless**.
+- An environment: in the Environments section, ··· menu → **Export**.
+- The whole workspace (backup): **Settings → Workspace → Export workspace**.
+
+## Fork and merge
+
+- **Fork**: copies a collection (to this or another workspace) so you can make changes without affecting the original.
+- **Merge into source**: the fork's ··· menu. The original collection ends up identical to the fork. A revision is saved, so you can undo it from the change history.

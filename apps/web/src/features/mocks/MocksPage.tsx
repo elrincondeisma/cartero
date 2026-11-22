@@ -8,6 +8,7 @@ import type { MockRow } from '@/api/types'
 import { confirm } from '@/components/dialogs'
 import { Badge, Button, Checkbox, Dialog, Empty, Field, IconButton, Input, MethodBadge, Select, Spinner, cx, statusTone, timeAgo } from '@/components/ui'
 import { useWs } from '../workspace/context'
+import { t, tj } from "@/i18n";
 
 export function MocksPage() {
   const { ws, canEdit } = useWs()
@@ -21,18 +22,17 @@ export function MocksPage() {
       <div className="flex w-80 shrink-0 flex-col border-r border-app bg-soft">
         <div className="flex items-center border-b border-app px-4 py-3">
           <div className="flex-1">
-            <h2 className="font-semibold">Mock servers</h2>
-            <p className="text-xs text-muted">Responden con los ejemplos guardados.</p>
+            <h2 className="font-semibold">{t("Mock servers")}</h2>
+            <p className="text-xs text-muted">{t("Responden con los ejemplos guardados.")}</p>
           </div>
           {canEdit && (
             <Button size="sm" variant="primary" icon={<Plus className="size-3.5" />} onClick={() => setCreateOpen(true)}>
-              Nuevo
-            </Button>
+              {t("Nuevo")}</Button>
           )}
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto p-2">
           {isLoading && <Spinner className="m-3" />}
-          {mocks?.length === 0 && <Empty icon={<Server />} title="Sin mock servers">Simula tu API antes de que exista, o para que el frontend no dependa del backend.</Empty>}
+          {mocks?.length === 0 && <Empty icon={<Server />} title={t("Sin mock servers")}>{t("Simula tu API antes de que exista, o para que el frontend no dependa del backend.")}</Empty>}
           {mocks?.map((m) => (
             <button
               key={m.id}
@@ -48,7 +48,7 @@ export function MocksPage() {
           ))}
         </div>
       </div>
-      <div className="min-w-0 flex-1">{current ? <MockDetail key={current.id} mock={current} /> : !isLoading && <Empty icon={<Server />} title="Elige o crea un mock server" />}</div>
+      <div className="min-w-0 flex-1">{current ? <MockDetail key={current.id} mock={current} /> : !isLoading && <Empty icon={<Server />} title={t("Elige o crea un mock server")} />}</div>
       <MockDialog open={createOpen} onOpenChange={setCreateOpen} onCreated={setSelected} />
     </div>
   )
@@ -82,56 +82,55 @@ function MockDetail({ mock }: { mock: MockRow }) {
               size="sm"
               icon={<Trash2 className="size-3.5" />}
               onClick={async () => {
-                if (!(await confirm('Eliminar mock', `La URL ${url} dejará de responder.`, { confirm: 'Eliminar', danger: true }))) return
+                if (!(await confirm(t("Eliminar mock"), t("La URL {0} dejará de responder.", [url]), { confirm: t("Eliminar"), danger: true }))) return
                 await api.del(`/api/mocks/${mock.id}`)
                 qc.invalidateQueries({ queryKey: qk.mocks(ws) })
               }}
             >
-              Eliminar
-            </Button>
+              {t("Eliminar")}</Button>
           )}
         </div>
         <div className="flex items-center gap-2 rounded-lg border border-app bg-soft px-3 py-2">
           <span className="flex-1 truncate font-mono text-[12.5px]">{url}</span>
           <IconButton
-            label="Copiar URL"
+            label={t("Copiar URL")}
             onClick={() => {
               navigator.clipboard.writeText(url)
-              toast.success('URL copiada')
+              toast.success(t("URL copiada"))
             }}
           >
             <Copy className="size-3.5" />
           </IconButton>
         </div>
         <div className="flex flex-wrap items-end gap-6">
-          <Field label="Retardo simulado (ms)">
+          <Field label={t("Retardo simulado (ms)")}>
             <Input type="number" className="w-32" value={delay} min={0} max={60000} onChange={(e) => setDelay(Number(e.target.value) || 0)} onBlur={() => delay !== mock.delayMs && patch({ delayMs: delay })} disabled={!canEdit} />
           </Field>
-          <Checkbox checked={mock.isPrivate} onChange={(v) => canEdit && patch({ isPrivate: v })} label="Privado (requiere x-api-key)" />
+          <Checkbox checked={mock.isPrivate} onChange={(v) => canEdit && patch({ isPrivate: v })} label={t("Privado (requiere x-api-key)")} />
         </div>
         <details className="text-xs text-muted">
-          <summary className="cursor-pointer select-none">Cómo elige la respuesta</summary>
+          <summary className="cursor-pointer select-none">{t("Cómo elige la respuesta")}</summary>
           <ul className="mt-2 list-disc space-y-1 pl-5">
-            <li>Busca los ejemplos guardados cuyo método y ruta coinciden (las partes <code>:param</code> y <code>{'{{var}}'}</code> valen cualquier valor).</li>
-            <li>Desempata por query params y prefiere respuestas 2xx.</li>
+            <li>{tj('Busca los ejemplos guardados cuyo método y ruta coinciden (las partes {param} y {var} valen cualquier valor).', { param: <code>:param</code>, var: <code>{'{{var}}'}</code> })}</li>
+            <li>{t("Desempata por query params y prefiere respuestas 2xx.")}</li>
             <li>
-              Fuerza un ejemplo con las cabeceras <code>x-mock-response-name</code>, <code>x-mock-response-code</code> o <code>x-mock-response-id</code>.
+              {tj('Fuerza un ejemplo con las cabeceras {a}, {b} o {c}.', { a: <code>x-mock-response-name</code>, b: <code>x-mock-response-code</code>, c: <code>x-mock-response-id</code> })}
             </li>
             <li>
-              Compara también el body con <code>x-mock-match-request-body: true</code>.
+              {tj('Compara también el body con {h}.', { h: <code>x-mock-match-request-body: true</code> })}
             </li>
             <li>
-              Admite variables dinámicas en el body del ejemplo: <code>{'{{$randomEmail}}'}</code>, <code>{'{{$guid}}'}</code>, <code>{'{{$timestamp}}'}</code>…
+              {t("Admite variables dinámicas en el body del ejemplo:")}{' '}<code>{'{{$randomEmail}}'}</code>, <code>{'{{$guid}}'}</code>, <code>{'{{$timestamp}}'}</code>…
             </li>
           </ul>
         </details>
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto">
-        <div className="px-5 pt-4 pb-2 text-xs font-semibold text-muted uppercase">Llamadas recibidas</div>
+        <div className="px-5 pt-4 pb-2 text-xs font-semibold text-muted uppercase">{t("Llamadas recibidas")}</div>
         {isLoading && <Spinner className="m-4" />}
         {logs?.length === 0 && (
           <p className="px-5 text-muted">
-            Aún no hay llamadas. Prueba: <code className="font-mono">curl {url}/tu-ruta</code>
+            {t("Aún no hay llamadas. Prueba:")}{' '}<code className="font-mono">curl{' '}{url}/{t('tu-ruta')}</code>
           </p>
         )}
         <table className="w-full text-[12.5px]">
@@ -145,7 +144,7 @@ function MockDetail({ mock }: { mock: MockRow }) {
                 <td className="py-1.5">
                   <Badge tone={statusTone(l.status)}>{l.status}</Badge>
                 </td>
-                <td className="py-1.5 text-xs text-muted">{l.matchedExample ?? 'sin coincidencia'}</td>
+                <td className="py-1.5 text-xs text-muted">{l.matchedExample ?? t("sin coincidencia")}</td>
                 <td className="py-1.5 pr-5 text-right text-xs text-muted">{timeAgo(l.createdAt)}</td>
               </tr>
             ))}
@@ -187,20 +186,18 @@ function MockDialog({ open, onOpenChange, onCreated }: { open: boolean; onOpenCh
     <Dialog
       open={open}
       onOpenChange={onOpenChange}
-      title="Nuevo mock server"
+      title={t("Nuevo mock server")}
       footer={
         <>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
-            Cancelar
-          </Button>
+            {t("Cancelar")}</Button>
           <Button variant="primary" onClick={submit} disabled={!collectionId}>
-            Crear
-          </Button>
+            {t("Crear")}</Button>
         </>
       }
     >
       <div className="space-y-3">
-        <Field label="Colección" hint="Responderá con los ejemplos guardados en sus peticiones.">
+        <Field label={t("Colección")} hint={t("Responderá con los ejemplos guardados en sus peticiones.")}>
           <Select value={collectionId} onChange={(e) => setCollectionId(e.target.value)} className="w-full">
             {collections?.map((c) => (
               <option key={c.id} value={c.id}>
@@ -209,12 +206,12 @@ function MockDialog({ open, onOpenChange, onCreated }: { open: boolean; onOpenCh
             ))}
           </Select>
         </Field>
-        <Field label="Nombre">
+        <Field label={t("Nombre")}>
           <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={collections?.find((c) => c.id === collectionId)?.name} />
         </Field>
-        <Field label="Entorno" hint="Para resolver {{variables}} en las URLs y bodies de los ejemplos.">
+        <Field label={t("Entorno")} hint={t("Para resolver {{variables}} en las URLs y bodies de los ejemplos.")}>
           <Select value={envId} onChange={(e) => setEnvId(e.target.value)} className="w-full">
-            <option value="">Ninguno</option>
+            <option value="">{t("Ninguno")}</option>
             {envs?.map((e) => (
               <option key={e.id} value={e.id}>
                 {e.name}
@@ -222,10 +219,10 @@ function MockDialog({ open, onOpenChange, onCreated }: { open: boolean; onOpenCh
             ))}
           </Select>
         </Field>
-        <Field label="Retardo simulado (ms)">
+        <Field label={t("Retardo simulado (ms)")}>
           <Input type="number" value={delay} onChange={(e) => setDelay(Number(e.target.value) || 0)} />
         </Field>
-        <Checkbox checked={isPrivate} onChange={setPrivate} label="Privado: exige un token de API en la cabecera x-api-key" />
+        <Checkbox checked={isPrivate} onChange={setPrivate} label={t("Privado: exige un token de API en la cabecera x-api-key")} />
       </div>
     </Dialog>
   )

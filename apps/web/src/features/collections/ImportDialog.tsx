@@ -6,6 +6,7 @@ import { api } from '@/api/client'
 import { qk } from '@/api/hooks'
 import { Button, Dialog, Input, SubTabs, Textarea, cx } from '@/components/ui'
 import { useWs } from '../workspace/context'
+import { t } from "@/i18n";
 
 interface ImportResult {
   format: string
@@ -16,16 +17,16 @@ interface ImportResult {
 }
 
 const FORMAT_NAMES: Record<string, string> = {
-  'postman-collection': 'colección de Postman',
-  'postman-environment': 'entorno de Postman',
-  'postman-globals': 'globales de Postman',
-  'postman-dump': 'volcado de datos de Postman',
-  zip: 'ZIP de exportación',
+  'postman-collection': t('colección de Postman'),
+  'postman-environment': t('entorno de Postman'),
+  'postman-globals': t('globales de Postman'),
+  'postman-dump': t('volcado de datos de Postman'),
+  zip: t('ZIP de exportación'),
   curl: 'cURL',
   'insomnia-v4': 'Insomnia',
   'insomnia-v5': 'Insomnia (v5)',
   'swagger-2': 'Swagger 2.0',
-  'cartero-workspace': 'workspace de Cartero',
+  'cartero-workspace': t('workspace de Cartero'),
 }
 
 export function ImportDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
@@ -51,11 +52,11 @@ export function ImportDialog({ open, onOpenChange }: { open: boolean; onOpenChan
     qc.invalidateQueries({ queryKey: qk.globals(ws) })
     for (const r of results) {
       const parts = []
-      if (r.collections.length) parts.push(`${r.collections.length} colección(es)`)
-      if (r.environments.length) parts.push(`${r.environments.length} entorno(s)`)
-      if (r.globals) parts.push(`${r.globals} variable(s) global(es)`)
+      if (r.collections.length) parts.push(t('{0} colección(es)', [r.collections.length]))
+      if (r.environments.length) parts.push(t('{0} entorno(s)', [r.environments.length]))
+      if (r.globals) parts.push(t('{0} variable(s) global(es)', [r.globals]))
       const fmt = FORMAT_NAMES[r.format] ?? r.format.replace('openapi-', 'OpenAPI ')
-      toast.success(`Importado desde ${fmt}: ${parts.join(', ') || 'nada'}`)
+      toast.success(t("Importado desde {0}: {1}", [fmt, parts.join(', ') || t('nada')]))
       for (const w of r.warnings) toast.warning(w)
     }
     reset()
@@ -95,17 +96,15 @@ export function ImportDialog({ open, onOpenChange }: { open: boolean; onOpenChan
     <Dialog
       open={open}
       onOpenChange={onOpenChange}
-      title="Importar"
-      description="Postman (colecciones v1/v2.0/v2.1, entornos, globales y el ZIP de exportación), Insomnia, OpenAPI/Swagger y cURL. El formato se detecta solo."
+      title={t("Importar")}
+      description={t("Postman (colecciones v1/v2.0/v2.1, entornos, globales y el ZIP de exportación), Insomnia, OpenAPI/Swagger y cURL. El formato se detecta solo.")}
       width="max-w-xl"
       footer={
         <>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
-            Cancelar
-          </Button>
+            {t("Cancelar")}</Button>
           <Button variant="primary" onClick={submit} loading={loading} disabled={!canSubmit}>
-            Importar
-          </Button>
+            {t("Importar")}</Button>
         </>
       }
     >
@@ -114,8 +113,8 @@ export function ImportDialog({ open, onOpenChange }: { open: boolean; onOpenChan
         value={mode}
         onChange={setMode}
         tabs={[
-          { id: 'file', label: <span className="flex items-center gap-1.5"><FileUp className="size-3.5" />Ficheros</span> },
-          { id: 'text', label: <span className="flex items-center gap-1.5"><TextCursorInput className="size-3.5" />Pegar texto</span> },
+          { id: 'file', label: <span className="flex items-center gap-1.5"><FileUp className="size-3.5" />{t("Ficheros")}</span> },
+          { id: 'text', label: <span className="flex items-center gap-1.5"><TextCursorInput className="size-3.5" />{t("Pegar texto")}</span> },
           { id: 'url', label: <span className="flex items-center gap-1.5"><Link2 className="size-3.5" />URL</span> },
         ]}
       />
@@ -148,8 +147,8 @@ export function ImportDialog({ open, onOpenChange }: { open: boolean; onOpenChan
             </div>
           ) : (
             <>
-              <div className="font-medium">Arrastra aquí tus ficheros</div>
-              <div className="text-xs text-muted">.json, .yaml, .yml o .zip — o haz clic para elegirlos</div>
+              <div className="font-medium">{t("Arrastra aquí tus ficheros")}</div>
+              <div className="text-xs text-muted">{t(".json, .yaml, .yml o .zip — o haz clic para elegirlos")}</div>
             </>
           )}
           <input
@@ -175,7 +174,7 @@ export function ImportDialog({ open, onOpenChange }: { open: boolean; onOpenChan
       {mode === 'url' && (
         <div className="space-y-2">
           <Input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://petstore3.swagger.io/api/v3/openapi.json" autoFocus />
-          <p className="text-xs text-muted">Útil para especificaciones OpenAPI publicadas o colecciones públicas en JSON.</p>
+          <p className="text-xs text-muted">{t("Útil para especificaciones OpenAPI publicadas o colecciones públicas en JSON.")}</p>
         </div>
       )}
     </Dialog>

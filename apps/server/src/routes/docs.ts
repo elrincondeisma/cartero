@@ -21,7 +21,7 @@ function scrub(value: any): any {
           if (scheme === 'type' || !Array.isArray(attrs)) continue
           a[scheme] = attrs.map((x: any) =>
             /password|secret|token|key|value|clientSecret|accessKey|sessionToken/i.test(x.key) && !/^\{\{.*\}\}$/.test(String(x.value ?? ''))
-              ? { ...x, value: '<oculto>' }
+              ? { ...x, value: '••••••' }
               : x,
           )
         }

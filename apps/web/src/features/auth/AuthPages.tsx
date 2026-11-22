@@ -4,8 +4,10 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
 import { toast } from 'sonner'
 import { api } from '@/api/client'
 import { qk, useMe } from '@/api/hooks'
+import { LanguageLinks } from '@/components/LanguageSwitch'
 import { Logo } from '@/components/Logo'
 import { Button, Field, Input, Spinner } from '@/components/ui'
+import { lang, t } from "@/i18n";
 
 function AuthShell({ title, subtitle, children }: { title: string; subtitle?: ReactNode; children: ReactNode }) {
   return (
@@ -19,7 +21,8 @@ function AuthShell({ title, subtitle, children }: { title: string; subtitle?: Re
           {subtitle && <p className="mt-1 text-muted">{subtitle}</p>}
           <div className="mt-5">{children}</div>
         </div>
-        <p className="mt-4 text-center text-xs text-muted">Cartero · cliente de APIs open source</p>
+        <p className="mt-4 text-center text-xs text-muted">{t("Cartero · cliente de APIs open source")}</p>
+        <LanguageLinks className="mt-3" />
       </div>
     </div>
   )
@@ -49,24 +52,22 @@ export function LoginPage() {
   }
 
   return (
-    <AuthShell title="Inicia sesión" subtitle="Accede a tus colecciones y workspaces.">
+    <AuthShell title={t("Inicia sesión")} subtitle={t("Accede a tus colecciones y workspaces.")}>
       <form onSubmit={submit} className="space-y-3">
-        <Field label="Email">
+        <Field label={t("Email")}>
           <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoFocus required autoComplete="email" />
         </Field>
-        <Field label="Contraseña">
+        <Field label={t("Contraseña")}>
           <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="current-password" />
         </Field>
         <Button type="submit" variant="primary" className="w-full" loading={loading}>
-          Entrar
-        </Button>
+          {t("Entrar")}</Button>
       </form>
       {cfg?.allowRegistration !== false && (
         <p className="mt-4 text-center text-muted">
-          ¿No tienes cuenta?{' '}
+          {t("¿No tienes cuenta?")}{' '}
           <Link to={`/register${params.get('next') ? `?next=${encodeURIComponent(params.get('next')!)}` : ''}`} className="text-brand-600 hover:underline">
-            Regístrate
-          </Link>
+            {t("Regístrate")}</Link>
         </p>
       )}
     </AuthShell>
@@ -86,7 +87,7 @@ export function RegisterPage({ invitation, presetEmail }: { invitation?: string;
     e.preventDefault()
     setLoading(true)
     try {
-      await api.post('/api/auth/register', { email, name, password, invitation })
+      await api.post('/api/auth/register', { email, name, password, invitation, lang })
       await qc.invalidateQueries({ queryKey: qk.me })
       await qc.invalidateQueries({ queryKey: qk.workspaces })
       nav(params.get('next') ?? '/', { replace: true })
@@ -98,27 +99,25 @@ export function RegisterPage({ invitation, presetEmail }: { invitation?: string;
   }
 
   return (
-    <AuthShell title="Crea tu cuenta" subtitle="Gratis y sin límites: es tu servidor.">
+    <AuthShell title={t("Crea tu cuenta")} subtitle={t("Gratis y sin límites: es tu servidor.")}>
       <form onSubmit={submit} className="space-y-3">
-        <Field label="Nombre">
+        <Field label={t("Nombre")}>
           <Input value={name} onChange={(e) => setName(e.target.value)} autoFocus required autoComplete="name" />
         </Field>
-        <Field label="Email">
+        <Field label={t("Email")}>
           <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required readOnly={!!presetEmail} autoComplete="email" />
         </Field>
-        <Field label="Contraseña" hint="Mínimo 8 caracteres">
+        <Field label={t("Contraseña")} hint={t("Mínimo 8 caracteres")}>
           <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} minLength={8} required autoComplete="new-password" />
         </Field>
         <Button type="submit" variant="primary" className="w-full" loading={loading}>
-          Crear cuenta
-        </Button>
+          {t("Crear cuenta")}</Button>
       </form>
       {!invitation && (
         <p className="mt-4 text-center text-muted">
-          ¿Ya tienes cuenta?{' '}
+          {t("¿Ya tienes cuenta?")}{' '}
           <Link to="/login" className="text-brand-600 hover:underline">
-            Inicia sesión
-          </Link>
+            {t("Inicia sesión")}</Link>
         </p>
       )}
     </AuthShell>
@@ -144,10 +143,9 @@ export function InvitePage() {
     )
   if (error || !inv)
     return (
-      <AuthShell title="Invitación no válida" subtitle="La invitación no existe o ha caducado.">
+      <AuthShell title={t("Invitación no válida")} subtitle={t("La invitación no existe o ha caducado.")}>
         <Link to="/" className="text-brand-600 hover:underline">
-          Ir al inicio
-        </Link>
+          {t("Ir al inicio")}</Link>
       </AuthShell>
     )
 
@@ -166,10 +164,9 @@ export function InvitePage() {
   }
 
   return (
-    <AuthShell title={`Únete a «${inv.workspace}»`} subtitle={`Te han invitado como ${inv.role}.`}>
+    <AuthShell title={t("Únete a «{0}»", [inv.workspace])} subtitle={t('Te han invitado como {0}.', [({ owner: t('Propietario'), admin: t('Administrador'), editor: t('Editor'), viewer: t('Lector') } as Record<string, string>)[inv.role] ?? inv.role])}>
       <Button variant="primary" className="w-full" onClick={accept} loading={accepting}>
-        Aceptar invitación
-      </Button>
+        {t("Aceptar invitación")}</Button>
     </AuthShell>
   )
 }

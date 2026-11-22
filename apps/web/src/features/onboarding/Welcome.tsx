@@ -9,6 +9,7 @@ import { Dialog, cx } from '@/components/ui'
 import { ImportDialog } from '../collections/ImportDialog'
 import { useWs } from '../workspace/context'
 import { useTour } from './Tour'
+import { lang, t } from "@/i18n";
 
 interface DemoStatus {
   status: 'idle' | 'running' | 'done' | 'error' | 'reverting'
@@ -24,7 +25,7 @@ export function useDemoLoader() {
   const start = async () => {
     const current = await api.get<DemoStatus>('/api/demo')
     if (current.status === 'done' && current.workspaceId) return current.workspaceId
-    await api.post('/api/demo')
+    await api.post('/api/demo', { lang })
     setStatus({ status: 'running', log: [] })
     for (;;) {
       await new Promise((r) => setTimeout(r, 1200))
@@ -71,7 +72,7 @@ export function Welcome() {
       markWelcomed()
       setOpen(false)
       nav(`/w/${ws}`)
-      toast.success('Datos de ejemplo cargados', { description: 'Puedes quitarlos cuando quieras en Ajustes → Workspace.' })
+      toast.success(t("Datos de ejemplo cargados"), { description: t("Puedes quitarlos cuando quieras en Ajustes → Workspace.") })
       setTimeout(startTour, 600)
     } catch (e) {
       toast.error((e as Error).message)
@@ -81,33 +82,32 @@ export function Welcome() {
   const options = [
     {
       icon: <FileUp className="size-5" />,
-      title: 'Importar desde Postman',
-      text: 'Colecciones, entornos o el ZIP de exportación completo. También Insomnia, OpenAPI y cURL.',
+      title: t("Importar desde Postman"),
+      text: t("Colecciones, entornos o el ZIP de exportación completo. También Insomnia, OpenAPI y cURL."),
       onClick: () => setImportOpen(true),
     },
     {
       icon: <Sparkles className="size-5" />,
-      title: 'Ver un ejemplo completo',
-      text: 'Un workspace con APIs públicas reales: tests, entornos, mocks, monitores, docs… Se quita con un clic.',
+      title: t("Ver un ejemplo completo"),
+      text: t("Un workspace con APIs públicas reales: tests, entornos, mocks, monitores, docs… Se quita con un clic."),
       onClick: loadDemo,
       highlight: true,
     },
     {
       icon: <SquarePen className="size-5" />,
-      title: 'Empezar en blanco',
-      text: 'Crea tu primera petición y ve descubriendo Cartero a tu ritmo.',
+      title: t("Empezar en blanco"),
+      text: t("Crea tu primera petición y ve descubriendo Cartero a tu ritmo."),
       onClick: () => close(true),
     },
   ]
 
   return (
     <>
-      <Dialog open={open} onOpenChange={(o) => !o && !loading && close(false)} title={`¡Hola, ${me.name.split(' ')[0]}!`} description="Cartero es tu cliente de APIs: todo incluido, sin límites y en tu servidor. ¿Cómo quieres empezar?" width="max-w-2xl">
+      <Dialog open={open} onOpenChange={(o) => !o && !loading && close(false)} title={t("¡Hola, {0}!", [me.name.split(' ')[0]])} description={t("Cartero es tu cliente de APIs: todo incluido, sin límites y en tu servidor. ¿Cómo quieres empezar?")} width="max-w-2xl">
         {loading ? (
           <div className="py-4">
             <div className="mb-3 flex items-center gap-2 font-medium">
-              <Loader2 className="size-4 animate-spin text-brand-600" /> Preparando el workspace de ejemplo con APIs reales…
-            </div>
+              <Loader2 className="size-4 animate-spin text-brand-600" /> {t("Preparando el workspace de ejemplo con APIs reales…")}</div>
             <ul className="space-y-1.5">
               {demo.status?.log.map((l) => (
                 <li key={l} className="flex items-start gap-2 text-muted">
@@ -137,10 +137,9 @@ export function Welcome() {
         )}
         {!loading && (
           <div className="mt-4 flex justify-between text-xs text-muted">
-            <span>Puedes repetir el recorrido desde el botón de ayuda (?).</span>
+            <span>{t("Puedes repetir el recorrido desde el botón de ayuda (?).")}</span>
             <button className="hover:text-app hover:underline" onClick={() => close(false)}>
-              Saltar
-            </button>
+              {t("Saltar")}</button>
           </div>
         )}
       </Dialog>

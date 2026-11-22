@@ -4,6 +4,7 @@ import { useRuns } from '@/api/hooks'
 import { Empty, Spinner, cx, formatMs, timeAgo } from '@/components/ui'
 import { RunStatusBadge, RunView } from '../runner/RunView'
 import { useWs } from '../workspace/context'
+import { t } from "@/i18n";
 
 export function RunsPage() {
   const { ws } = useWs()
@@ -15,12 +16,12 @@ export function RunsPage() {
     <div className="flex h-full">
       <div className="flex w-96 shrink-0 flex-col border-r border-app bg-soft">
         <div className="border-b border-app px-4 py-3">
-          <h2 className="font-semibold">Ejecuciones</h2>
-          <p className="text-xs text-muted">Runner, monitores y CLI. Sin límite de ejecuciones.</p>
+          <h2 className="font-semibold">{t("Ejecuciones")}</h2>
+          <p className="text-xs text-muted">{t("Runner, monitores y CLI. Sin límite de ejecuciones.")}</p>
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto p-2">
           {isLoading && <Spinner className="m-3" />}
-          {runs?.length === 0 && <Empty icon={<Zap />} title="Aún no hay ejecuciones">Ejecuta una colección desde su menú, o con la CLI: cartero run.</Empty>}
+          {runs?.length === 0 && <Empty icon={<Zap />} title={t("Aún no hay ejecuciones")}>{t("Ejecuta una colección desde su menú, o con la CLI: cartero run.")}</Empty>}
           {runs?.map((r) => (
             <button
               key={r.id}
@@ -33,12 +34,11 @@ export function RunsPage() {
               </div>
               <div className="flex gap-3 text-[11px] text-muted">
                 <span>{timeAgo(r.startedAt)}</span>
-                <span>{r.source === 'monitor' ? 'Monitor' : r.source === 'cli' ? 'CLI' : (r.user ?? 'App')}</span>
+                <span>{r.source === 'monitor' ? t("Monitor") : r.source === 'cli' ? 'CLI' : (r.user ?? t("App"))}</span>
                 {r.stats && (
                   <>
                     <span>
-                      {r.stats.assertions - r.stats.failedAssertions}/{r.stats.assertions} tests
-                    </span>
+                      {r.stats.assertions - r.stats.failedAssertions}/{r.stats.assertions} {t("tests")}</span>
                     <span>{formatMs(r.stats.totalTime)}</span>
                   </>
                 )}

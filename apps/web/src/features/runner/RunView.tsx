@@ -6,14 +6,15 @@ import { qk, useRun } from '@/api/hooks'
 import type { ConsoleEntry, Execution, RunRow } from '@/api/types'
 import { Badge, Button, MethodBadge, Spinner, SubTabs, cx, formatBytes, formatMs, statusTone } from '@/components/ui'
 import { ConsoleView, HeaderTable, TestList } from '../request/ResponsePane'
+import { locale, t } from "@/i18n";
 
 export function RunStatusBadge({ status }: { status: RunRow['status'] }) {
   const map: Record<RunRow['status'], { tone: 'green' | 'red' | 'amber' | 'blue' | 'neutral'; label: string }> = {
-    running: { tone: 'blue', label: 'En curso' },
+    running: { tone: 'blue', label: t("En curso") },
     passed: { tone: 'green', label: 'OK' },
-    failed: { tone: 'red', label: 'Fallos' },
-    error: { tone: 'red', label: 'Error' },
-    aborted: { tone: 'amber', label: 'Cancelado' },
+    failed: { tone: 'red', label: t("Fallos") },
+    error: { tone: 'red', label: t("Error") },
+    aborted: { tone: 'amber', label: t("Cancelado") },
   }
   const s = map[status]
   return <Badge tone={s.tone}>{s.label}</Badge>
@@ -65,15 +66,15 @@ export function RunView({ runId }: { runId: string }) {
     const times = executions.map((e) => e.response?.time ?? 0).filter(Boolean)
     return {
       requests: executions.length,
-      passed: tests.filter((t) => t.passed).length,
-      failed: tests.filter((t) => !t.passed && !t.skipped).length,
+      passed: tests.filter((tItem) => tItem.passed).length,
+      failed: tests.filter((tItem) => !tItem.passed && !tItem.skipped).length,
       errors: executions.filter((e) => e.error).length,
       avg: times.length ? times.reduce((a, b) => a + b, 0) / times.length : 0,
     }
   }, [executions])
 
   const filtered = executions.filter((e) => {
-    const failed = !!e.error || e.tests.some((t) => !t.passed && !t.skipped)
+    const failed = !!e.error || e.tests.some((tItem) => !tItem.passed && !tItem.skipped)
     return filter === 'all' || (filter === 'failed' ? failed : !failed)
   })
 
@@ -101,24 +102,22 @@ export function RunView({ runId }: { runId: string }) {
           <RunStatusBadge status={run.status} />
           <span className="font-semibold">{run.name}</span>
           <span className="text-xs text-muted">
-            {new Date(run.startedAt).toLocaleString()} · {run.source === 'monitor' ? 'monitor' : run.source === 'cli' ? 'CLI' : (run.user ?? '')}
+            {new Date(run.startedAt).toLocaleString(locale)} · {run.source === 'monitor' ? 'monitor' : run.source === 'cli' ? 'CLI' : (run.user ?? '')}
           </span>
         </div>
-        <Stat label="Peticiones" value={stats.requests} />
-        <Stat label="Tests OK" value={stats.passed} tone="text-green-600 dark:text-green-400" />
-        <Stat label="Tests fallidos" value={stats.failed} tone={stats.failed ? 'text-red-600 dark:text-red-400' : undefined} />
-        <Stat label="Errores" value={stats.errors} tone={stats.errors ? 'text-red-600 dark:text-red-400' : undefined} />
-        <Stat label="Media" value={formatMs(stats.avg)} />
-        <Stat label="Duración" value={formatMs(duration)} />
+        <Stat label={t("Peticiones")} value={stats.requests} />
+        <Stat label={t("Tests OK")} value={stats.passed} tone="text-green-600 dark:text-green-400" />
+        <Stat label={t("Tests fallidos")} value={stats.failed} tone={stats.failed ? 'text-red-600 dark:text-red-400' : undefined} />
+        <Stat label={t("Errores")} value={stats.errors} tone={stats.errors ? 'text-red-600 dark:text-red-400' : undefined} />
+        <Stat label={t("Media")} value={formatMs(stats.avg)} />
+        <Stat label={t("Duración")} value={formatMs(duration)} />
         <div className="ml-auto flex gap-2">
           {run.status === 'running' ? (
             <Button size="sm" variant="outline" icon={<Square className="size-3.5" />} onClick={() => api.post(`/api/runs/${runId}/abort`)}>
-              Detener
-            </Button>
+              {t("Detener")}</Button>
           ) : (
             <Button size="sm" variant="ghost" icon={<Download className="size-3.5" />} onClick={exportReport}>
-              Exportar JSON
-            </Button>
+              {t("Exportar JSON")}</Button>
           )}
         </div>
       </div>
@@ -127,15 +126,15 @@ export function RunView({ runId }: { runId: string }) {
         value={view}
         onChange={setView}
         tabs={[
-          { id: 'results', label: 'Resultados' },
-          { id: 'console', label: 'Consola', count: logs.length },
+          { id: 'results', label: t("Resultados") },
+          { id: 'console', label: t("Consola"), count: logs.length },
         ]}
         right={
           view === 'results' && (
             <div className="flex gap-1 text-xs">
               {(['all', 'passed', 'failed'] as const).map((f) => (
                 <button key={f} onClick={() => setFilter(f)} className={cx('rounded px-2 py-0.5', filter === f ? 'bg-muted font-medium' : 'text-muted')}>
-                  {f === 'all' ? 'Todas' : f === 'passed' ? 'Correctas' : 'Con fallos'}
+                  {f === 'all' ? t("Todas") : f === 'passed' ? t("Correctas") : t("Con fallos")}
                 </button>
               ))}
             </div>
@@ -152,10 +151,10 @@ export function RunView({ runId }: { runId: string }) {
             ))}
             {run.status === 'running' && (
               <div className="flex items-center gap-2 px-4 py-3 text-muted">
-                <Spinner className="size-3.5" /> {current ? `Ejecutando «${current}»…` : 'Ejecutando…'}
+                <Spinner className="size-3.5" /> {current ? t("Ejecutando «{0}»…", [current]) : t("Ejecutando…")}
               </div>
             )}
-            {run.status !== 'running' && filtered.length === 0 && <div className="p-8 text-center text-muted">No hay resultados con este filtro.</div>}
+            {run.status !== 'running' && filtered.length === 0 && <div className="p-8 text-center text-muted">{t("No hay resultados con este filtro.")}</div>}
           </div>
         )}
       </div>
@@ -175,7 +174,7 @@ function Stat({ label, value, tone }: { label: string; value: string | number; t
 function ExecutionRow({ e, showIteration }: { e: Execution; showIteration: boolean }) {
   const [open, setOpen] = useState(false)
   const [tab, setTab] = useState<'tests' | 'response' | 'request'>('tests')
-  const failed = e.tests.filter((t) => !t.passed && !t.skipped).length
+  const failed = e.tests.filter((tItem) => !tItem.passed && !tItem.skipped).length
   return (
     <div>
       <button onClick={() => setOpen(!open)} className="flex w-full items-center gap-3 px-4 py-2 text-left hover:bg-soft">
@@ -187,7 +186,7 @@ function ExecutionRow({ e, showIteration }: { e: Execution; showIteration: boole
         <span className="hidden min-w-0 flex-1 truncate font-mono text-xs text-muted @3xl:block">{e.request?.url}</span>
         <span className="flex-1 @3xl:hidden" />
         {e.error ? (
-          <Badge tone="red">Error</Badge>
+          <Badge tone="red">{t("Error")}</Badge>
         ) : (
           e.response && (
             <>
@@ -213,9 +212,9 @@ function ExecutionRow({ e, showIteration }: { e: Execution; showIteration: boole
             value={tab}
             onChange={setTab}
             tabs={[
-              { id: 'tests', label: `Tests (${e.tests.length})` },
-              { id: 'response', label: 'Respuesta' },
-              { id: 'request', label: 'Petición' },
+              { id: 'tests', label: t("Tests ({0})", [e.tests.length]) },
+              { id: 'response', label: t("Respuesta") },
+              { id: 'request', label: t("Petición") },
             ]}
           />
           <div className="max-h-96 overflow-auto px-4 py-2">
@@ -223,12 +222,12 @@ function ExecutionRow({ e, showIteration }: { e: Execution; showIteration: boole
             {(e.prerequestError || e.testScriptError) && (
               <div className="mb-2 text-xs text-amber-700 dark:text-amber-400">{e.prerequestError ?? e.testScriptError}</div>
             )}
-            {tab === 'tests' && (e.tests.length ? <TestList tests={e.tests} /> : <div className="text-muted">Sin tests</div>)}
+            {tab === 'tests' && (e.tests.length ? <TestList tests={e.tests} /> : <div className="text-muted">{t("Sin tests")}</div>)}
             {tab === 'response' && e.response && (
               <div className="space-y-2">
                 <HeaderTable rows={e.response.headers} />
                 <pre className="max-h-64 overflow-auto rounded-md bg-app p-3 font-mono text-xs whitespace-pre-wrap">
-                  {e.response.body ?? `(binario, ${formatBytes(e.response.size.body)})`}
+                  {e.response.body ?? t("(binario, {0})", [formatBytes(e.response.size.body)])}
                 </pre>
               </div>
             )}

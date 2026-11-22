@@ -18,9 +18,14 @@ const CLASS_CALLS = new Set(['cx', 'clsx'])
 
 const SPANISH = /[áéíóúñü¿¡«»]/i
 
+/** Cosas que nunca se traducen: HTML, cabeceras, código, rutas… */
+const TECHNICAL = [/<\/?[a-z]+[\s>{]/i, /="/, /^x-[a-z-]+/, /^pm\.\w+/, /^:[a-z]+$/, /^curl\b/, /^cartero run$/, /^Authorization: /, /^\/[\w/-]*\/?$/, /^Enter$/]
+const isTechnical = (s: string) => TECHNICAL.some((r) => r.test(s.trim()))
+
 /** ¿Parece texto para personas? */
 function isNL(raw: string, strict = false): boolean {
   const s = raw.trim()
+  if (isTechnical(s)) return false
   if (s.length < 2 || !/[a-záéíóúñ]/i.test(s)) return false
   if (s.startsWith('/') || s.startsWith('#') || s.startsWith('.') || s.startsWith('@')) return false
   if (/:\/\//.test(s) && !/\s/.test(s)) return false
@@ -38,9 +43,13 @@ function insideT(node: Node): boolean {
   return !!call && call.getExpression().getText() === 't'
 }
 
+/** Atributo JSX que contiene el nodo, solo si no hay un elemento JSX en medio (si lo hay, es contenido). */
 function attrName(node: Node): string | undefined {
-  const attr = node.getFirstAncestorByKind(SyntaxKind.JsxAttribute)
-  return attr?.getNameNode().getText()
+  for (const a of node.getAncestors()) {
+    if (Node.isJsxAttribute(a)) return a.getNameNode().getText()
+    if (Node.isJsxElement(a) || Node.isJsxSelfClosingElement(a) || Node.isJsxFragment(a)) return undefined
+  }
+  return undefined
 }
 
 /** Sube por condicionales/paréntesis/|| hasta el contexto real. */
@@ -56,8 +65,10 @@ function context(node: Node): Node | undefined {
   return p
 }
 
+const insideTj = (node: Node) => node.getAncestors().some((a) => Node.isCallExpression(a) && a.getExpression().getText() === 'tj')
+
 function shouldWrap(node: StringLiteral | NoSubstitutionTemplateLiteral | TemplateExpression, text: string): boolean {
-  if (insideT(node)) return false
+  if (insideT(node) || insideTj(node)) return false
   const ctx = context(node)
   if (!ctx) return false
   if (Node.isImportDeclaration(ctx) || Node.isExportDeclaration(ctx) || Node.isLiteralTypeNode(ctx) || Node.isCaseClause(ctx)) return false
@@ -93,6 +104,25 @@ const lit = (s: string) => JSON.stringify(s)
 let total = 0
 const changedFiles: string[] = []
 
+// 0) Las variables locales llamadas «t» taparían la función t(): se renombran (respetando el ámbito)
+let renamed = 0
+for (const sf of project.getSourceFiles()) {
+  if (SKIP_FILES.some((r) => r.test(sf.getFilePath()))) continue
+  const decls = [
+    ...sf.getDescendantsOfKind(SyntaxKind.Parameter),
+    ...sf.getDescendantsOfKind(SyntaxKind.VariableDeclaration),
+    ...sf.getDescendantsOfKind(SyntaxKind.BindingElement),
+  ]
+  for (const d of decls) {
+    const name = (d as any).getNameNode?.()
+    if (name && Node.isIdentifier(name) && name.getText() === 't') {
+      if (!DRY) name.rename('tItem')
+      renamed++
+    }
+  }
+}
+console.log(`${renamed} variables «t» locales renombradas`)
+
 for (const sf of project.getSourceFiles()) {
   const path = sf.getFilePath()
   if (SKIP_FILES.some((r) => r.test(path))) continue
@@ -103,7 +133,7 @@ for (const sf of project.getSourceFiles()) {
     const raw = jt.getText()
     const trimmed = raw.replace(/\s+/g, ' ').trim()
     if (!trimmed || !/[a-záéíóúñ]/i.test(trimmed)) continue
-    if (/^[A-Z0-9_\-+./]+$/.test(trimmed)) continue
+    if (/^[A-Z0-9_\-+./]+$/.test(trimmed) || isTechnical(trimmed) || insideTj(jt)) continue
     const lead = raw.match(/^\s*/)![0].includes('\n') ? '' : raw.match(/^\s*/)![0] ? ' ' : ''
     const trail = raw.match(/\s*$/)![0].includes('\n') ? '' : raw.match(/\s*$/)![0] ? ' ' : ''
     // Conserva espacios significativos entre elementos
@@ -137,7 +167,7 @@ for (const sf of project.getSourceFiles()) {
       parts.push(`{${i}}${span.getLiteral().getLiteralText()}`)
     })
     const text = parts.join('')
-    const plain = text.replace(/\{\d+\}/g, ' x ')
+    const plain = text.replace(/\{\d+\}/g, ' ')
     if (!shouldWrap(node, plain)) continue
     if (!isNL(plain)) continue
     if (!DRY) node.replaceWithText(`t(${lit(text)}, [${exprs.join(', ')}])`)
@@ -155,6 +185,33 @@ for (const sf of project.getSourceFiles()) {
     }
   }
 }
+
+// 4) Autolimpieza: t('técnico') → texto tal cual
+let unwrapped = 0
+for (const sf of project.getSourceFiles()) {
+  if (SKIP_FILES.some((r) => r.test(sf.getFilePath()))) continue
+  for (const call of sf.getDescendantsOfKind(SyntaxKind.CallExpression).reverse()) {
+    if (call.wasForgotten() || call.getExpression().getText() !== 't') continue
+    const [arg, vars] = call.getArguments()
+    if (!arg || !(Node.isStringLiteral(arg) || Node.isNoSubstitutionTemplateLiteral(arg))) continue
+    const key = arg.getLiteralText()
+    const plain = key.replace(/\{\d+\}/g, ' ')
+    if (!isTechnical(key) && /[a-záéíóúñ]/i.test(plain) && !(/^\s*$/.test(plain.replace(/[^a-záéíóúñ]/gi, '')))) continue
+    // Reconstruye el literal o la plantilla original
+    let rep: string
+    if (vars && Node.isArrayLiteralExpression(vars)) {
+      const exprs = vars.getElements().map((e) => e.getText())
+      rep = '`' + key.replace(/`/g, '\\`').replace(/\{(\d+)\}/g, (_m, i) => '${' + exprs[Number(i)] + '}') + '`'
+    } else rep = JSON.stringify(key)
+    const parent = call.getParent()
+    const isChild = parent && Node.isJsxExpression(parent) && parent.getParent() && !Node.isJsxAttribute(parent.getParent()!)
+    if (isChild && /^[\w .:\-+/…]+$/.test(key) && !vars) {
+      if (!DRY) parent!.replaceWithText(key)
+    } else if (!DRY) call.replaceWithText(rep)
+    unwrapped++
+  }
+}
+console.log(`${unwrapped} t() técnicos deshechos`)
 
 console.log(changedFiles.join('\n'))
 console.log(`${DRY ? '[dry] ' : ''}${total} textos en ${changedFiles.length} ficheros`)

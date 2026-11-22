@@ -1,7 +1,7 @@
 /**
  * Datos de demostración con APIs públicas reales, reversibles.
  *
- *   pnpm --filter @cartero/server demo seed   --email tu@email.com
+ *   pnpm --filter @cartero/server demo seed   --email tu@email.com [--lang en]
  *   pnpm --filter @cartero/server demo revert --email tu@email.com
  */
 import { sqlClient } from '../db/index.js'
@@ -15,7 +15,8 @@ if (!['seed', 'revert'].includes(cmd) || !rest.includes('--email') || !email) {
 }
 try {
   if (cmd === 'seed') {
-    await seedDemo(email)
+    const lang = rest.includes('--lang') && rest[rest.indexOf('--lang') + 1] === 'en' ? 'en' : 'es'
+    await seedDemo(email, console.log, lang)
     console.log(`Para deshacerlo: pnpm --filter @cartero/server demo revert --email ${email}`)
   } else await revertDemo(email)
 } catch {

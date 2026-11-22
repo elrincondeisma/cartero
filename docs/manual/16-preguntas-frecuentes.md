@@ -30,5 +30,8 @@ Sí: panel de comentarios y cambios de la petición, o **Actividad** de la colec
 **¿Cómo quito los datos de ejemplo?**
 **Ajustes → Workspace → Datos de ejemplo → Quitar datos de ejemplo**.
 
+**¿Cómo cambio el idioma?**
+Desde el menú de tu cuenta (arriba a la derecha) o en **Ajustes → Mi perfil → Idioma de la interfaz**.
+
 **¿Es seguro conectar un asistente de IA?**
 Usa un token propio que puedes revocar, actúa con tus permisos, no puede borrar nada y nunca ve los secretos. Ver [Conectar asistentes de IA](13-ia-mcp.md).

@@ -45,7 +45,7 @@ export const useUi = create<UiState>()(
       setResponseHeight: (responseHeight) => set({ responseHeight }),
       toggleExpanded: (id, value) => set({ expanded: { ...get().expanded, [id]: value ?? !get().expanded[id] } }),
     }),
-    { name: 'cartero-ui', partialize: (s) => ({ section: s.section, activeEnv: s.activeEnv, sidebarWidth: s.sidebarWidth, responseHeight: s.responseHeight, expanded: s.expanded }) },
+    { name: 'cartero-ui', partialize: (s) => ({ section: s.section, settingsTab: s.settingsTab, activeEnv: s.activeEnv, sidebarWidth: s.sidebarWidth, responseHeight: s.responseHeight, expanded: s.expanded }) },
   ),
 )
 

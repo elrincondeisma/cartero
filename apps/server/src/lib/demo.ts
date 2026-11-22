@@ -11,6 +11,7 @@ import { and, eq, inArray, like } from 'drizzle-orm'
 import { config } from '../config.js'
 import { db, schema } from '../db/index.js'
 import { randomToken, sha256 } from '../lib/crypto.js'
+import { demoTranslator } from './demo-en.js'
 
 export const WORKSPACE_NAME = 'Demo Cartero'
 const DEMO_DOMAIN = '@demo.cartero.local'
@@ -413,7 +414,7 @@ async function waitRun(call: ReturnType<typeof client>, runId: string) {
 }
 
 /** Ejecuta cada petición y guarda su respuesta real como ejemplo. */
-async function saveRealExamples(call: ReturnType<typeof client>, ws: string, collectionId: string, environmentId?: string) {
+async function saveRealExamples(call: ReturnType<typeof client>, ws: string, collectionId: string, environmentId?: string, tr: <T>(v: T) => T = (v) => v) {
   const col = await call('GET', `/api/collections/${collectionId}`)
   let n = 0
   for (const row of col.items.filter((i: Json) => i.type === 'request')) {
@@ -422,7 +423,7 @@ async function saveRealExamples(call: ReturnType<typeof client>, ws: string, col
     const res = r.execution?.response
     if (!res || res.body === undefined) continue
     const example = {
-      name: `${res.code} ${res.status} (respuesta real)`,
+      name: tr(`${res.code} ${res.status} (respuesta real)`),
       originalRequest: row.data.request,
       status: res.status,
       code: res.code,
@@ -439,7 +440,9 @@ async function saveRealExamples(call: ReturnType<typeof client>, ws: string, col
   return n
 }
 
-export async function seedDemo(email: string, log: (s: string) => void = console.log): Promise<{ workspaceId: string }> {
+export async function seedDemo(email: string, log: (s: string) => void = console.log, lang: 'es' | 'en' = 'es'): Promise<{ workspaceId: string }> {
+  const tr = demoTranslator(lang)
+  const L = (es: string, en: string) => (lang === 'en' ? en : es)
   const MANIFEST = manifestPath(email)
   const user = await findUser(email)
   const existing = await db
@@ -457,13 +460,13 @@ export async function seedDemo(email: string, log: (s: string) => void = console
   try {
     const ws = (await call('POST', '/api/workspaces', { name: WORKSPACE_NAME })).id
     manifest.workspaceId = ws
-    step(`Workspace «${WORKSPACE_NAME}»`)
+    step(L(`Workspace «${WORKSPACE_NAME}»`, `“${WORKSPACE_NAME}” workspace`))
 
     // Globales y entornos
-    await call('PUT', `/api/workspaces/${ws}/globals`, [
-      { key: 'idioma', value: 'es' },
+    await call('PUT', `/api/workspaces/${ws}/globals`, tr([
+      { key: 'idioma', value: lang },
       { key: 'appNombre', value: 'Cartero Demo' },
-    ])
+    ]))
     const envs: Record<string, string> = {}
     for (const [name, values] of [
       ['Madrid', [{ key: 'ciudad', value: 'Madrid' }]],
@@ -479,65 +482,65 @@ export async function seedDemo(email: string, log: (s: string) => void = console
         ],
       ],
     ] as const) {
-      envs[name] = (await call('POST', `/api/workspaces/${ws}/environments`, { name, values })).id
+      envs[name] = (await call('POST', `/api/workspaces/${ws}/environments`, tr({ name, values }))).id
     }
-    step('Globales y 4 entornos (las credenciales de httpbin, cifradas)')
+    step(L('Globales y 4 entornos (las credenciales de httpbin, cifradas)', 'Globals and 4 environments (httpbin credentials encrypted)'))
 
     // Colecciones: importadas en distintos formatos
     const imp = async (text: string) => (await call('POST', `/api/workspaces/${ws}/import`, { text })).collections[0].id
     const ids: Record<string, string> = {}
-    ids.blog = await imp(JSON.stringify(blog))
-    ids.httpbin = await imp(JSON.stringify(httpbin))
-    ids.clima = await imp(JSON.stringify(clima))
-    ids.poke = await imp(JSON.stringify(pokeapi))
-    ids.paises = await imp(JSON.stringify(paises))
-    step('5 colecciones importadas (formato Postman v2.1)')
+    ids.blog = await imp(JSON.stringify(tr(blog)))
+    ids.httpbin = await imp(JSON.stringify(tr(httpbin)))
+    ids.clima = await imp(JSON.stringify(tr(clima)))
+    ids.poke = await imp(JSON.stringify(tr(pokeapi)))
+    ids.paises = await imp(JSON.stringify(tr(paises)))
+    step(L('5 colecciones importadas (formato Postman v2.1)', '5 collections imported (Postman v2.1 format)'))
 
     const petstore = await call('POST', `/api/workspaces/${ws}/import`, { url: 'https://petstore3.swagger.io/api/v3/openapi.json' })
     ids.petstore = petstore.collections[0].id
     const pet = await call('GET', `/api/collections/${ids.petstore}`)
     await call('PATCH', `/api/collections/${ids.petstore}`, {
-      name: 'Petstore — importada de OpenAPI',
+      name: tr('Petstore — importada de OpenAPI'),
       data: {
-        description: 'Importada directamente de la especificación OpenAPI 3 publicada en https://petstore3.swagger.io/api/v3/openapi.json',
+        description: tr('Importada directamente de la especificación OpenAPI 3 publicada en https://petstore3.swagger.io/api/v3/openapi.json'),
         variable: (pet.data.variable ?? []).map((v: Json) => (v.key === 'baseUrl' ? { ...v, value: 'https://petstore3.swagger.io/api/v3' } : v)),
       },
     })
-    step('Petstore importada desde su URL de OpenAPI')
+    step(L('Petstore importada desde su URL de OpenAPI', 'Petstore imported from its OpenAPI URL'))
 
     const gh = await call('POST', `/api/workspaces/${ws}/import`, {
       text: `curl -H 'Accept: application/vnd.github+json' -H 'X-GitHub-Api-Version: 2022-11-28' https://api.github.com/repos/postmanlabs/postman-runtime`,
     })
     ids.github = gh.collections[0].id
-    await call('PATCH', `/api/collections/${ids.github}`, { name: 'GitHub — importada de cURL' })
+    await call('PATCH', `/api/collections/${ids.github}`, { name: tr('GitHub — importada de cURL') })
     const ghCol = await call('GET', `/api/collections/${ids.github}`)
     const ghItem = ghCol.items[0]
     await call('PATCH', `/api/items/${ghItem.id}`, {
-      name: 'Repositorio postman-runtime',
-      data: { ...ghItem.data, event: test(`const r = pm.response.json();\npm.test('Repo público', () => pm.expect(r.private).to.be.false);\nconsole.log(r.full_name, '⭐', r.stargazers_count);`) },
+      name: tr('Repositorio postman-runtime'),
+      data: { ...ghItem.data, event: tr(test(`const r = pm.response.json();\npm.test('Repo público', () => pm.expect(r.private).to.be.false);\nconsole.log(r.full_name, '⭐', r.stargazers_count);`)) },
       version: ghItem.version,
     })
-    step('GitHub importada desde un comando cURL')
+    step(L('GitHub importada desde un comando cURL', 'GitHub imported from a cURL command'))
 
     // Ejemplos reales (alimentan el mock y la documentación)
     let examples = 0
-    examples += await saveRealExamples(call, ws, ids.blog)
-    examples += await saveRealExamples(call, ws, ids.clima, envs.Madrid)
-    examples += await saveRealExamples(call, ws, ids.poke)
+    examples += await saveRealExamples(call, ws, ids.blog, undefined, tr)
+    examples += await saveRealExamples(call, ws, ids.clima, envs.Madrid, tr)
+    examples += await saveRealExamples(call, ws, ids.poke, undefined, tr)
     // Un 404 manual para enseñar x-mock-response-code
     const blogCol = await call('GET', `/api/collections/${ids.blog}`)
-    const getPost = blogCol.items.find((i: Json) => i.name === 'Obtener post')
+    const getPost = blogCol.items.find((i: Json) => i.name === tr('Obtener post'))
     await call('PATCH', `/api/items/${getPost.id}`, {
       data: {
         ...getPost.data,
         response: [
           ...(getPost.data.response ?? []),
-          { name: 'Post no encontrado', code: 404, status: 'Not Found', originalRequest: getPost.data.request, header: jsonHeader, body: '{\n  "error": "Post no encontrado"\n}' },
+          tr({ name: 'Post no encontrado', code: 404, status: 'Not Found', originalRequest: getPost.data.request, header: jsonHeader, body: '{\n  "error": "Post no encontrado"\n}' }),
         ],
       },
       version: getPost.version,
     })
-    step(`${examples + 1} ejemplos guardados a partir de respuestas reales`)
+    step(L(`${examples + 1} ejemplos guardados a partir de respuestas reales`, `${examples + 1} examples saved from real responses`))
 
     // Runs: uno por colección y uno con datos (varias ciudades)
     const runs = [
@@ -548,54 +551,54 @@ export async function seedDemo(email: string, log: (s: string) => void = console
       await call('POST', `/api/collections/${ids.github}/runs`, {}),
       await call('POST', `/api/collections/${ids.clima}/runs`, {
         environmentId: envs.Madrid,
-        data: [{ ciudad: 'Madrid' }, { ciudad: 'Sevilla' }, { ciudad: 'Bilbao' }, { ciudad: 'Tokio' }, { ciudad: 'Buenos Aires' }],
+        data: (lang === 'en' ? ['Madrid', 'Seville', 'Bilbao', 'Tokyo', 'Buenos Aires'].map((city) => ({ city })) : ['Madrid', 'Sevilla', 'Bilbao', 'Tokio', 'Buenos Aires'].map((ciudad) => ({ ciudad }))),
         persistVariables: false,
       }),
     ]
     for (const r of runs) {
       const run = await waitRun(call, r.runId)
-      step(`Run «${run.name}»: ${run.status} (${run.stats.assertions - run.stats.failedAssertions}/${run.stats.assertions} tests)`)
+      step(L(`Run «${run.name}»: ${run.status} (${run.stats.assertions - run.stats.failedAssertions}/${run.stats.assertions} tests)`, `Run “${run.name}”: ${run.status} (${run.stats.assertions - run.stats.failedAssertions}/${run.stats.assertions} tests)`))
     }
 
     // Mock server
-    const mock = await call('POST', `/api/workspaces/${ws}/mocks`, { collectionId: ids.blog, name: 'Mock del blog', delayMs: 150 })
+    const mock = await call('POST', `/api/workspaces/${ws}/mocks`, { collectionId: ids.blog, name: tr('Mock del blog'), delayMs: 150 })
     for (const [p, headers] of [
       ['/posts', {}],
       ['/posts/1', {}],
       ['/posts/1', { 'x-mock-response-code': '404' }],
       ['/users/7', {}],
       ['/posts/1/comments', {}],
-      ['/no-existe', {}],
+      [L('/no-existe', '/does-not-exist'), {}],
     ] as const) {
       await fetch(`${API}/mock/${mock.slug}${p}`, { headers })
     }
     await fetch(`${API}/mock/${mock.slug}/posts`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{"title":"hola"}' })
-    step(`Mock server en ${config.publicUrl}/mock/${mock.slug}`)
+    step(L(`Mock server en ${config.publicUrl}/mock/${mock.slug}`, `Mock server at ${config.publicUrl}/mock/${mock.slug}`))
 
     // Documentación publicada
     const suffix = randomToken(3).toLowerCase().replace(/[^a-z0-9]/g, 'x')
     const docBlog = await call('PUT', `/api/collections/${ids.blog}/docs`, { slug: `blog-demo-${suffix}`, published: true })
     const docClima = await call('PUT', `/api/collections/${ids.clima}/docs`, { slug: `clima-demo-${suffix}`, published: true, environmentId: envs.Madrid })
-    step(`Documentación: ${config.publicUrl}/docs/${docBlog.slug} y /docs/${docClima.slug}`)
+    step(L(`Documentación: ${config.publicUrl}/docs/${docBlog.slug} y /docs/${docClima.slug}`, `Docs: ${config.publicUrl}/docs/${docBlog.slug} and /docs/${docClima.slug}`))
 
     // Monitores (se ejecutan de verdad; uno se lanza ya para tener historial)
     const m1 = await call('POST', `/api/workspaces/${ws}/monitors`, {
       collectionId: ids.httpbin,
       environmentId: envs['httpbin (credenciales)'],
-      name: 'Salud de httpbin',
+      name: tr('Salud de httpbin'),
       cron: '0 * * * *',
       timezone: 'Europe/Madrid',
     })
     const m2 = await call('POST', `/api/workspaces/${ws}/monitors`, {
       collectionId: ids.clima,
       environmentId: envs.Madrid,
-      name: 'El tiempo en Madrid',
+      name: tr('El tiempo en Madrid'),
       cron: '0 8 * * *',
       timezone: 'Europe/Madrid',
     })
     await call('POST', `/api/monitors/${m1.id}/run`)
     await call('POST', `/api/monitors/${m2.id}/run`)
-    step('2 monitores (cada hora y cada día a las 8:00, Europa/Madrid)')
+    step(L('2 monitores (cada hora y cada día a las 8:00, Europa/Madrid)', '2 monitors (hourly and daily at 8:00, Europe/Madrid)'))
 
     // Colaboración: una compañera de demo
     const lauraEmail = `laura-${randomToken(4).toLowerCase().replace(/[^a-z0-9]/g, 'x')}${DEMO_DOMAIN}`
@@ -603,7 +606,7 @@ export async function seedDemo(email: string, log: (s: string) => void = console
     const reg = await fetch(`${API}/api/auth/register`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ email: lauraEmail, name: 'Laura Martín (demo)', password: randomToken(16), invitation: inv.link.split('/').pop() }),
+      body: JSON.stringify({ email: lauraEmail, name: 'Laura Martín (demo)', password: randomToken(16), invitation: inv.link.split('/').pop(), lang }),
     })
     if (!reg.ok) throw new Error(`No se pudo crear la usuaria de demo: ${await reg.text()}`)
     const cookie = reg.headers.get('set-cookie')!.split(';')[0]
@@ -614,27 +617,27 @@ export async function seedDemo(email: string, log: (s: string) => void = console
     manifest.demoWorkspaces = (await laura('GET', '/api/workspaces')).filter((w: Json) => w.type === 'personal').map((w: Json) => w.id)
 
     const blog2 = await call('GET', `/api/collections/${ids.blog}`)
-    const crear = blog2.items.find((i: Json) => i.name === 'Crear post')
-    const listar = blog2.items.find((i: Json) => i.name === 'Listar posts')
-    await laura('POST', `/api/collections/${ids.blog}/comments`, { itemId: crear.id, body: '¿Validamos también que el título no venga vacío? En producción nos ha pasado.' })
-    await call('POST', `/api/collections/${ids.blog}/comments`, { itemId: crear.id, body: 'Buena idea, lo añado al test. 👍' })
-    await laura('POST', `/api/collections/${ids.blog}/comments`, { itemId: listar.id, body: 'He subido el límite de tiempo a 3 s en la colección, que JSONPlaceholder a veces va lento.' })
+    const crear = blog2.items.find((i: Json) => i.name === tr('Crear post'))
+    const listar = blog2.items.find((i: Json) => i.name === tr('Listar posts'))
+    await laura('POST', `/api/collections/${ids.blog}/comments`, { itemId: crear.id, body: tr('¿Validamos también que el título no venga vacío? En producción nos ha pasado.') })
+    await call('POST', `/api/collections/${ids.blog}/comments`, { itemId: crear.id, body: tr('Buena idea, lo añado al test. 👍') })
+    await laura('POST', `/api/collections/${ids.blog}/comments`, { itemId: listar.id, body: tr('He subido el límite de tiempo a 3 s en la colección, que JSONPlaceholder a veces va lento.') })
     // Laura edita una petición (queda en el historial de cambios)
     await laura('PATCH', `/api/items/${listar.id}`, {
-      data: { ...listar.data, request: { ...listar.data.request, header: [{ key: 'Accept', value: 'application/json', description: 'Añadido por Laura' }] } },
+      data: { ...listar.data, request: { ...listar.data.request, header: [{ key: 'Accept', value: 'application/json', description: tr('Añadido por Laura') }] } },
       version: listar.version,
     })
     // …y crea un fork para probar cambios sin tocar la original
-    const fork = await laura('POST', `/api/collections/${ids.blog}/fork`, { workspaceId: ws, name: 'Blog — fork de Laura' })
+    const fork = await laura('POST', `/api/collections/${ids.blog}/fork`, { workspaceId: ws, name: tr('Blog — fork de Laura') })
     const forkCol = await laura('GET', `/api/collections/${fork.id}`)
     const folder = forkCol.items.find((i: Json) => i.name === 'Posts')
     await laura('POST', `/api/collections/${fork.id}/items`, {
       type: 'request',
-      name: 'Buscar posts por usuario',
+      name: tr('Buscar posts por usuario'),
       parentId: folder.id,
       data: { request: { method: 'GET', header: [], url: { raw: '{{baseUrl}}/posts?userId=2', host: ['{{baseUrl}}'], path: ['posts'], query: [{ key: 'userId', value: '2' }] } } },
     })
-    step('Colaboradora de demo (Laura): comentarios, un cambio y un fork')
+    step(L('Colaboradora de demo (Laura): comentarios, un cambio y un fork', 'Demo teammate (Laura): comments, a change and a fork'))
 
     manifest.collections = ids
     manifest.environments = envs

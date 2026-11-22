@@ -1,5 +1,6 @@
 import { createContext, useContext } from 'react'
 import type { Role, Workspace } from '@/api/types'
+import { t } from "@/i18n";
 
 export interface WorkspaceCtx {
   ws: string
@@ -14,6 +15,6 @@ export const WorkspaceContext = createContext<WorkspaceCtx | null>(null)
 
 export function useWs(): WorkspaceCtx {
   const ctx = useContext(WorkspaceContext)
-  if (!ctx) throw new Error('useWs fuera de WorkspaceContext')
+  if (!ctx) throw new Error(t("useWs fuera de WorkspaceContext"))
   return ctx
 }

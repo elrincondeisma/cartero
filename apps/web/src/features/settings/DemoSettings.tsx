@@ -8,6 +8,7 @@ import { qk } from '@/api/hooks'
 import { confirm } from '@/components/dialogs'
 import { Button } from '@/components/ui'
 import { useDemoLoader } from '../onboarding/Welcome'
+import { t } from "@/i18n";
 
 /** Cargar o quitar el workspace de ejemplo con APIs públicas reales. */
 export function DemoSettings() {
@@ -21,16 +22,13 @@ export function DemoSettings() {
 
   return (
     <section className="mb-10">
-      <h3 className="text-[15px] font-semibold">Datos de ejemplo</h3>
+      <h3 className="text-[15px] font-semibold">{t("Datos de ejemplo")}</h3>
       <p className="mt-0.5 mb-4 text-muted">
-        Un workspace «Demo Cartero» con APIs públicas reales (JSONPlaceholder, httpbin, Open-Meteo, PokeAPI, GraphQL, Petstore, GitHub): tests, entornos, ejemplos, un mock, monitores, documentación
-        publicada y una compañera de demo con comentarios. Se quita entero con un clic.
-      </p>
+        {t("Un workspace «Demo Cartero» con APIs públicas reales (JSONPlaceholder, httpbin, Open-Meteo, PokeAPI, GraphQL, Petstore, GitHub): tests, entornos, ejemplos, un mock, monitores, documentación publicada y una compañera de demo con comentarios. Se quita entero con un clic.")}</p>
       {loading ? (
         <div className="rounded-lg border border-app p-4">
           <div className="mb-2 flex items-center gap-2 font-medium">
-            <Loader2 className="size-4 animate-spin text-brand-600" /> Cargando…
-          </div>
+            <Loader2 className="size-4 animate-spin text-brand-600" /> {t("Cargando…")}</div>
           <ul className="space-y-1 text-xs text-muted">
             {demo.status?.log.map((l) => (
               <li key={l} className="flex gap-1.5">
@@ -43,20 +41,19 @@ export function DemoSettings() {
       ) : exists ? (
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => nav(`/w/${data.workspaceId}`)}>
-            Ir al workspace de ejemplo
-          </Button>
+            {t("Ir al workspace de ejemplo")}</Button>
           <Button
             variant="ghost"
             icon={<Trash2 className="size-3.5" />}
             loading={removing}
             onClick={async () => {
-              if (!(await confirm('Quitar los datos de ejemplo', 'Se borrará el workspace «Demo Cartero» con todo su contenido (y la usuaria de demo). Tus otros workspaces no se tocan.', { confirm: 'Quitar', danger: true }))) return
+              if (!(await confirm(t("Quitar los datos de ejemplo"), t("Se borrará el workspace «Demo Cartero» con todo su contenido (y la usuaria de demo). Tus otros workspaces no se tocan."), { confirm: t("Quitar"), danger: true }))) return
               setRemoving(true)
               try {
                 await api.del('/api/demo')
                 await qc.invalidateQueries({ queryKey: qk.workspaces })
                 await refetch()
-                toast.success('Datos de ejemplo eliminados')
+                toast.success(t("Datos de ejemplo eliminados"))
                 nav('/')
               } catch (e) {
                 toast.error((e as Error).message)
@@ -65,8 +62,7 @@ export function DemoSettings() {
               }
             }}
           >
-            Quitar datos de ejemplo
-          </Button>
+            {t("Quitar datos de ejemplo")}</Button>
         </div>
       ) : (
         <Button
@@ -76,15 +72,14 @@ export function DemoSettings() {
             try {
               const ws = await demo.start()
               await refetch()
-              toast.success('Datos de ejemplo cargados')
+              toast.success(t("Datos de ejemplo cargados"))
               nav(`/w/${ws}`)
             } catch (e) {
               toast.error((e as Error).message)
             }
           }}
         >
-          Cargar datos de ejemplo
-        </Button>
+          {t("Cargar datos de ejemplo")}</Button>
       )}
     </section>
   )

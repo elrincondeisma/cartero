@@ -12,6 +12,7 @@ const registerBody = z.object({
   name: z.string().min(1).max(100),
   password: z.string().min(8).max(200),
   invitation: z.string().optional(),
+  lang: z.enum(['es', 'en']).optional(),
 })
 
 const loginBody = z.object({ email: z.string().email(), password: z.string().min(1) })
@@ -47,9 +48,12 @@ export async function authRoutes(app: FastifyInstance) {
     const user = await db.transaction(async (tx) => {
       const [u] = await tx
         .insert(schema.users)
-        .values({ email, name: body.name, passwordHash: await hashPassword(body.password) })
+        .values({ email, name: body.name, passwordHash: await hashPassword(body.password), settings: body.lang ? { lang: body.lang } : {} })
         .returning()
-      const [ws] = await tx.insert(schema.workspaces).values({ name: 'Mi workspace', type: 'personal' }).returning()
+      const [ws] = await tx
+        .insert(schema.workspaces)
+        .values({ name: body.lang === 'en' ? 'My workspace' : 'Mi workspace', type: 'personal' })
+        .returning()
       await tx.insert(schema.members).values({ workspaceId: ws.id, userId: u.id, role: 'owner' })
       return u
     })

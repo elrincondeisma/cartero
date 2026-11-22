@@ -1,16 +1,26 @@
 ---
 import { Image } from 'astro:assets'
 import { getRelativeLocaleUrl } from 'astro:i18n'
-import collab from '../assets/screens/collab.png'
-import docs from '../assets/screens/docs.png'
-import mcp from '../assets/screens/mcp.png'
-import mocks from '../assets/screens/mocks.png'
-import monitors from '../assets/screens/monitors.png'
-import palette from '../assets/screens/palette.png'
-import requestDark from '../assets/screens/request-dark.png'
-import requestLight from '../assets/screens/request-light.png'
-import runner from '../assets/screens/runner.png'
-import scripts from '../assets/screens/scripts.png'
+import collabEs from '../assets/screens/collab.png'
+import collabEn from '../assets/screens/en/collab.png'
+import docsEs from '../assets/screens/docs.png'
+import docsEn from '../assets/screens/en/docs.png'
+import mcpEs from '../assets/screens/mcp.png'
+import mcpEn from '../assets/screens/en/mcp.png'
+import mocksEs from '../assets/screens/mocks.png'
+import mocksEn from '../assets/screens/en/mocks.png'
+import monitorsEs from '../assets/screens/monitors.png'
+import monitorsEn from '../assets/screens/en/monitors.png'
+import paletteEs from '../assets/screens/palette.png'
+import paletteEn from '../assets/screens/en/palette.png'
+import requestDarkEs from '../assets/screens/request-dark.png'
+import requestDarkEn from '../assets/screens/en/request-dark.png'
+import requestLightEs from '../assets/screens/request-light.png'
+import requestLightEn from '../assets/screens/en/request-light.png'
+import runnerEs from '../assets/screens/runner.png'
+import runnerEn from '../assets/screens/en/runner.png'
+import scriptsEs from '../assets/screens/scripts.png'
+import scriptsEn from '../assets/screens/en/scripts.png'
 import { type Lang, REPO_URL, languages, ui } from '../i18n/ui'
 import Icon from './Icon.astro'
 import Logo from './Logo.astro'
@@ -19,7 +29,10 @@ interface Props { lang: Lang }
 const { lang } = Astro.props
 const t = ui[lang]
 const other: Lang = lang === 'es' ? 'en' : 'es'
-const shots: Record<string, ImageMetadata> = { scripts, runner, mocks, monitors, collab, docs }
+const S = lang === 'en'
+  ? { scripts: scriptsEn, runner: runnerEn, mocks: mocksEn, monitors: monitorsEn, collab: collabEn, docs: docsEn, mcp: mcpEn, palette: paletteEn, requestLight: requestLightEn, requestDark: requestDarkEn }
+  : { scripts: scriptsEs, runner: runnerEs, mocks: mocksEs, monitors: monitorsEs, collab: collabEs, docs: docsEs, mcp: mcpEs, palette: paletteEs, requestLight: requestLightEs, requestDark: requestDarkEs }
+const shots: Record<string, ImageMetadata> = S
 const manualUrl = `${REPO_URL}/tree/main/docs/manual`
 
 const install = `git clone ${REPO_URL}.git cartero && cd cartero
@@ -101,8 +114,8 @@ const stack = ['TypeScript', 'React 19', 'Fastify', 'PostgreSQL', 'Redis', 'post
           <div class="flex items-center gap-1.5 px-2 pt-1 pb-2.5">
             <span class="size-2.5 rounded-full bg-zinc-700"></span><span class="size-2.5 rounded-full bg-zinc-700"></span><span class="size-2.5 rounded-full bg-zinc-700"></span>
           </div>
-          <Image src={requestLight} alt={t.hero.alt} widths={[800, 1440, 2160]} sizes="(max-width: 1200px) 100vw, 1150px" class="light-shot w-full rounded-lg" loading="eager" fetchpriority="high" />
-          <Image src={requestDark} alt={t.hero.alt} widths={[800, 1440, 2160]} sizes="(max-width: 1200px) 100vw, 1150px" class="dark-shot w-full rounded-lg" />
+          <Image src={S.requestLight} alt={t.hero.alt} widths={[800, 1440, 2160]} sizes="(max-width: 1200px) 100vw, 1150px" class="light-shot w-full rounded-lg" loading="eager" fetchpriority="high" />
+          <Image src={S.requestDark} alt={t.hero.alt} widths={[800, 1440, 2160]} sizes="(max-width: 1200px) 100vw, 1150px" class="dark-shot w-full rounded-lg" />
         </div>
       </div>
     </div>
@@ -191,7 +204,7 @@ const stack = ['TypeScript', 'React 19', 'Fastify', 'PostgreSQL', 'Redis', 'post
           </div>
           <pre class="code overflow-x-auto p-4 text-zinc-200">{mcpCmd}</pre>
         </div>
-        <Image src={mcp} alt="MCP" widths={[700, 1200]} sizes="(max-width: 1024px) 100vw, 600px" class="w-full rounded-xl border border-white/10 opacity-95" />
+        <Image src={S.mcp} alt="MCP" widths={[700, 1200]} sizes="(max-width: 1024px) 100vw, 600px" class="w-full rounded-xl border border-white/10 opacity-95" />
       </div>
     </div>
   </section>
@@ -199,7 +212,7 @@ const stack = ['TypeScript', 'React 19', 'Fastify', 'PostgreSQL', 'Redis', 'post
   <!-- PALETTE -->
   <section class="py-24">
     <div class="mx-auto grid max-w-7xl items-center gap-12 px-6 lg:grid-cols-[3fr_2fr]">
-      <Image src={palette} alt={t.palette.title} widths={[700, 1200, 1800]} sizes="(max-width: 1024px) 100vw, 720px" class="reveal shot w-full rounded-xl" />
+      <Image src={S.palette} alt={t.palette.title} widths={[700, 1200, 1800]} sizes="(max-width: 1024px) 100vw, 720px" class="reveal shot w-full rounded-xl" />
       <div class="reveal">
         <h2 class="text-3xl font-bold tracking-tight">{t.palette.title}</h2>
         <p class="mt-4 leading-relaxed text-zinc-600">{t.palette.text}</p>

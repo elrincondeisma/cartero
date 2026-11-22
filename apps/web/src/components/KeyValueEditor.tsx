@@ -1,6 +1,7 @@
 import { Trash2 } from 'lucide-react'
 import { Checkbox, cx } from './ui'
 import { VarInput } from './VarInput'
+import { t } from "@/i18n";
 
 export interface KVRow {
   key: string
@@ -19,8 +20,8 @@ export function KeyValueEditor({
   onChange,
   known,
   readOnly,
-  keyPlaceholder = 'Clave',
-  valuePlaceholder = 'Valor',
+  keyPlaceholder = t('Clave'),
+  valuePlaceholder = t('Valor'),
   showDescription = true,
   extraColumn,
   renderValue,
@@ -53,7 +54,7 @@ export function KeyValueEditor({
             <th className="border-l border-app px-2.5 py-1.5 font-medium">{keyPlaceholder}</th>
             {extraColumn && <th className={cx('border-l border-app px-2.5 py-1.5 font-medium', extraColumn.width)}>{extraColumn.header}</th>}
             <th className="border-l border-app px-2.5 py-1.5 font-medium">{valuePlaceholder}</th>
-            {showDescription && <th className="border-l border-app px-2.5 py-1.5 font-medium">Descripción</th>}
+            {showDescription && <th className="border-l border-app px-2.5 py-1.5 font-medium">{t("Descripción")}</th>}
             <th className="w-8" />
           </tr>
         </thead>
@@ -81,13 +82,13 @@ export function KeyValueEditor({
                       value={row.description ?? ''}
                       onChange={(e) => upd({ description: e.target.value || undefined })}
                       className="h-8 w-full bg-transparent px-2.5 outline-none placeholder:text-muted"
-                      placeholder={isNew ? 'Descripción' : ''}
+                      placeholder={isNew ? t("Descripción") : ''}
                     />
                   </td>
                 )}
                 <td className="text-center">
                   {!isNew && !readOnly && (
-                    <button onClick={() => remove(i)} className="invisible rounded p-1 text-muted group-hover:visible hover:text-red-500" aria-label="Eliminar">
+                    <button onClick={() => remove(i)} className="invisible rounded p-1 text-muted group-hover:visible hover:text-red-500" aria-label={t("Eliminar")}>
                       <Trash2 className="size-3.5" />
                     </button>
                   )}

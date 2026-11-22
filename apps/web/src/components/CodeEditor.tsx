@@ -8,6 +8,7 @@ import CssWorker from 'monaco-editor/language/css/css.worker?worker'
 import { useRef } from 'react'
 import { PM_TYPES } from '@/lib/pm-types'
 import { useUi } from '@/store/ui'
+import { t } from "@/i18n";
 
 // Monaco empaquetado localmente (sin CDN): funciona en despliegues sin Internet
 self.MonacoEnvironment = {
@@ -61,7 +62,7 @@ export function CodeEditor({ value, onChange, language = 'plaintext', readOnly, 
         onMount?.(editor, m)
       }}
       onChange={(v) => onChange?.(v ?? '')}
-      loading={<div className="p-3 text-muted">Cargando editor…</div>}
+      loading={<div className="p-3 text-muted">{t("Cargando editor…")}</div>}
       options={{
         readOnly,
         minimap: { enabled: false },

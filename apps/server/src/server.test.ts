@@ -238,6 +238,6 @@ describe('documentación pública', () => {
     const doc = JSON.parse(ok.body)
     expect(doc.collection.info.name).toBe('Demo API')
     const create = doc.collection.item[0].item.find((i: any) => i.name === 'Create user')
-    expect(create.request.auth.basic.find((a: any) => a.key === 'password').value).toBe('<oculto>')
+    expect(create.request.auth.basic.find((a: any) => a.key === 'password').value).toBe('••••••')
   })
 })

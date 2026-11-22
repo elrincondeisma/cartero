@@ -5,6 +5,7 @@ import { CodeEditor } from '@/components/CodeEditor'
 import { KeyValueEditor, type KVRow } from '@/components/KeyValueEditor'
 import { Badge, Button, Empty, Input, cx, statusTone } from '@/components/ui'
 import { languageForContentType } from '@/lib/request'
+import { t } from "@/i18n";
 
 /** Respuestas de ejemplo guardadas: documentan la API y las usan los mock servers. */
 export function ExamplesEditor({ examples, onChange, readOnly }: { examples: ResponseExample[]; onChange: (e: ResponseExample[]) => void; readOnly?: boolean }) {
@@ -14,7 +15,7 @@ export function ExamplesEditor({ examples, onChange, readOnly }: { examples: Res
   const add = () => {
     onChange([
       ...examples,
-      { id: crypto.randomUUID(), name: 'Nuevo ejemplo', code: 200, status: 'OK', header: [{ key: 'Content-Type', value: 'application/json' }], body: '{\n  \n}' },
+      { id: crypto.randomUUID(), name: t("Nuevo ejemplo"), code: 200, status: 'OK', header: [{ key: 'Content-Type', value: 'application/json' }], body: '{\n  \n}' },
     ])
     setSelected(examples.length)
   }
@@ -22,17 +23,15 @@ export function ExamplesEditor({ examples, onChange, readOnly }: { examples: Res
   if (!examples.length)
     return (
       <Empty
-        title="Sin ejemplos"
+        title={t("Sin ejemplos")}
         action={
           !readOnly && (
             <Button icon={<Plus className="size-3.5" />} onClick={add}>
-              Añadir ejemplo
-            </Button>
+              {t("Añadir ejemplo")}</Button>
           )
         }
       >
-        Guarda una respuesta real con el botón de guardar del panel de respuesta, o crea una a mano. Los mock servers responden con estos ejemplos.
-      </Empty>
+        {t("Guarda una respuesta real con el botón de guardar del panel de respuesta, o crea una a mano. Los mock servers responden con estos ejemplos.")}</Empty>
     )
 
   const ct = ex?.header?.find((h) => h.key.toLowerCase() === 'content-type')?.value
@@ -53,8 +52,7 @@ export function ExamplesEditor({ examples, onChange, readOnly }: { examples: Res
         ))}
         {!readOnly && (
           <button onClick={add} className="mt-1 flex w-full items-center gap-1.5 rounded-md px-2 py-1.5 text-xs text-brand-700 hover:bg-muted dark:text-brand-400">
-            <Plus className="size-3.5" /> Añadir ejemplo
-          </button>
+            <Plus className="size-3.5" /> {t("Añadir ejemplo")}</button>
         )}
       </div>
       {ex && (

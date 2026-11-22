@@ -8,6 +8,7 @@ import { CodeEditor } from '@/components/CodeEditor'
 import { Button, Checkbox, Dialog, Select } from '@/components/ui'
 import { useUi } from '@/store/ui'
 import { useWs } from '../workspace/context'
+import { t } from "@/i18n";
 
 interface Lang {
   key: string
@@ -48,8 +49,8 @@ export function SnippetDialog({ open, onOpenChange, request, collectionId }: { o
     <Dialog
       open={open}
       onOpenChange={onOpenChange}
-      title="Código"
-      description="Genera el código equivalente en más de 20 lenguajes."
+      title={t("Código")}
+      description={t("Genera el código equivalente en más de 20 lenguajes.")}
       width="max-w-3xl"
       footer={
         <Button
@@ -57,11 +58,10 @@ export function SnippetDialog({ open, onOpenChange, request, collectionId }: { o
           icon={<Copy className="size-3.5" />}
           onClick={() => {
             navigator.clipboard.writeText(snippet)
-            toast.success('Copiado al portapapeles')
+            toast.success(t("Copiado al portapapeles"))
           }}
         >
-          Copiar
-        </Button>
+          {t("Copiar")}</Button>
       }
     >
       <div className="mb-3 flex flex-wrap items-center gap-2">
@@ -79,7 +79,7 @@ export function SnippetDialog({ open, onOpenChange, request, collectionId }: { o
             ))}
           </Select>
         )}
-        <Checkbox checked={resolve} onChange={setResolve} label="Sustituir variables" className="ml-auto" />
+        <Checkbox checked={resolve} onChange={setResolve} label={t("Sustituir variables")} className="ml-auto" />
       </div>
       <div className="h-[46vh] overflow-hidden rounded-md border border-app">
         {error ? <div className="p-4 text-red-600">{error}</div> : <CodeEditor value={snippet} language={syntax} readOnly />}

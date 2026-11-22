@@ -5,6 +5,8 @@ import {
   ChevronDown,
   Clock,
   FolderTree,
+  Check,
+  Languages,
   LogOut,
   Moon,
   Plus,
@@ -20,6 +22,7 @@ import { toast } from 'sonner'
 import { api } from '@/api/client'
 import { qk, useEnvironments, useMe, useWorkspaces } from '@/api/hooks'
 import { prompt } from '@/components/dialogs'
+import { changeLanguage } from '@/components/LanguageSwitch'
 import { Logo } from '@/components/Logo'
 import { Menu, Select, Spinner, Tooltip, cx } from '@/components/ui'
 import { useRealtime } from '@/lib/realtime'
@@ -39,15 +42,16 @@ import { Welcome } from '../onboarding/Welcome'
 import { CommandPalette, usePalette } from '../palette/CommandPalette'
 import { TabsArea } from './TabsArea'
 import { WorkspaceContext, type WorkspaceCtx, useWs } from './context'
+import { LANGS, hasExplicitLang, lang, setLang, t } from "@/i18n";
 
 const SECTIONS: { id: Section; label: string; icon: React.ReactNode }[] = [
-  { id: 'collections', label: 'Colecciones', icon: <FolderTree /> },
-  { id: 'environments', label: 'Entornos', icon: <Variable /> },
-  { id: 'history', label: 'Historial', icon: <Clock /> },
-  { id: 'runs', label: 'Ejecuciones', icon: <Zap /> },
-  { id: 'mocks', label: 'Mock servers', icon: <Server /> },
-  { id: 'monitors', label: 'Monitores', icon: <Activity /> },
-  { id: 'settings', label: 'Ajustes', icon: <Settings /> },
+  { id: 'collections', label: t("Colecciones"), icon: <FolderTree /> },
+  { id: 'environments', label: t("Entornos"), icon: <Variable /> },
+  { id: 'history', label: t("Historial"), icon: <Clock /> },
+  { id: 'runs', label: t("Ejecuciones"), icon: <Zap /> },
+  { id: 'mocks', label: t("Mock servers"), icon: <Server /> },
+  { id: 'monitors', label: t("Monitores"), icon: <Activity /> },
+  { id: 'settings', label: t("Ajustes"), icon: <Settings /> },
 ]
 
 const FULL_PAGES: Section[] = ['runs', 'mocks', 'monitors', 'settings']
@@ -58,7 +62,7 @@ export function WorkspaceLayout() {
   const { data: workspaces, isLoading } = useWorkspaces()
   const workspace = workspaces?.find((w) => w.id === ws)
   const section = useUi((s) => s.section)
-  const activeTab = useTabs((s) => s.byWs[ws]?.tabs.find((t) => t.key === s.byWs[ws]?.active))
+  const activeTab = useTabs((s) => s.byWs[ws]?.tabs.find((tItem) => tItem.key === s.byWs[ws]?.active))
   const currentItem = activeTab && 'itemId' in activeTab ? activeTab.itemId : undefined
 
   useRealtime(workspace ? ws : '', me?.id, currentItem)
@@ -66,6 +70,11 @@ export function WorkspaceLayout() {
   useEffect(() => {
     if (workspace) localStorage.setItem('cartero-last-ws', ws)
   }, [workspace, ws])
+
+  useEffect(() => {
+    const saved = (me as any)?.settings?.lang
+    if ((saved === 'es' || saved === 'en') && saved !== lang && !hasExplicitLang()) setLang(saved)
+  }, [me])
 
   const ctx = useMemo<WorkspaceCtx | null>(() => {
     if (!workspace || !me) return null
@@ -200,7 +209,7 @@ function TopBar() {
   }, [envs, activeEnv, ws, setActiveEnv])
 
   const createWorkspace = async () => {
-    const name = await prompt('Nuevo workspace', { label: 'Nombre del workspace de equipo', confirm: 'Crear' })
+    const name = await prompt(t("Nuevo workspace"), { label: t("Nombre del workspace de equipo"), confirm: t("Crear") })
     if (!name) return
     const w = await api.post<{ id: string }>('/api/workspaces', { name })
     await qc.invalidateQueries({ queryKey: qk.workspaces })
@@ -232,7 +241,7 @@ function TopBar() {
             onSelect: () => nav(`/w/${w.id}`),
           })),
           'separator' as const,
-          { label: 'Nuevo workspace de equipo', icon: <Plus />, onSelect: createWorkspace },
+          { label: t("Nuevo workspace de equipo"), icon: <Plus />, onSelect: createWorkspace },
         ]}
       />
       <div className="flex-1" />
@@ -242,7 +251,7 @@ function TopBar() {
             .filter((u) => u.id !== me.id)
             .slice(0, 6)
             .map((u) => (
-              <Tooltip key={u.id} content={`${u.name} está conectado`}>
+              <Tooltip key={u.id} content={t("{0} está conectado", [u.name])}>
                 <span
                   className="flex size-6 items-center justify-center rounded-full border-2 border-[var(--bg)] text-[10px] font-semibold text-white"
                   style={{ background: u.color }}
@@ -259,9 +268,9 @@ function TopBar() {
         value={activeEnv}
         onChange={(e) => setActiveEnv(ws, e.target.value || null)}
         className="h-7 w-48 text-xs"
-        aria-label="Entorno activo"
+        aria-label={t("Entorno activo")}
       >
-        <option value="">Sin entorno</option>
+        <option value="">{t("Sin entorno")}</option>
         {envs?.map((e) => (
           <option key={e.id} value={e.id}>
             {e.name}
@@ -270,22 +279,28 @@ function TopBar() {
       </Select>
       <EnvQuickLook />
       </div>
-      <Tooltip content={theme === 'dark' ? 'Tema claro' : 'Tema oscuro'}>
-        <button onClick={toggleTheme} className="rounded-md p-1.5 text-muted hover:bg-muted hover:text-app" aria-label="Cambiar tema">
+      <Tooltip content={theme === 'dark' ? t("Tema claro") : t("Tema oscuro")}>
+        <button onClick={toggleTheme} className="rounded-md p-1.5 text-muted hover:bg-muted hover:text-app" aria-label={t("Cambiar tema")}>
           {theme === 'dark' ? <Sun className="size-4" /> : <Moon className="size-4" />}
         </button>
       </Tooltip>
       <Menu
         trigger={
-          <button className="flex size-7 items-center justify-center rounded-full bg-brand-600 text-[11px] font-semibold text-white" aria-label="Cuenta">
+          <button className="flex size-7 items-center justify-center rounded-full bg-brand-600 text-[11px] font-semibold text-white" aria-label={t("Cuenta")}>
             {initials(me.name)}
           </button>
         }
         items={[
           { label: me.email, onSelect: () => {}, disabled: true },
           'separator',
+          ...LANGS.map((l) => ({
+            label: l.label,
+            icon: l.id === lang ? <Check /> : <Languages />,
+            onSelect: () => void changeLanguage(l.id),
+          })),
+          'separator',
           {
-            label: 'Cerrar sesión',
+            label: t("Cerrar sesión"),
             icon: <LogOut />,
             onSelect: () => logout().catch((e) => toast.error(e.message)),
           },
