@@ -95,6 +95,7 @@ packages/
   mcp/        Servidor MCP (stdio y Streamable HTTP)
 docs/manual/  Manual de uso en inglés; en español, docs/manual/es (también en /ayuda)
 video/        Vídeo promocional (Remotion)
+desktop/      App de escritorio nativa en Rust (GPUI), en desarrollo: mira desktop/README.es.md
 ```
 
 Las peticiones se envían **desde el servidor**. Así no hay problemas de CORS y puedes probar APIs de tu red local. Los scripts de usuario se ejecutan en un proceso hijo con límites de tiempo y memoria.

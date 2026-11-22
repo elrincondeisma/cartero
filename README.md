@@ -95,6 +95,7 @@ packages/
   mcp/        MCP server (stdio and Streamable HTTP)
 docs/manual/  User guide in English; Spanish in docs/manual/es (also served at /ayuda)
 video/        Promo video (Remotion)
+desktop/      Native desktop app in Rust (GPUI), in progress: see desktop/README.md
 ```
 
 Requests are sent **from the server**. That means no CORS problems, and you can test APIs on your local network. User scripts run in a child process with time and memory limits.

@@ -1,0 +1,20 @@
+[package]
+name = "cartero-desktop"
+description = "Cartero: cliente de APIs de escritorio, nativo en Rust"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[[bin]]
+name = "cartero"
+path = "src/main.rs"
+
+[dependencies]
+gpui-kit = { version = "=0.10.0", default-features = false, features = ["component", "assets", "tree-sitter", "tree-sitter-javascript", "tree-sitter-html", "tree-sitter-yaml"] }
+serde_json.workspace = true
+anyhow.workspace = true
+
+[lints]
+workspace = true

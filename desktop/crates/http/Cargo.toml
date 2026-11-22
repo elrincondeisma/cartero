@@ -1,0 +1,25 @@
+[package]
+name = "cartero-http"
+description = "Motor de peticiones HTTP de Cartero, con tiempos por fase"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+tokio.workspace = true
+thiserror.workspace = true
+hyper = { version = "1", features = ["client", "http1", "http2"] }
+hyper-util = { version = "0.1", features = ["tokio"] }
+http-body-util = "0.1"
+bytes = "1"
+http = "1"
+url = "2"
+rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12"] }
+tokio-rustls = { version = "0.26", default-features = false, features = ["ring", "tls12"] }
+webpki-roots = "1"
+hickory-resolver = { version = "0.25", features = ["tokio"] }
+
+[lints]
+workspace = true

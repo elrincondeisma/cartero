@@ -1,0 +1,12 @@
+{
+  "name": "cartero-sandbox-libs",
+  "private": true,
+  "description": "Librerías del sandbox de scripts (las mismas que ofrece Postman), empaquetadas para QuickJS. Genera ../crates/script/assets/sandbox-libs.js",
+  "scripts": { "build": "esbuild entry.js --bundle --format=iife --platform=neutral --target=es2020 --main-fields=browser,module,main --minify --legal-comments=none --outfile=../crates/script/assets/sandbox-libs.js" },
+  "devDependencies": {
+    "esbuild": "0.25.12",
+    "chai": "4.5.0",
+    "lodash": "4.17.21",
+    "crypto-js": "4.2.0"
+  }
+}

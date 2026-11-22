@@ -1,0 +1,17 @@
+[package]
+name = "cartero-script"
+description = "Sandbox de scripts pm.* de Cartero sobre QuickJS"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+rquickjs = { version = "0.10", features = ["bindgen", "classes", "properties", "array-buffer", "macro"] }
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+
+[lints]
+workspace = true
