@@ -2,7 +2,7 @@
 
 use std::rc::Rc;
 
-use gpui_kit::component::button::{Button, ButtonVariants as _};
+use gpui_kit::component::button::Button;
 use gpui_kit::component::menu::{DropdownMenu as _, PopupMenuItem};
 
 use crate::ui::prelude::*;
@@ -34,7 +34,14 @@ pub fn method_label(method: &str, cx: &App) -> impl IntoElement + use<> {
         "OPTIONS" => "OPT".to_string(),
         m => m.to_string(),
     };
-    div().text_xs().font_semibold().text_color(crate::theme::method_color(method, cx)).w(px(38.)).flex_none().whitespace_nowrap().child(short)
+    div()
+        .text_xs()
+        .font_semibold()
+        .text_color(crate::theme::method_color(method, cx))
+        .w(px(38.))
+        .flex_none()
+        .whitespace_nowrap()
+        .child(short)
 }
 
 /// Pantalla vacía con un mensaje y, si se pasa, una acción.

@@ -81,7 +81,11 @@ impl Settings {
             .client_certs
             .iter()
             .filter_map(|c| {
-                Some(ClientCert { host: c.host.clone(), cert_pem: std::fs::read(&c.cert_path).ok()?, key_pem: std::fs::read(&c.key_path).ok()? })
+                Some(ClientCert {
+                    host: c.host.clone(),
+                    cert_pem: std::fs::read(&c.cert_path).ok()?,
+                    key_pem: std::fs::read(&c.key_path).ok()?,
+                })
             })
             .collect();
         Options {

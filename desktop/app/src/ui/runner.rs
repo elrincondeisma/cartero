@@ -40,7 +40,13 @@ pub struct RunnerTab {
 impl EventEmitter<TabEvent> for RunnerTab {}
 
 impl RunnerTab {
-    pub fn new(app: Entity<AppState>, collection_id: String, folder_id: Option<String>, window: &mut Window, cx: &mut Context<Self>) -> Self {
+    pub fn new(
+        app: Entity<AppState>,
+        collection_id: String,
+        folder_id: Option<String>,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> Self {
         let iterations = cx.new(|cx| InputState::new(window, cx).default_value("1"));
         let delay = cx.new(|cx| InputState::new(window, cx).default_value("0"));
         let mut this = Self {
@@ -75,7 +81,10 @@ impl RunnerTab {
         };
         let Some((title, roots)) = roots else { return };
         self.title = title;
-        self.requests = cartero_runner::run_requests(&roots).into_iter().map(|i| (i.id().to_string(), i.name.clone(), i.request.as_ref().map(|r| r.method.clone()).unwrap_or_default())).collect();
+        self.requests = cartero_runner::run_requests(&roots)
+            .into_iter()
+            .map(|i| (i.id().to_string(), i.name.clone(), i.request.as_ref().map(|r| r.method.clone()).unwrap_or_default()))
+            .collect();
     }
 
     pub fn title(&self) -> SharedString {
@@ -83,7 +92,12 @@ impl RunnerTab {
     }
 
     fn pick_data(&mut self, window: &mut Window, cx: &mut Context<Self>) {
-        let rx = cx.prompt_for_paths(PathPromptOptions { files: true, directories: false, multiple: false, prompt: Some(tr("Fichero de datos (CSV o JSON)")) });
+        let rx = cx.prompt_for_paths(PathPromptOptions {
+            files: true,
+            directories: false,
+            multiple: false,
+            prompt: Some(tr("Fichero de datos (CSV o JSON)")),
+        });
         cx.spawn_in(window, async move |this, cx| {
             if let Ok(Ok(Some(paths))) = rx.await
                 && let Some(p) = paths.first()
@@ -164,7 +178,10 @@ impl RunnerTab {
                     a.persist_script_vars(&before, &after, Some(&cid), cx);
                     a.save_cookies();
                 });
-                let msg = trf("{p} tests superados, {f} fallidos", &[("p", &summary.tests_passed.to_string()), ("f", &summary.tests_failed.to_string())]);
+                let msg = trf(
+                    "{p} tests superados, {f} fallidos",
+                    &[("p", &summary.tests_passed.to_string()), ("f", &summary.tests_failed.to_string())],
+                );
                 if summary.tests_failed > 0 || summary.errors > 0 {
                     window.push_notification(Notification::warning(msg).title(tr("Ejecución terminada")), cx);
                 } else {
@@ -186,7 +203,11 @@ impl RunnerTab {
 
     fn export(&mut self, junit: bool, window: &mut Window, cx: &mut Context<Self>) {
         let Some(s) = self.summary.clone() else { return };
-        let (content, name) = if junit { (cartero_runner::report::junit(&s), "cartero-run.xml") } else { (cartero_runner::report::json(&s), "cartero-run.json") };
+        let (content, name) = if junit {
+            (cartero_runner::report::junit(&s), "cartero-run.xml")
+        } else {
+            (cartero_runner::report::json(&s), "cartero-run.json")
+        };
         let dir = dirs::download_dir().unwrap_or_else(std::env::temp_dir);
         let rx = cx.prompt_for_new_path(&dir, Some(name));
         cx.spawn_in(window, async move |_, cx| {
@@ -234,40 +255,73 @@ impl Render for RunnerTab {
                     div()
                         .h_flex()
                         .gap_2()
-                        .child(Button::new("pick-data").outline().small().icon(IconName::Upload).label(tr("CSV o JSON…")).on_click(cx.listener(|this, _, w, cx| this.pick_data(w, cx))))
+                        .child(
+                            Button::new("pick-data")
+                                .outline()
+                                .small()
+                                .icon(IconName::Upload)
+                                .label(tr("CSV o JSON…"))
+                                .on_click(cx.listener(|this, _, w, cx| this.pick_data(w, cx))),
+                        )
                         .when_some(self.data_file.clone(), |d, f| {
                             let name = std::path::Path::new(&f).file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or(f);
-                            d.child(div().flex_1().truncate().text_xs().child(trf("{file} · {n} filas", &[("file", &name), ("n", &self.data.len().to_string())])))
-                                .child(Button::new("clear-data").ghost().xsmall().icon(IconName::X).on_click(cx.listener(|this, _, _, cx| {
+                            d.child(
+                                div()
+                                    .flex_1()
+                                    .truncate()
+                                    .text_xs()
+                                    .child(trf("{file} · {n} filas", &[("file", &name), ("n", &self.data.len().to_string())])),
+                            )
+                            .child(Button::new("clear-data").ghost().xsmall().icon(IconName::X).on_click(
+                                cx.listener(|this, _, _, cx| {
                                     this.data.clear();
                                     this.data_file = None;
                                     cx.notify();
-                                })))
+                                }),
+                            ))
                         }),
                 ),
             )
-            .child(Checkbox::new("bail").checked(self.bail).label(tr("Parar al primer fallo")).on_click(cx.listener(|this, c: &bool, _, cx| {
-                this.bail = *c;
-                cx.notify();
-            })))
+            .child(Checkbox::new("bail").checked(self.bail).label(tr("Parar al primer fallo")).on_click(cx.listener(
+                |this, c: &bool, _, cx| {
+                    this.bail = *c;
+                    cx.notify();
+                },
+            )))
             .child(if running {
-                Button::new("stop-run").outline().icon(IconName::Square).label(tr("Parar")).on_click(cx.listener(|this, _, _, cx| this.stop(cx)))
+                Button::new("stop-run")
+                    .outline()
+                    .icon(IconName::Square)
+                    .label(tr("Parar"))
+                    .on_click(cx.listener(|this, _, _, cx| this.stop(cx)))
             } else {
-                Button::new("start-run").primary().icon(IconName::Play).label(tr("Ejecutar")).on_click(cx.listener(|this, _, w, cx| this.run(w, cx)))
+                Button::new("start-run")
+                    .primary()
+                    .icon(IconName::Play)
+                    .label(tr("Ejecutar"))
+                    .on_click(cx.listener(|this, _, w, cx| this.run(w, cx)))
             })
             .child(div().text_xs().font_semibold().pt_2().child(trf("Peticiones ({n})", &[("n", &self.requests.len().to_string())])))
-            .child(div().id("runner-requests").flex_1().overflow_y_scroll().v_flex().gap_0p5().children(self.requests.iter().enumerate().map(|(i, (id, name, method))| {
-                let checked = !self.excluded.contains(id);
-                let id = id.clone();
-                div().h_flex().gap_2().text_sm().child(Checkbox::new(("run-req", i)).checked(checked).on_click(cx.listener(move |this, c: &bool, _, cx| {
-                    if *c {
-                        this.excluded.remove(&id);
-                    } else {
-                        this.excluded.insert(id.clone());
-                    }
-                    cx.notify();
-                }))).child(method_label(method, cx)).child(div().flex_1().truncate().child(name.clone()))
-            })));
+            .child(div().id("runner-requests").flex_1().overflow_y_scroll().v_flex().gap_0p5().children(
+                self.requests.iter().enumerate().map(|(i, (id, name, method))| {
+                    let checked = !self.excluded.contains(id);
+                    let id = id.clone();
+                    div()
+                        .h_flex()
+                        .gap_2()
+                        .text_sm()
+                        .child(Checkbox::new(("run-req", i)).checked(checked).on_click(cx.listener(move |this, c: &bool, _, cx| {
+                            if *c {
+                                this.excluded.remove(&id);
+                            } else {
+                                this.excluded.insert(id.clone());
+                            }
+                            cx.notify();
+                        })))
+                        .child(method_label(method, cx))
+                        .child(div().flex_1().truncate().child(name.clone()))
+                }),
+            ));
 
         let ok = crate::theme::status_color(200, cx);
         let bad = cx.theme().danger;
@@ -275,7 +329,13 @@ impl Render for RunnerTab {
         let failed: usize = self.results.iter().map(|r| r.tests.iter().filter(|t| !t.passed).count()).sum();
         let progress = if self.total > 0 { self.results.len() as f32 / self.total as f32 } else { 0.0 };
         let results: AnyElement = if self.results.is_empty() && !running {
-            empty_state(IconName::Rocket, tr("Ejecuta la colección"), tr("Las peticiones se envían en orden, con sus scripts y tests. Aquí verás el resultado de cada una."), cx).into_any_element()
+            empty_state(
+                IconName::Rocket,
+                tr("Ejecuta la colección"),
+                tr("Las peticiones se envían en orden, con sus scripts y tests. Aquí verás el resultado de cada una."),
+                cx,
+            )
+            .into_any_element()
         } else {
             let rows = self.results.iter().enumerate().map(|(i, r)| {
                 let open = self.expanded.contains(&i);
@@ -310,7 +370,14 @@ impl Render for RunnerTab {
                                 None => div().text_color(bad).child(tr("error")),
                             })
                             .child(div().w(px(70.)).text_right().text_color(muted).child(format!("{} ms", r.time_ms)))
-                            .child(div().w(px(70.)).text_right().when(t_bad > 0, |d| d.text_color(bad)).when(t_bad == 0 && t_ok > 0, |d| d.text_color(ok)).child(if r.tests.is_empty() { "—".to_string() } else { format!("{t_ok}/{}", r.tests.len()) })),
+                            .child(
+                                div()
+                                    .w(px(70.))
+                                    .text_right()
+                                    .when(t_bad > 0, |d| d.text_color(bad))
+                                    .when(t_bad == 0 && t_ok > 0, |d| d.text_color(ok))
+                                    .child(if r.tests.is_empty() { "—".to_string() } else { format!("{t_ok}/{}", r.tests.len()) }),
+                            ),
                     )
                     .when(open, |d| {
                         d.child(
@@ -327,7 +394,11 @@ impl Render for RunnerTab {
                                     div()
                                         .h_flex()
                                         .gap_2()
-                                        .child(div().text_color(if t.passed { ok } else { bad }).child(Icon::new(if t.passed { IconName::CircleCheck } else { IconName::CircleX }).size_3()))
+                                        .child(
+                                            div().text_color(if t.passed { ok } else { bad }).child(
+                                                Icon::new(if t.passed { IconName::CircleCheck } else { IconName::CircleX }).size_3(),
+                                            ),
+                                        )
                                         .child(t.name.clone())
                                         .when_some(t.error.clone().filter(|_| !t.passed), |d, e| d.child(div().text_color(bad).child(e)))
                                 }))
@@ -348,17 +419,50 @@ impl Render for RunnerTab {
                     .h_flex()
                     .gap_4()
                     .text_sm()
-                    .child(div().font_semibold().child(if running { tr("Ejecutando…") } else if self.summary.is_some() { tr("Terminado") } else { tr("Resultados") }))
+                    .child(div().font_semibold().child(if running {
+                        tr("Ejecutando…")
+                    } else if self.summary.is_some() {
+                        tr("Terminado")
+                    } else {
+                        tr("Resultados")
+                    }))
                     .child(div().text_color(ok).child(trf("{n} superados", &[("n", &passed.to_string())])))
                     .child(div().text_color(if failed > 0 { bad } else { muted }).child(trf("{n} fallidos", &[("n", &failed.to_string())])))
                     .when_some(self.summary.as_ref(), |d, s| d.child(div().text_color(muted).child(format!("{} ms", s.duration_ms))))
                     .child(div().flex_1())
                     .when(self.summary.is_some(), |d| {
-                        d.child(Button::new("export-json").ghost().small().icon(IconName::Download).label("JSON").on_click(cx.listener(|this, _, w, cx| this.export(false, w, cx))))
-                            .child(Button::new("export-junit").ghost().small().icon(IconName::Download).label("JUnit").on_click(cx.listener(|this, _, w, cx| this.export(true, w, cx))))
+                        d.child(
+                            Button::new("export-json")
+                                .ghost()
+                                .small()
+                                .icon(IconName::Download)
+                                .label("JSON")
+                                .on_click(cx.listener(|this, _, w, cx| this.export(false, w, cx))),
+                        )
+                        .child(
+                            Button::new("export-junit")
+                                .ghost()
+                                .small()
+                                .icon(IconName::Download)
+                                .label("JUnit")
+                                .on_click(cx.listener(|this, _, w, cx| this.export(true, w, cx))),
+                        )
                     }),
             )
-            .child(div().h_1().w_full().rounded_full().bg(cx.theme().muted).child(div().h_full().rounded_full().bg(crate::theme::brand()).w(relative(progress))));
-        div().track_focus(&self.focus).size_full().flex().flex_row().child(config).child(div().flex_1().h_full().v_flex().child(header).child(div().flex_1().min_h_0().child(results)))
+            .child(
+                div()
+                    .h_1()
+                    .w_full()
+                    .rounded_full()
+                    .bg(cx.theme().muted)
+                    .child(div().h_full().rounded_full().bg(crate::theme::brand()).w(relative(progress))),
+            );
+        div()
+            .track_focus(&self.focus)
+            .size_full()
+            .flex()
+            .flex_row()
+            .child(config)
+            .child(div().flex_1().h_full().v_flex().child(header).child(div().flex_1().min_h_0().child(results)))
     }
 }

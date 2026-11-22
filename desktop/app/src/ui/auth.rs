@@ -46,7 +46,12 @@ fn fields(kind: &str) -> Vec<Field> {
             f("consumerSecret", "Consumer secret", "", Kind::Secret),
             f("token", "Token de acceso", "", Kind::Text),
             f("tokenSecret", "Secreto del token", "", Kind::Secret),
-            f("signatureMethod", "Método de firma", "", Kind::Choice(&[("HMAC-SHA1", "HMAC-SHA1"), ("HMAC-SHA256", "HMAC-SHA256"), ("PLAINTEXT", "PLAINTEXT")])),
+            f(
+                "signatureMethod",
+                "Método de firma",
+                "",
+                Kind::Choice(&[("HMAC-SHA1", "HMAC-SHA1"), ("HMAC-SHA256", "HMAC-SHA256"), ("PLAINTEXT", "PLAINTEXT")]),
+            ),
             f("realm", "Realm", "", Kind::Text),
             f("addParamsToHeader", "Enviar los parámetros en la cabecera Authorization", "", Kind::Bool(true)),
         ],
@@ -54,7 +59,16 @@ fn fields(kind: &str) -> Vec<Field> {
             f("accessToken", "Token de acceso", "", Kind::Secret),
             f("headerPrefix", "Prefijo de la cabecera", "Bearer", Kind::Text),
             f("addTokenTo", "Dónde se envía", "", Kind::Choice(&[("header", "Cabecera"), ("queryParams", "Parámetro de la URL")])),
-            f("grant_type", "Tipo de concesión", "", Kind::Choice(&[("authorization_code", "Código de autorización (con PKCE)"), ("client_credentials", "Credenciales de cliente"), ("password", "Usuario y contraseña")])),
+            f(
+                "grant_type",
+                "Tipo de concesión",
+                "",
+                Kind::Choice(&[
+                    ("authorization_code", "Código de autorización (con PKCE)"),
+                    ("client_credentials", "Credenciales de cliente"),
+                    ("password", "Usuario y contraseña"),
+                ]),
+            ),
             f("authUrl", "URL de autorización", "https://…/authorize", Kind::Text),
             f("accessTokenUrl", "URL del token", "https://…/token", Kind::Text),
             f("clientId", "Client ID", "", Kind::Text),
@@ -63,7 +77,12 @@ fn fields(kind: &str) -> Vec<Field> {
             f("username", "Usuario", "", Kind::Text),
             f("password", "Contraseña", "", Kind::Secret),
             f("redirect_uri", "URL de redirección", crate::oauth2::DEFAULT_CALLBACK, Kind::Text),
-            f("client_authentication", "Credenciales del cliente", "", Kind::Choice(&[("header", "En la cabecera (Basic)"), ("body", "En el cuerpo")])),
+            f(
+                "client_authentication",
+                "Credenciales del cliente",
+                "",
+                Kind::Choice(&[("header", "En la cabecera (Basic)"), ("body", "En el cuerpo")]),
+            ),
         ],
         "awsv4" => vec![
             f("accessKey", "Access key", "", Kind::Text),
@@ -135,7 +154,14 @@ impl EventEmitter<AuthChanged> for AuthEditor {}
 
 impl AuthEditor {
     /// `auth`: None = hereda (o sin auth si no se puede heredar).
-    pub fn new(app: Entity<AppState>, collection_id: Option<String>, auth: Option<Auth>, allow_inherit: bool, window: &mut Window, cx: &mut Context<Self>) -> Self {
+    pub fn new(
+        app: Entity<AppState>,
+        collection_id: Option<String>,
+        auth: Option<Auth>,
+        allow_inherit: bool,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> Self {
         let mut this = Self {
             app,
             collection_id,
@@ -304,7 +330,9 @@ impl Render for AuthEditor {
             let key = field.key;
             let control: AnyElement = match field.kind {
                 Kind::Text | Kind::Secret => match self.inputs.get(key) {
-                    Some(input) => Input::new(input).small().when(matches!(field.kind, Kind::Secret), |i| i.mask_toggle()).into_any_element(),
+                    Some(input) => {
+                        Input::new(input).small().when(matches!(field.kind, Kind::Secret), |i| i.mask_toggle()).into_any_element()
+                    }
                     None => div().into_any_element(),
                 },
                 Kind::Choice(opts) => {
@@ -339,7 +367,11 @@ impl Render for AuthEditor {
                 }
             };
             let label = if matches!(field.kind, Kind::Bool(_)) { SharedString::default() } else { tr_static(field.label) };
-            div().h_flex().gap_3().child(div().w(px(180.)).flex_none().text_sm().text_color(muted).child(label)).child(div().flex_1().max_w(px(520.)).child(control))
+            div()
+                .h_flex()
+                .gap_3()
+                .child(div().w(px(180.)).flex_none().text_sm().text_color(muted).child(label))
+                .child(div().flex_1().max_w(px(520.)).child(control))
         });
         div()
             .v_flex()

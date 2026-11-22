@@ -30,7 +30,8 @@ impl ServersPanel {
             }
             cx.notify();
         });
-        let mut this = Self { app, url, token, show_token: false, connecting: false, remote: Default::default(), busy: None, _subs: vec![sub] };
+        let mut this =
+            Self { app, url, token, show_token: false, connecting: false, remote: Default::default(), busy: None, _subs: vec![sub] };
         this.load_remote(cx);
         this
     }
@@ -70,14 +71,23 @@ impl ServersPanel {
                 this.connecting = false;
                 match r {
                     Ok(me) => {
-                        let info = ServerInfo { id: uuid::Uuid::new_v4().to_string(), url: url.clone(), user_id: me.id, email: me.email.clone(), name: me.name };
+                        let info = ServerInfo {
+                            id: uuid::Uuid::new_v4().to_string(),
+                            url: url.clone(),
+                            user_id: me.id,
+                            email: me.email.clone(),
+                            name: me.name,
+                        };
                         // Si ya estaba conectado ese servidor con la misma cuenta, se reutiliza
                         let existing = this.app.read(cx).servers.iter().find(|s| s.url == url && s.email == me.email).map(|s| s.id.clone());
                         let info = ServerInfo { id: existing.unwrap_or(info.id.clone()), ..info };
                         this.app.update(cx, |a, cx| a.save_server(info, &token, cx));
                         this.token.update(cx, |s, cx| s.set_value("", window, cx));
                         this.show_token = false;
-                        window.push_notification(Notification::success(trf("Conectado como {email}", &[("email", &me.email)])).title(tr("Servidor conectado")), cx);
+                        window.push_notification(
+                            Notification::success(trf("Conectado como {email}", &[("email", &me.email)])).title(tr("Servidor conectado")),
+                            cx,
+                        );
                     }
                     Err(e) => window.push_notification(Notification::error(e.to_string()).title(tr("No se pudo conectar")), cx),
                 }
@@ -171,7 +181,10 @@ impl ServersPanel {
                             a.refresh_workspaces(cx);
                             cx.emit(StateEvent::Sync);
                         });
-                        window.push_notification(Notification::success(trf("«{name}» se está subiendo al servidor", &[("name", &local.name)])), cx);
+                        window.push_notification(
+                            Notification::success(trf("«{name}» se está subiendo al servidor", &[("name", &local.name)])),
+                            cx,
+                        );
                     }
                     Err(e) => window.push_notification(Notification::error(e.to_string()), cx),
                 }
@@ -183,14 +196,21 @@ impl ServersPanel {
 
     fn unlink_current(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         let app = self.app.clone();
-        dialogs::confirm(tr("Dejar de sincronizar"), tr("El workspace se queda en este ordenador con todo su contenido, pero deja de sincronizarse con el servidor."), tr("Dejar de sincronizar"), window, cx, move |_, cx| {
-            let id = app.read(cx).workspace.id.clone();
-            let _ = app.read(cx).store.link_workspace(&id, None, None);
-            app.update(cx, |a, cx| {
-                a.refresh_workspaces(cx);
-                cx.emit(StateEvent::Sync);
-            });
-        });
+        dialogs::confirm(
+            tr("Dejar de sincronizar"),
+            tr("El workspace se queda en este ordenador con todo su contenido, pero deja de sincronizarse con el servidor."),
+            tr("Dejar de sincronizar"),
+            window,
+            cx,
+            move |_, cx| {
+                let id = app.read(cx).workspace.id.clone();
+                let _ = app.read(cx).store.link_workspace(&id, None, None);
+                app.update(cx, |a, cx| {
+                    a.refresh_workspaces(cx);
+                    cx.emit(StateEvent::Sync);
+                });
+            },
+        );
     }
 }
 
@@ -237,7 +257,13 @@ impl Render for ServersPanel {
                     .v_flex()
                     .gap_1()
                     .children(list.into_iter().enumerate().map(|(j, w)| {
-                        let local = self.app.read(cx).workspaces.iter().find(|l| l.remote_id.as_deref() == Some(w.id.as_str())).map(|l| l.name.clone());
+                        let local = self
+                            .app
+                            .read(cx)
+                            .workspaces
+                            .iter()
+                            .find(|l| l.remote_id.as_deref() == Some(w.id.as_str()))
+                            .map(|l| l.name.clone());
                         let server = s1.clone();
                         let w2 = w.clone();
                         div()
@@ -255,7 +281,13 @@ impl Render for ServersPanel {
                                 };
                                 d.child(div().text_xs().text_color(muted).child(role))
                             })
-                            .child(Button::new(("ws-dl", i * 1000 + j)).ghost().xsmall().label(if local.is_some() { tr("Abrir") } else { tr("Descargar") }).on_click(cx.listener(move |this, _, w, cx| this.download(server.clone(), w2.clone(), w, cx))))
+                            .child(
+                                Button::new(("ws-dl", i * 1000 + j))
+                                    .ghost()
+                                    .xsmall()
+                                    .label(if local.is_some() { tr("Abrir") } else { tr("Descargar") })
+                                    .on_click(cx.listener(move |this, _, w, cx| this.download(server.clone(), w2.clone(), w, cx))),
+                            )
                     }))
                     .into_any_element(),
             };
@@ -271,29 +303,52 @@ impl Render for ServersPanel {
                         .h_flex()
                         .gap_2()
                         .child(Icon::new(IconName::Server).size_5())
-                        .child(div().v_flex().flex_1().child(div().text_sm().font_semibold().child(s.url.clone())).child(div().text_xs().text_color(muted).child(trf("Conectado como {email}", &[("email", &s.email)]))))
-                        .child(Button::new(("srv-del", i)).ghost().xsmall().icon(IconName::Unlink).tooltip(tr("Desconectar este servidor")).on_click(cx.listener(move |this, _, window, cx| {
-                            let app = this.app.clone();
-                            let id = s3.clone();
-                            dialogs::confirm(tr("Desconectar el servidor"), tr("Los workspaces descargados se quedan en este ordenador, pero dejan de sincronizarse."), tr("Desconectar"), window, cx, move |_, cx| app.update(cx, |a, cx| a.remove_server(&id, cx)));
-                        }))),
+                        .child(
+                            div()
+                                .v_flex()
+                                .flex_1()
+                                .child(div().text_sm().font_semibold().child(s.url.clone()))
+                                .child(div().text_xs().text_color(muted).child(trf("Conectado como {email}", &[("email", &s.email)]))),
+                        )
+                        .child(
+                            Button::new(("srv-del", i))
+                                .ghost()
+                                .xsmall()
+                                .icon(IconName::Unlink)
+                                .tooltip(tr("Desconectar este servidor"))
+                                .on_click(cx.listener(move |this, _, window, cx| {
+                                    let app = this.app.clone();
+                                    let id = s3.clone();
+                                    dialogs::confirm(
+                                        tr("Desconectar el servidor"),
+                                        tr("Los workspaces descargados se quedan en este ordenador, pero dejan de sincronizarse."),
+                                        tr("Desconectar"),
+                                        window,
+                                        cx,
+                                        move |_, cx| app.update(cx, |a, cx| a.remove_server(&id, cx)),
+                                    );
+                                })),
+                        ),
                 )
                 .child(div().text_xs().font_semibold().text_color(muted).child(tr("Workspaces en el servidor")))
                 .child(workspaces)
-                .child(
-                    div().h_flex().gap_2().pt_1().child(if linked_here {
-                        Button::new(("unlink", i)).outline().small().icon(IconName::CloudOff).label(trf("Dejar de sincronizar «{name}»", &[("name", &current.name)])).on_click(cx.listener(|this, _, w, cx| this.unlink_current(w, cx)))
-                    } else {
-                        Button::new(("upload", i))
-                            .outline()
-                            .small()
-                            .icon(IconName::Upload)
-                            .label(trf("Subir «{name}» a este servidor", &[("name", &current.name)]))
-                            .disabled(current_server.is_some())
-                            .loading(self.busy.as_deref() == Some(s.id.as_str()))
-                            .on_click(cx.listener(move |this, _, w, cx| this.upload_current(s2.clone(), w, cx)))
-                    }),
-                )
+                .child(div().h_flex().gap_2().pt_1().child(if linked_here {
+                    Button::new(("unlink", i))
+                        .outline()
+                        .small()
+                        .icon(IconName::CloudOff)
+                        .label(trf("Dejar de sincronizar «{name}»", &[("name", &current.name)]))
+                        .on_click(cx.listener(|this, _, w, cx| this.unlink_current(w, cx)))
+                } else {
+                    Button::new(("upload", i))
+                        .outline()
+                        .small()
+                        .icon(IconName::Upload)
+                        .label(trf("Subir «{name}» a este servidor", &[("name", &current.name)]))
+                        .disabled(current_server.is_some())
+                        .loading(self.busy.as_deref() == Some(s.id.as_str()))
+                        .on_click(cx.listener(move |this, _, w, cx| this.upload_current(s2.clone(), w, cx)))
+                }))
         });
         div().v_flex().gap_4().children(list).child(add)
     }

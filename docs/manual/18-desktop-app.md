@@ -1,0 +1,100 @@
+> 🌐 **English** · [Español](es/18-app-de-escritorio.md)
+
+# Desktop app
+
+Cartero also comes as a native desktop app for macOS, Windows and Linux. It works on its own as soon as you install it: your collections, environments and history are stored **on your computer**, and requests are sent **from your machine**, so they reach your `localhost`, your VPN and your local network. If you want, you can connect it to a Cartero server to sync workspaces across computers and work as a team.
+
+## Install
+
+Download the installer for your system from the [releases page](https://github.com/elrincondeisma/cartero/releases):
+
+| System | File | Notes |
+|---|---|---|
+| macOS (Apple Silicon and Intel) | `Cartero-…-macos-universal.dmg` | Open the `.dmg` and drag **Cartero** to **Applications**. If the build is not signed, the first time right-click the app → **Open** → **Open**. |
+| Windows 10/11 | `Cartero-…-windows-x64-setup.exe` | If SmartScreen warns you, click **More info** → **Run anyway**. |
+| Linux | `.deb` or `.AppImage` | `sudo apt install ./cartero_…_amd64.deb`, or make the AppImage executable and run it. |
+
+The first time it opens, the app creates a workspace with an example collection against httpbin.org and an `httpbin` environment, so you can press **Send** right away.
+
+## The window
+
+- **Activity bar** (left): Collections, Environments and History. Click the active one again to hide the sidebar (`Ctrl+B`).
+- **Collections**: tree with folders. Right-click for new request or folder, run, auth/scripts/variables, export, rename, duplicate and delete. Drag requests and folders to move them, also between collections.
+- **Tabs**: each request opens in a tab. A dot means unsaved changes. Open tabs come back the next time you start the app.
+- **Title bar**: workspace switcher, sync status, active environment, cookies and search (`Ctrl+K`).
+
+## Sending requests
+
+It works like the web app ([Requests](02-requests.md)):
+
+- **Method and URL.** Paste a `curl` command into the URL bar and it becomes the request.
+- Under the URL you can see every `{{variable}}` with its value and where it comes from (environment, collection or global); undefined ones are red.
+- **Params** stay in sync with the URL. `:id` style path variables get their own table.
+- **Authorization**: inherit, none, Basic, Bearer, API key, Digest, OAuth 1.0, OAuth 2.0 (getting a token with the browser and PKCE, client credentials or password), AWS Signature v4 and Hawk.
+- **Body**: raw (JSON, text, XML, HTML, JavaScript), x-www-form-urlencoded, form-data with files, binary and GraphQL.
+- **Scripts**: pre-request and post-response, with the `pm.*` API and snippets. The collection and its folders can have their own scripts, which run first ([Scripts and tests](05-scripts-and-tests.md)).
+- **Response**: pretty or raw body (huge bodies are shown without colours to keep the app smooth), image preview, headers, cookies, phase timings (DNS, TCP, TLS, first byte, download), tests and console.
+- **View as code**: cURL, HTTPie, JavaScript fetch, Node.js axios, Python requests, Go, PHP, C# and PowerShell.
+
+Cookies sent by servers are stored per workspace and sent automatically; manage them with the cookie button in the title bar.
+
+## Environments and variables
+
+**Environments** in the activity bar: create, edit and choose the active one (also from the title bar). Mark a variable as **secret** with the eye icon: its value is hidden and stored encrypted with a key kept in your system keychain. Global variables are at the bottom of the list. When a script calls `pm.environment.set`, the value is saved in the environment (you can turn that off in Settings).
+
+## Runner
+
+Right-click a collection or folder → **Run**. Choose iterations, delay, a CSV or JSON data file (one iteration per row) and whether to stop on the first failure. Results appear as they arrive; you can export them as JSON or JUnit. `pm.execution.setNextRequest` and `skipRequest` work like in Postman.
+
+## Import and export
+
+**Import** (`Ctrl+O`, or the button next to Collections) accepts Postman collections v1, v2.0 and v2.1, Postman environments and globals, a full Cartero export and cURL commands, pasted or from a file. Right-click a collection → **Export** saves it as Postman v2.1, without losing anything.
+
+## Connecting to a Cartero server
+
+Settings → **Servers**:
+
+1. Type your server address and click **Connect with the browser**. The server's `/connect-desktop` page opens; sign in if needed and click **Connect**. The app receives a token through `127.0.0.1` (nothing leaves your computer). You can also paste a token created in the web app (Settings → API tokens).
+2. You will see the server's workspaces. **Download** one to have it on this computer, or **Upload** the current workspace to the server.
+
+A synced workspace shows a cloud in the title bar. The app syncs every few seconds, as soon as someone else changes something (WebSocket) and when you click **Sync now**. It works offline too: changes wait until the server is reachable again. Your request history and runner results are uploaded so the team can see them in the web app. The avatars next to the status show who else is connected.
+
+**Conflicts.** If someone changed on the server the same thing you changed here, the status turns orange. Open **Resolve conflicts…**: you see both versions and choose **Keep mine** or **Keep the server's**.
+
+Mock servers, monitors and published docs are managed in the web app.
+
+## Settings
+
+- **General**: theme (light, dark or same as the system) and language (Spanish or English).
+- **Requests**: timeout, redirects, SSL certificate verification, script timeout and response highlighting limit.
+- **Proxy**: HTTP proxy (HTTPS goes through a CONNECT tunnel) with an exception list.
+- **Certificates**: client certificates for mutual TLS (per domain, PEM) and custom CA certificates.
+- **About**: version, data folder and update checks.
+
+## Keyboard shortcuts
+
+On macOS use `⌘` instead of `Ctrl`.
+
+| Shortcut | Action |
+|---|---|
+| `Ctrl+T` / `Ctrl+N` | New request |
+| `Ctrl+Enter` | Send |
+| `Ctrl+S` | Save |
+| `Ctrl+W` | Close tab |
+| `Ctrl+Tab` / `Ctrl+Shift+Tab` | Next / previous tab |
+| `Ctrl+K` / `Ctrl+P` | Search requests and commands |
+| `Ctrl+L` | Go to the URL bar |
+| `Ctrl+O` | Import |
+| `Ctrl+B` | Show or hide the sidebar |
+| `Ctrl+Shift+F` | Search in collections |
+| `Ctrl+,` | Settings |
+
+## Where your data lives
+
+| System | Folder |
+|---|---|
+| macOS | `~/Library/Application Support/Cartero` |
+| Windows | `%APPDATA%\Cartero` |
+| Linux | `~/.local/share/Cartero` |
+
+It is an SQLite database (`cartero.db`). Back it up by copying the folder with the app closed.

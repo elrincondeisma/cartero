@@ -53,20 +53,35 @@ pub fn prompt_text(
         dialog
             .title(title.clone())
             .w(px(440.))
-            .child(div().v_flex().gap_2().child(div().text_sm().text_color(cx.theme().muted_foreground).child(label.clone())).child(Input::new(&input)))
+            .child(
+                div()
+                    .v_flex()
+                    .gap_2()
+                    .child(div().text_sm().text_color(cx.theme().muted_foreground).child(label.clone()))
+                    .child(Input::new(&input)),
+            )
             .footer(footer(ok_label.clone(), false, submit))
     });
 }
 
 /// Pide confirmación para algo que no se puede deshacer.
-pub fn confirm(title: SharedString, body: SharedString, ok_label: SharedString, window: &mut Window, cx: &mut App, on_ok: impl Fn(&mut Window, &mut App) + 'static) {
+pub fn confirm(
+    title: SharedString,
+    body: SharedString,
+    ok_label: SharedString,
+    window: &mut Window,
+    cx: &mut App,
+    on_ok: impl Fn(&mut Window, &mut App) + 'static,
+) {
     let on_ok = Rc::new(on_ok);
     window.open_dialog(cx, move |dialog, _, cx| {
         let on_ok = on_ok.clone();
-        dialog.title(title.clone()).w(px(440.)).child(div().text_sm().text_color(cx.theme().muted_foreground).child(body.clone())).footer(footer(ok_label.clone(), true, move |window, cx| {
-            window.close_dialog(cx);
-            on_ok(window, cx)
-        }))
+        dialog.title(title.clone()).w(px(440.)).child(div().text_sm().text_color(cx.theme().muted_foreground).child(body.clone())).footer(
+            footer(ok_label.clone(), true, move |window, cx| {
+                window.close_dialog(cx);
+                on_ok(window, cx)
+            }),
+        )
     });
 }
 
@@ -87,7 +102,10 @@ pub fn save_request_as(tab: Entity<RequestTab>, window: &mut Window, cx: &mut Ap
                 let mut flat = vec![];
                 cartero_model::tree::walk(&tree.item, &mut flat, 1);
                 for (it, depth) in flat.into_iter().filter(|(i, _)| i.is_folder()) {
-                    out.push((format!("{}{} / {}", "  ".repeat(depth), meta.name, it.name).into(), (meta.id.clone(), Some(it.id().to_string()))));
+                    out.push((
+                        format!("{}{} / {}", "  ".repeat(depth), meta.name, it.name).into(),
+                        (meta.id.clone(), Some(it.id().to_string())),
+                    ));
                 }
             }
         }
@@ -156,7 +174,11 @@ pub fn codegen(app: Entity<AppState>, collection_id: Option<String>, item: Item,
     };
     let lang = Rc::new(std::cell::Cell::new(Language::Curl));
     let editor = cx.new(|cx| {
-        let mut s = EditorState::new(window, cx).language("bash".to_string()).line_number(true).soft_wrap(true).default_value(generate(Language::Curl, &prepared));
+        let mut s = EditorState::new(window, cx)
+            .language("bash".to_string())
+            .line_number(true)
+            .soft_wrap(true)
+            .default_value(generate(Language::Curl, &prepared));
         s.set_readonly(true, cx);
         s
     });
@@ -190,11 +212,26 @@ pub fn codegen(app: Entity<AppState>, collection_id: Option<String>, item: Item,
                 div()
                     .v_flex()
                     .gap_2()
-                    .child(div().h_flex().gap_2().child(picker).child(div().flex_1()).child(Button::new("copy-code").outline().small().icon(IconName::Copy).label(tr("Copiar")).on_click(copy)))
-                    .child(div().text_xs().text_color(cx.theme().muted_foreground).child(tr("Con las variables del entorno activo ya sustituidas. Ojo: incluye los secretos.")))
+                    .child(
+                        div()
+                            .h_flex()
+                            .gap_2()
+                            .child(picker)
+                            .child(div().flex_1())
+                            .child(Button::new("copy-code").outline().small().icon(IconName::Copy).label(tr("Copiar")).on_click(copy)),
+                    )
+                    .child(
+                        div()
+                            .text_xs()
+                            .text_color(cx.theme().muted_foreground)
+                            .child(tr("Con las variables del entorno activo ya sustituidas. Ojo: incluye los secretos.")),
+                    )
                     .child(div().h(px(380.)).child(Editor::new(&editor).h_full())),
             )
-            .footer(DialogFooter::new().child(Button::new("close-code").outline().label(tr("Cerrar")).on_click(|_, window, cx| window.close_dialog(cx))))
+            .footer(
+                DialogFooter::new()
+                    .child(Button::new("close-code").outline().label(tr("Cerrar")).on_click(|_, window, cx| window.close_dialog(cx))),
+            )
     });
 }
 
@@ -205,7 +242,12 @@ pub fn import(app: Entity<AppState>, window: &mut Window, cx: &mut App) {
         let pick = {
             let editor = editor.clone();
             move |_: &ClickEvent, window: &mut Window, cx: &mut App| {
-                let rx = cx.prompt_for_paths(PathPromptOptions { files: true, directories: false, multiple: false, prompt: Some(tr("Importar")) });
+                let rx = cx.prompt_for_paths(PathPromptOptions {
+                    files: true,
+                    directories: false,
+                    multiple: false,
+                    prompt: Some(tr("Importar")),
+                });
                 let editor = editor.clone();
                 window
                     .spawn(cx, async move |cx| {
@@ -249,7 +291,20 @@ pub fn import(app: Entity<AppState>, window: &mut Window, cx: &mut App) {
                 div()
                     .v_flex()
                     .gap_2()
-                    .child(div().h_flex().gap_2().child(Button::new("import-file").outline().small().icon(IconName::Upload).label(tr("Elegir un fichero…")).on_click(pick)).child(div().text_xs().text_color(cx.theme().muted_foreground).child(tr("o pega el contenido debajo"))))
+                    .child(
+                        div()
+                            .h_flex()
+                            .gap_2()
+                            .child(
+                                Button::new("import-file")
+                                    .outline()
+                                    .small()
+                                    .icon(IconName::Upload)
+                                    .label(tr("Elegir un fichero…"))
+                                    .on_click(pick),
+                            )
+                            .child(div().text_xs().text_color(cx.theme().muted_foreground).child(tr("o pega el contenido debajo"))),
+                    )
                     .child(div().h(px(320.)).child(Editor::new(&editor).h_full())),
             )
             .footer(footer(tr("Importar"), false, submit))

@@ -117,10 +117,18 @@ fn raw_language_for_editor(lang: &str) -> &'static str {
 }
 
 impl RequestTab {
-    pub fn new(app: Entity<AppState>, collection_id: Option<String>, item: Item, saved: bool, window: &mut Window, cx: &mut Context<Self>) -> Self {
+    pub fn new(
+        app: Entity<AppState>,
+        collection_id: Option<String>,
+        item: Item,
+        saved: bool,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> Self {
         let req = item.request.clone().unwrap_or_default();
         let url_raw = req.url.raw();
-        let url = cx.new(|cx| InputState::new(window, cx).placeholder(tr("Escribe una URL o pega un comando cURL")).default_value(url_raw.clone()));
+        let url = cx
+            .new(|cx| InputState::new(window, cx).placeholder(tr("Escribe una URL o pega un comando cURL")).default_value(url_raw.clone()));
         let query: Vec<KvItem> = match &req.url {
             Url::Parts(p) => p
                 .query
@@ -134,9 +142,25 @@ impl RequestTab {
                     flag: false,
                 })
                 .collect(),
-            Url::Raw(s) => cartero_model::url::parse(s).query.unwrap_or_default().into_iter().map(|q| KvItem::new(q.key.unwrap_or_default(), q.value.unwrap_or_default())).collect(),
+            Url::Raw(s) => cartero_model::url::parse(s)
+                .query
+                .unwrap_or_default()
+                .into_iter()
+                .map(|q| KvItem::new(q.key.unwrap_or_default(), q.value.unwrap_or_default()))
+                .collect(),
         };
-        let path: Vec<KvItem> = req.url.path_variables().iter().map(|v| KvItem { key: v.key.clone(), value: v.value_str(), description: cartero_model::description_text(&v.description), enabled: true, flag: false }).collect();
+        let path: Vec<KvItem> = req
+            .url
+            .path_variables()
+            .iter()
+            .map(|v| KvItem {
+                key: v.key.clone(),
+                value: v.value_str(),
+                description: cartero_model::description_text(&v.description),
+                enabled: true,
+                flag: false,
+            })
+            .collect();
         let params = cx.new(|cx| KvEditor::new(query, KvOptions::default(), window, cx));
         let path_vars = cx.new(|cx| KvEditor::new(path, KvOptions { checkbox: false, ..Default::default() }, window, cx).readonly(false));
         let headers = cx.new(|cx| KvEditor::new(kv_from_headers(req.headers()), KvOptions::default(), window, cx));
@@ -144,7 +168,8 @@ impl RequestTab {
         let body_mode = body.mode().to_string();
         let raw_lang = body.raw_language().to_string();
         let raw = editor(raw_language_for_editor(&raw_lang), body.raw.clone().unwrap_or_default(), window, cx);
-        let urlencoded = cx.new(|cx| KvEditor::new(kv_from_headers(body.urlencoded.as_deref().unwrap_or_default()), KvOptions::default(), window, cx));
+        let urlencoded =
+            cx.new(|cx| KvEditor::new(kv_from_headers(body.urlencoded.as_deref().unwrap_or_default()), KvOptions::default(), window, cx));
         let form_items: Vec<KvItem> = body
             .formdata
             .iter()
@@ -219,7 +244,8 @@ impl RequestTab {
         for kv in [self.path_vars.clone(), self.headers.clone(), self.urlencoded.clone(), self.formdata.clone()] {
             self._subs.push(cx.subscribe_in(&kv, window, |this, _, _: &KvChanged, _, cx| this.mark_dirty(cx)));
         }
-        for ed in [self.raw.clone(), self.gql_query.clone(), self.gql_vars.clone(), self.pre.clone(), self.post.clone(), self.docs.clone()] {
+        for ed in [self.raw.clone(), self.gql_query.clone(), self.gql_vars.clone(), self.pre.clone(), self.post.clone(), self.docs.clone()]
+        {
             self._subs.push(cx.subscribe_in(&ed, window, |this, _, ev: &InputEvent, _, cx| {
                 if matches!(ev, InputEvent::Change) {
                     this.mark_dirty(cx)
@@ -371,9 +397,25 @@ impl RequestTab {
             Url::Parts(p) => p.clone(),
             Url::Raw(s) => cartero_model::url::parse(s),
         };
-        let query = parts.query.iter().flatten().map(|q| KvItem { key: q.key.clone().unwrap_or_default(), value: q.value.clone().unwrap_or_default(), description: cartero_model::description_text(&q.description), enabled: !q.disabled, flag: false }).collect();
+        let query = parts
+            .query
+            .iter()
+            .flatten()
+            .map(|q| KvItem {
+                key: q.key.clone().unwrap_or_default(),
+                value: q.value.clone().unwrap_or_default(),
+                description: cartero_model::description_text(&q.description),
+                enabled: !q.disabled,
+                flag: false,
+            })
+            .collect();
         self.params.update(cx, |p, cx| p.set_items(query, window, cx));
-        let path = parts.variable.iter().flatten().map(|v| KvItem { key: v.key.clone(), value: v.value_str(), description: String::new(), enabled: true, flag: false }).collect();
+        let path = parts
+            .variable
+            .iter()
+            .flatten()
+            .map(|v| KvItem { key: v.key.clone(), value: v.value_str(), description: String::new(), enabled: true, flag: false })
+            .collect();
         self.path_vars.update(cx, |p, cx| p.set_items(path, window, cx));
         self.headers.update(cx, |p, cx| p.set_items(kv_from_headers(req.headers()), window, cx));
         let body = req.body.clone().unwrap_or_default();
@@ -386,7 +428,18 @@ impl RequestTab {
             s.set_value(raw_body, window, cx)
         });
         self.urlencoded.update(cx, |p, cx| p.set_items(kv_from_headers(body.urlencoded.as_deref().unwrap_or_default()), window, cx));
-        let form = body.formdata.iter().flatten().map(|f| KvItem { key: f.key.clone(), value: if f.is_file() { f.files().join(", ") } else { f.value.clone().unwrap_or_default() }, description: cartero_model::description_text(&f.description), enabled: !f.disabled, flag: f.is_file() }).collect();
+        let form = body
+            .formdata
+            .iter()
+            .flatten()
+            .map(|f| KvItem {
+                key: f.key.clone(),
+                value: if f.is_file() { f.files().join(", ") } else { f.value.clone().unwrap_or_default() },
+                description: cartero_model::description_text(&f.description),
+                enabled: !f.disabled,
+                flag: f.is_file(),
+            })
+            .collect();
         self.formdata.update(cx, |p, cx| p.set_items(form, window, cx));
         self.file_path = body.file_src();
         let auth = req.auth.clone().flatten().filter(|a| !a.is_inherit());
@@ -443,13 +496,21 @@ impl RequestTab {
         req.body = match self.body_mode.as_str() {
             "none" => None,
             mode => {
-                let mut b = Body { mode: Some(mode.to_string()), options: base_body.options.clone(), extra: base_body.extra.clone(), ..Default::default() };
+                let mut b = Body {
+                    mode: Some(mode.to_string()),
+                    options: base_body.options.clone(),
+                    extra: base_body.extra.clone(),
+                    ..Default::default()
+                };
                 match mode {
                     "raw" => {
                         b.raw = Some(self.raw.read(cx).value().to_string());
                         b.set_raw_language(&self.raw_lang);
                     }
-                    "urlencoded" => b.urlencoded = Some(kv_to_headers(self.urlencoded.read(cx).items(cx), base_body.urlencoded.as_deref().unwrap_or_default())),
+                    "urlencoded" => {
+                        b.urlencoded =
+                            Some(kv_to_headers(self.urlencoded.read(cx).items(cx), base_body.urlencoded.as_deref().unwrap_or_default()))
+                    }
                     "formdata" => {
                         b.formdata = Some(
                             self.formdata
@@ -469,7 +530,11 @@ impl RequestTab {
                         )
                     }
                     "file" => b.file = Some(serde_json::json!({ "src": self.file_path.clone().unwrap_or_default() })),
-                    "graphql" => b.graphql = Some(serde_json::json!({ "query": self.gql_query.read(cx).value().to_string(), "variables": self.gql_vars.read(cx).value().to_string() })),
+                    "graphql" => {
+                        b.graphql = Some(
+                            serde_json::json!({ "query": self.gql_query.read(cx).value().to_string(), "variables": self.gql_vars.read(cx).value().to_string() }),
+                        )
+                    }
                     _ => {}
                 }
                 Some(b)
@@ -541,7 +606,16 @@ impl RequestTab {
     }
 
     #[allow(clippy::too_many_arguments)]
-    fn on_outcome(&mut self, outcome: Outcome, before: &cartero_runner::VarState, after: &cartero_runner::VarState, item: Item, workspace: &str, window: &mut Window, cx: &mut Context<Self>) {
+    fn on_outcome(
+        &mut self,
+        outcome: Outcome,
+        before: &cartero_runner::VarState,
+        after: &cartero_runner::VarState,
+        item: Item,
+        workspace: &str,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
         let entry = cartero_store::HistoryEntry {
             id: uuid::Uuid::new_v4().to_string(),
             workspace_id: workspace.to_string(),
@@ -609,11 +683,6 @@ impl RequestTab {
         cx.notify();
     }
 
-    pub fn rename(&mut self, name: String, cx: &mut Context<Self>) {
-        self.name = name;
-        self.mark_dirty(cx);
-    }
-
     fn set_method(&mut self, m: String, cx: &mut Context<Self>) {
         self.method = m;
         self.mark_dirty(cx);
@@ -645,7 +714,8 @@ impl RequestTab {
     }
 
     fn pick_body_file(&mut self, window: &mut Window, cx: &mut Context<Self>) {
-        let rx = cx.prompt_for_paths(PathPromptOptions { files: true, directories: false, multiple: false, prompt: Some(tr("Elegir fichero")) });
+        let rx =
+            cx.prompt_for_paths(PathPromptOptions { files: true, directories: false, multiple: false, prompt: Some(tr("Elegir fichero")) });
         cx.spawn_in(window, async move |this, cx| {
             if let Ok(Ok(Some(paths))) = rx.await
                 && let Some(p) = paths.first()
@@ -674,24 +744,38 @@ impl RequestTab {
         let entity = cx.entity();
         let method = self.method.clone();
         let method_color = crate::theme::method_color(&method, cx);
-        let method_btn = Button::new("method").outline().label(method.clone()).dropdown_caret(true).text_color(method_color).font_semibold().w(px(118.)).dropdown_menu({
-            let entity = entity.clone();
-            move |mut menu, _, cx| {
-                for m in METHODS {
-                    let entity = entity.clone();
-                    menu = menu.item(
-                        PopupMenuItem::element(move |_, cx| div().text_color(crate::theme::method_color(m, cx)).font_semibold().child(m))
+        let method_btn = Button::new("method")
+            .outline()
+            .label(method.clone())
+            .dropdown_caret(true)
+            .text_color(method_color)
+            .font_semibold()
+            .w(px(118.))
+            .dropdown_menu({
+                let entity = entity.clone();
+                move |mut menu, _, cx| {
+                    for m in METHODS {
+                        let entity = entity.clone();
+                        menu = menu.item(
+                            PopupMenuItem::element(move |_, cx| {
+                                div().text_color(crate::theme::method_color(m, cx)).font_semibold().child(m)
+                            })
                             .on_click(move |_, _, cx| entity.update(cx, |this, cx| this.set_method(m.to_string(), cx))),
-                    );
+                        );
+                    }
+                    let _ = cx;
+                    menu
                 }
-                let _ = cx;
-                menu
-            }
-        });
+            });
         let send_btn = if self.sending.is_some() {
             Button::new("cancel").outline().icon(IconName::X).label(tr("Cancelar")).on_click(cx.listener(|this, _, _, cx| this.cancel(cx)))
         } else {
-            Button::new("send").primary().icon(IconName::Send).label(tr("Enviar")).tooltip(tr("Enviar (Ctrl+Intro)")).on_click(cx.listener(|this, _, window, cx| this.send(window, cx)))
+            Button::new("send")
+                .primary()
+                .icon(IconName::Send)
+                .label(tr("Enviar"))
+                .tooltip(tr("Enviar (Ctrl+Intro)"))
+                .on_click(cx.listener(|this, _, window, cx| this.send(window, cx)))
         };
         div()
             .h_flex()
@@ -706,13 +790,11 @@ impl RequestTab {
                     .tooltip(tr("Guardar (Ctrl+S)"))
                     .on_click(cx.listener(|this, _, window, cx| this.save(window, cx))),
             )
-            .child(
-                Button::new("code")
-                    .ghost()
-                    .icon(IconName::Code)
-                    .tooltip(tr("Ver como código (cURL, Python, Go…)"))
-                    .on_click(cx.listener(|this, _, window, cx| crate::ui::dialogs::codegen(this.app.clone(), this.collection_id.clone(), this.build_item(cx), window, cx))),
-            )
+            .child(Button::new("code").ghost().icon(IconName::Code).tooltip(tr("Ver como código (cURL, Python, Go…)")).on_click(
+                cx.listener(|this, _, window, cx| {
+                    crate::ui::dialogs::codegen(this.app.clone(), this.collection_id.clone(), this.build_item(cx), window, cx)
+                }),
+            ))
     }
 
     /// Las {{variables}} de la URL con su valor (verde) o sin definir (rojo).
@@ -742,7 +824,16 @@ impl RequestTab {
                     None => (format!("{{{{{n}}}}} · {}", tr("sin definir")).into(), bad),
                 }
             };
-            div().px_2().py_0p5().rounded(px(4.)).border_1().border_color(color.opacity(0.35)).bg(color.opacity(0.08)).text_xs().text_color(color).child(text)
+            div()
+                .px_2()
+                .py_0p5()
+                .rounded(px(4.))
+                .border_1()
+                .border_color(color.opacity(0.35))
+                .bg(color.opacity(0.08))
+                .text_xs()
+                .text_color(color)
+                .child(text)
         });
         Some(div().h_flex().flex_wrap().gap_1().children(chips))
     }
@@ -751,14 +842,19 @@ impl RequestTab {
         let muted = cx.theme().muted_foreground;
         match self.section {
             Section::Params => {
-                let has_path = !self.path_vars.read(cx).items(cx).is_empty() || cartero_model::url::parse(self.url.read(cx).value().as_ref()).variable.is_some();
+                let has_path = !self.path_vars.read(cx).items(cx).is_empty()
+                    || cartero_model::url::parse(self.url.read(cx).value().as_ref()).variable.is_some();
                 div()
                     .v_flex()
                     .gap_3()
                     .p_3()
-                    .child(div().text_sm().text_color(muted).child(tr("Parámetros de la URL (query). Se sincronizan con la barra de la URL.")))
+                    .child(
+                        div().text_sm().text_color(muted).child(tr("Parámetros de la URL (query). Se sincronizan con la barra de la URL.")),
+                    )
                     .child(self.params.clone())
-                    .when(has_path, |d| d.child(div().text_sm().font_semibold().pt_2().child(tr("Variables de ruta"))).child(self.path_vars.clone()))
+                    .when(has_path, |d| {
+                        d.child(div().text_sm().font_semibold().pt_2().child(tr("Variables de ruta"))).child(self.path_vars.clone())
+                    })
                     .into_any_element()
             }
             Section::Auth => self.auth.clone().into_any_element(),
@@ -766,7 +862,12 @@ impl RequestTab {
                 .v_flex()
                 .gap_3()
                 .p_3()
-                .child(div().text_sm().text_color(muted).child(tr("Cartero añade User-Agent, Accept y Host si no los pones tú; Content-Type sale del tipo de cuerpo.")))
+                .child(
+                    div()
+                        .text_sm()
+                        .text_color(muted)
+                        .child(tr("Cartero añade User-Agent, Accept y Host si no los pones tú; Content-Type sale del tipo de cuerpo.")),
+                )
                 .child(self.headers.clone())
                 .into_any_element(),
             Section::Body => self.render_body(cx),
@@ -776,7 +877,12 @@ impl RequestTab {
                 .size_full()
                 .p_3()
                 .gap_2()
-                .child(div().text_sm().text_color(muted).child(tr("Explica qué hace esta petición (admite Markdown). Se publica con la documentación de la colección.")))
+                .child(
+                    div()
+                        .text_sm()
+                        .text_color(muted)
+                        .child(tr("Explica qué hace esta petición (admite Markdown). Se publica con la documentación de la colección.")),
+                )
                 .child(div().flex_1().min_h(px(160.)).child(Editor::new(&self.docs).h_full()))
                 .into_any_element(),
         }
@@ -798,35 +904,80 @@ impl RequestTab {
         });
         let mut bar = div().h_flex().gap_2().px_3().py_2().child(mode_picker);
         if self.body_mode == "raw" {
-            let langs: Vec<(SharedString, String)> =
-                vec![("JSON".into(), "json".into()), ("Text".into(), "text".into()), ("XML".into(), "xml".into()), ("HTML".into(), "html".into()), ("JavaScript".into(), "javascript".into())];
+            let langs: Vec<(SharedString, String)> = vec![
+                ("JSON".into(), "json".into()),
+                ("Text".into(), "text".into()),
+                ("XML".into(), "xml".into()),
+                ("HTML".into(), "html".into()),
+                ("JavaScript".into(), "javascript".into()),
+            ];
             bar = bar.child(choice("raw-lang", &self.raw_lang, langs, {
                 let entity = entity.clone();
                 move |l, window, cx| entity.update(cx, |this, cx| this.set_raw_lang(l, window, cx))
             }));
             if self.raw_lang == "json" {
-                bar = bar.child(Button::new("beautify").ghost().small().label(tr("Dar formato")).on_click(cx.listener(|this, _, window, cx| this.beautify(window, cx))));
+                bar = bar.child(
+                    Button::new("beautify")
+                        .ghost()
+                        .small()
+                        .label(tr("Dar formato"))
+                        .on_click(cx.listener(|this, _, window, cx| this.beautify(window, cx))),
+                );
             }
         }
         let muted = cx.theme().muted_foreground;
         let content: AnyElement = match self.body_mode.as_str() {
             "raw" => div().flex_1().min_h(px(120.)).child(Editor::new(&self.raw).h_full()).into_any_element(),
             "urlencoded" => div().px_3().child(self.urlencoded.clone()).into_any_element(),
-            "formdata" => div().px_3().v_flex().gap_2().child(div().text_xs().text_color(muted).child(tr("Pulsa el icono de subir en una fila para enviar un fichero."))).child(self.formdata.clone()).into_any_element(),
+            "formdata" => div()
+                .px_3()
+                .v_flex()
+                .gap_2()
+                .child(div().text_xs().text_color(muted).child(tr("Pulsa el icono de subir en una fila para enviar un fichero.")))
+                .child(self.formdata.clone())
+                .into_any_element(),
             "file" => div()
                 .px_3()
                 .h_flex()
                 .gap_2()
-                .child(Button::new("pick-file").outline().small().icon(IconName::Upload).label(tr("Elegir fichero")).on_click(cx.listener(|this, _, w, cx| this.pick_body_file(w, cx))))
-                .child(div().text_sm().text_color(muted).child(self.file_path.clone().unwrap_or_else(|| tr("Ningún fichero elegido").to_string())))
+                .child(
+                    Button::new("pick-file")
+                        .outline()
+                        .small()
+                        .icon(IconName::Upload)
+                        .label(tr("Elegir fichero"))
+                        .on_click(cx.listener(|this, _, w, cx| this.pick_body_file(w, cx))),
+                )
+                .child(
+                    div()
+                        .text_sm()
+                        .text_color(muted)
+                        .child(self.file_path.clone().unwrap_or_else(|| tr("Ningún fichero elegido").to_string())),
+                )
                 .into_any_element(),
             "graphql" => div()
                 .flex_1()
                 .min_h(px(160.))
                 .child(
                     h_resizable("gql-split")
-                        .child(resizable_panel().child(div().size_full().v_flex().child(div().px_3().text_xs().text_color(muted).child(tr("Consulta"))).child(div().flex_1().child(Editor::new(&self.gql_query).h_full()))))
-                        .child(resizable_panel().child(div().size_full().v_flex().child(div().px_3().text_xs().text_color(muted).child(tr("Variables (JSON)"))).child(div().flex_1().child(Editor::new(&self.gql_vars).h_full())))),
+                        .child(
+                            resizable_panel().child(
+                                div()
+                                    .size_full()
+                                    .v_flex()
+                                    .child(div().px_3().text_xs().text_color(muted).child(tr("Consulta")))
+                                    .child(div().flex_1().child(Editor::new(&self.gql_query).h_full())),
+                            ),
+                        )
+                        .child(
+                            resizable_panel().child(
+                                div()
+                                    .size_full()
+                                    .v_flex()
+                                    .child(div().px_3().text_xs().text_color(muted).child(tr("Variables (JSON)")))
+                                    .child(div().flex_1().child(Editor::new(&self.gql_vars).h_full())),
+                            ),
+                        ),
                 )
                 .into_any_element(),
             _ => div().p_3().text_sm().text_color(muted).child(tr("Esta petición no envía cuerpo.")).into_any_element(),
@@ -852,23 +1003,52 @@ impl RequestTab {
                 (tr("Guardar una variable de entorno"), "pm.environment.set(\"variable\", \"valor\")"),
                 (tr("Leer una variable"), "const valor = pm.variables.get(\"variable\")"),
                 (tr("Marca de tiempo"), "pm.variables.set(\"timestamp\", Date.now())"),
-                (tr("Añadir una cabecera"), "pm.request.headers.add({ key: \"X-Request-Id\", value: pm.variables.replaceIn(\"{{$guid}}\") })"),
-                (tr("Pedir un token antes"), "pm.sendRequest({\n  url: pm.environment.get(\"baseUrl\") + \"/login\",\n  method: \"POST\",\n  header: { \"Content-Type\": \"application/json\" },\n  body: { mode: \"raw\", raw: JSON.stringify({ user: \"demo\", password: \"demo\" }) }\n}, (err, res) => {\n  pm.environment.set(\"token\", res.json().token)\n})"),
+                (
+                    tr("Añadir una cabecera"),
+                    "pm.request.headers.add({ key: \"X-Request-Id\", value: pm.variables.replaceIn(\"{{$guid}}\") })",
+                ),
+                (
+                    tr("Pedir un token antes"),
+                    "pm.sendRequest({\n  url: pm.environment.get(\"baseUrl\") + \"/login\",\n  method: \"POST\",\n  header: { \"Content-Type\": \"application/json\" },\n  body: { mode: \"raw\", raw: JSON.stringify({ user: \"demo\", password: \"demo\" }) }\n}, (err, res) => {\n  pm.environment.set(\"token\", res.json().token)\n})",
+                ),
             ]
         } else {
             vec![
                 (tr("Código de estado 200"), "pm.test(\"Responde 200\", () => {\n  pm.response.to.have.status(200)\n})"),
-                (tr("Tiempo de respuesta"), "pm.test(\"Responde en menos de 500 ms\", () => {\n  pm.expect(pm.response.responseTime).to.be.below(500)\n})"),
-                (tr("Valor en el JSON"), "pm.test(\"El JSON trae el valor esperado\", () => {\n  const json = pm.response.json()\n  pm.expect(json.id).to.eql(1)\n})"),
-                (tr("El cuerpo contiene un texto"), "pm.test(\"El cuerpo contiene un texto\", () => {\n  pm.expect(pm.response.text()).to.include(\"texto\")\n})"),
-                (tr("Cabecera Content-Type"), "pm.test(\"Responde JSON\", () => {\n  pm.response.to.have.header(\"Content-Type\")\n  pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\")\n})"),
-                (tr("Validar con un esquema JSON"), "const schema = {\n  type: \"object\",\n  required: [\"id\"],\n  properties: { id: { type: \"number\" } }\n}\npm.test(\"Cumple el esquema\", () => {\n  pm.response.to.have.jsonSchema(schema)\n})"),
+                (
+                    tr("Tiempo de respuesta"),
+                    "pm.test(\"Responde en menos de 500 ms\", () => {\n  pm.expect(pm.response.responseTime).to.be.below(500)\n})",
+                ),
+                (
+                    tr("Valor en el JSON"),
+                    "pm.test(\"El JSON trae el valor esperado\", () => {\n  const json = pm.response.json()\n  pm.expect(json.id).to.eql(1)\n})",
+                ),
+                (
+                    tr("El cuerpo contiene un texto"),
+                    "pm.test(\"El cuerpo contiene un texto\", () => {\n  pm.expect(pm.response.text()).to.include(\"texto\")\n})",
+                ),
+                (
+                    tr("Cabecera Content-Type"),
+                    "pm.test(\"Responde JSON\", () => {\n  pm.response.to.have.header(\"Content-Type\")\n  pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\")\n})",
+                ),
+                (
+                    tr("Validar con un esquema JSON"),
+                    "const schema = {\n  type: \"object\",\n  required: [\"id\"],\n  properties: { id: { type: \"number\" } }\n}\npm.test(\"Cumple el esquema\", () => {\n  pm.response.to.have.jsonSchema(schema)\n})",
+                ),
                 (tr("Guardar un valor de la respuesta"), "const json = pm.response.json()\npm.environment.set(\"token\", json.token)"),
                 (tr("Ir a otra petición (runner)"), "pm.execution.setNextRequest(\"Nombre de la petición\")"),
             ]
         };
-        let snippet_list = div().v_flex().w(px(230.)).flex_none().gap_0p5().p_2().border_l_1().border_color(cx.theme().border).child(div().text_xs().font_semibold().text_color(muted).pb_1().child(tr("Fragmentos"))).children(
-            snippets.into_iter().enumerate().map(|(i, (label, code))| {
+        let snippet_list = div()
+            .v_flex()
+            .w(px(230.))
+            .flex_none()
+            .gap_0p5()
+            .p_2()
+            .border_l_1()
+            .border_color(cx.theme().border)
+            .child(div().text_xs().font_semibold().text_color(muted).pb_1().child(tr("Fragmentos")))
+            .children(snippets.into_iter().enumerate().map(|(i, (label, code))| {
                 div()
                     .id(("snippet", i))
                     .px_2()
@@ -880,16 +1060,17 @@ impl RequestTab {
                     .hover(|s| s.bg(cx.theme().muted))
                     .child(label)
                     .on_click(cx.listener(move |this, _, window, cx| this.insert_snippet(code, window, cx)))
-            }),
-        );
+            }));
         div()
             .v_flex()
             .size_full()
-            .child(div().h_flex().gap_3().px_3().py_2().child(tabs).child(div().text_xs().text_color(muted).child(if kind == ScriptKind::Pre {
-                tr("Se ejecuta antes de enviar. La colección y las carpetas pueden tener los suyos, que van antes.")
-            } else {
-                tr("Se ejecuta con la respuesta: escribe aquí los tests con pm.test y pm.expect.")
-            })))
+            .child(div().h_flex().gap_3().px_3().py_2().child(tabs).child(div().text_xs().text_color(muted).child(
+                if kind == ScriptKind::Pre {
+                    tr("Se ejecuta antes de enviar. La colección y las carpetas pueden tener los suyos, que van antes.")
+                } else {
+                    tr("Se ejecuta con la respuesta: escribe aquí los tests con pm.test y pm.expect.")
+                },
+            )))
             .child(div().flex_1().min_h_0().flex().flex_row().child(div().flex_1().h_full().child(editor_el)).child(snippet_list.h_full()))
             .into_any_element()
     }
@@ -932,11 +1113,18 @@ impl Render for RequestTab {
             .size_full()
             .child(div().v_flex().gap_2().px_3().pt_3().pb_1().child(self.render_url_bar(cx)).children(self.render_variables(cx)))
             .child(div().px_1().child(tabs))
-            .child(div().id("request-section").flex_1().min_h_0().when(!matches!(self.section, Section::Body | Section::Scripts | Section::Docs), |d| d.overflow_y_scroll()).child(self.render_section(cx)));
+            .child(
+                div()
+                    .id("request-section")
+                    .flex_1()
+                    .min_h_0()
+                    .when(!matches!(self.section, Section::Body | Section::Scripts | Section::Docs), |d| d.overflow_y_scroll())
+                    .child(self.render_section(cx)),
+            );
         div().track_focus(&self.focus).size_full().child(
-            v_resizable("request-split")
-                .child(resizable_panel().size(px(360.)).size_range(px(160.)..px(2000.)).child(top))
-                .child(resizable_panel().child(div().size_full().border_t_1().border_color(cx.theme().border).child(self.response.clone()))),
+            v_resizable("request-split").child(resizable_panel().size(px(360.)).size_range(px(160.)..px(2000.)).child(top)).child(
+                resizable_panel().child(div().size_full().border_t_1().border_color(cx.theme().border).child(self.response.clone())),
+            ),
         )
     }
 }

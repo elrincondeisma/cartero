@@ -7,7 +7,11 @@ use crate::i18n::tr;
 
 pub fn collection() -> Collection {
     let mut c = Collection::new(tr("Ejemplos de Cartero").as_ref());
-    c.info.description = Some(tr("Peticiones de ejemplo contra httpbin.org. Pulsa Enviar en cualquiera para ver la respuesta, los tests y los tiempos.").to_string().into());
+    c.info.description = Some(
+        tr("Peticiones de ejemplo contra httpbin.org. Pulsa Enviar en cualquiera para ver la respuesta, los tests y los tiempos.")
+            .to_string()
+            .into(),
+    );
     let mut get = Item::request(tr("Leer datos (GET)").as_ref(), Request::new("GET", "{{baseUrl}}/get?lang=es&page=1"));
     get.event = Some(vec![Event::new(
         "test",
@@ -15,7 +19,8 @@ pub fn collection() -> Collection {
     )]);
     let mut post_req = Request::new("POST", "{{baseUrl}}/post");
     post_req.header = Some(vec![KeyValue::new("X-Cartero", "{{$guid}}")]);
-    let mut b = Body { mode: Some("raw".into()), raw: Some("{\n  \"nombre\": \"Ana\",\n  \"rol\": \"admin\"\n}".into()), ..Default::default() };
+    let mut b =
+        Body { mode: Some("raw".into()), raw: Some("{\n  \"nombre\": \"Ana\",\n  \"rol\": \"admin\"\n}".into()), ..Default::default() };
     b.set_raw_language("json");
     post_req.body = Some(b);
     let mut post = Item::request(tr("Crear un usuario (POST JSON)").as_ref(), post_req);

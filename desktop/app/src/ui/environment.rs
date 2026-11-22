@@ -14,7 +14,13 @@ use crate::ui::request::TabEvent;
 pub fn vars_to_kv(values: &[Variable]) -> Vec<KvItem> {
     values
         .iter()
-        .map(|v| KvItem { key: v.key.clone(), value: v.value_str(), description: cartero_model::description_text(&v.description), enabled: !v.disabled, flag: v.is_secret() })
+        .map(|v| KvItem {
+            key: v.key.clone(),
+            value: v.value_str(),
+            description: cartero_model::description_text(&v.description),
+            enabled: !v.disabled,
+            flag: v.is_secret(),
+        })
         .collect()
 }
 
@@ -54,7 +60,14 @@ impl EnvironmentTab {
             None => (tr("Variables globales").to_string(), app.read(cx).globals.clone()),
         };
         let name_input = cx.new(|cx| InputState::new(window, cx).default_value(name));
-        let vars = cx.new(|cx| KvEditor::new(vars_to_kv(&values), KvOptions { key_placeholder: tr("Variable"), flag: FlagKind::Secret, ..Default::default() }, window, cx));
+        let vars = cx.new(|cx| {
+            KvEditor::new(
+                vars_to_kv(&values),
+                KvOptions { key_placeholder: tr("Variable"), flag: FlagKind::Secret, ..Default::default() },
+                window,
+                cx,
+            )
+        });
         let mut subs = vec![];
         subs.push(cx.subscribe_in(&vars, window, |this, _, _: &KvChanged, _, cx| this.mark_dirty(cx)));
         subs.push(cx.subscribe_in(&name_input, window, |this, _, ev: &InputEvent, window, cx| match ev {
@@ -81,7 +94,11 @@ impl EnvironmentTab {
         let values = kv_to_vars(self.vars.read(cx).items(cx), &self.base);
         let store = self.app.read(cx).store.clone();
         let result = match &self.env_id {
-            Some(id) => store.save_environment(&Environment { id: Some(id.clone()), name: self.name.read(cx).value().trim().to_string(), values: values.clone() }),
+            Some(id) => store.save_environment(&Environment {
+                id: Some(id.clone()),
+                name: self.name.read(cx).value().trim().to_string(),
+                values: values.clone(),
+            }),
             None => store.save_globals(&self.app.read(cx).workspace.id, &values),
         };
         match result {

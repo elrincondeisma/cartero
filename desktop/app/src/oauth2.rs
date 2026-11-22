@@ -17,7 +17,6 @@ pub struct Token {
     pub access_token: String,
     pub refresh_token: Option<String>,
     pub token_type: Option<String>,
-    pub expires_in: Option<u64>,
 }
 
 fn b64url(data: &[u8]) -> String {
@@ -76,10 +75,13 @@ async fn token_request(p: &HashMap<String, String>, mut form: Vec<(String, Strin
             access_token: token.to_string(),
             refresh_token: json["refresh_token"].as_str().map(String::from),
             token_type: json["token_type"].as_str().map(String::from),
-            expires_in: json["expires_in"].as_u64().or_else(|| json["expires_in"].as_str().and_then(|s| s.parse().ok())),
         });
     }
-    let detail = json["error_description"].as_str().or(json["error"].as_str()).map(String::from).unwrap_or_else(|| format!("{} {}", res.status, text.chars().take(200).collect::<String>()));
+    let detail = json["error_description"]
+        .as_str()
+        .or(json["error"].as_str())
+        .map(String::from)
+        .unwrap_or_else(|| format!("{} {}", res.status, text.chars().take(200).collect::<String>()));
     Err(detail)
 }
 
@@ -89,7 +91,8 @@ pub async fn fetch_token(params: HashMap<String, String>, opts: Options, open_br
     match get("grant_type").as_str() {
         "client_credentials" => token_request(&params, vec![("grant_type".into(), "client_credentials".into())], &opts).await,
         "password" => {
-            let form = vec![("grant_type".into(), "password".into()), ("username".into(), get("username")), ("password".into(), get("password"))];
+            let form =
+                vec![("grant_type".into(), "password".into()), ("username".into(), get("username")), ("password".into(), get("password"))];
             token_request(&params, form, &opts).await
         }
         _ => {
@@ -100,7 +103,9 @@ pub async fn fetch_token(params: HashMap<String, String>, opts: Options, open_br
                 return Err("La URL de redirección tiene que ser local (localhost o 127.0.0.1) para que Cartero reciba el código".into());
             }
             let port = cb.port().unwrap_or(80);
-            let listener = tokio::net::TcpListener::bind(("127.0.0.1", port)).await.map_err(|e| format!("No se puede escuchar en el puerto {port}: {e}"))?;
+            let listener = tokio::net::TcpListener::bind(("127.0.0.1", port))
+                .await
+                .map_err(|e| format!("No se puede escuchar en el puerto {port}: {e}"))?;
             let state = random_string(24);
             let verifier = random_string(64);
             let challenge = b64url(&sha256(verifier.as_bytes()));
@@ -108,7 +113,10 @@ pub async fn fetch_token(params: HashMap<String, String>, opts: Options, open_br
             let mut auth_url = url::Url::parse(&get("authUrl")).map_err(|e| format!("URL de autorización no válida: {e}"))?;
             {
                 let mut q = auth_url.query_pairs_mut();
-                q.append_pair("response_type", "code").append_pair("client_id", &get("clientId")).append_pair("redirect_uri", &callback).append_pair("state", &state);
+                q.append_pair("response_type", "code")
+                    .append_pair("client_id", &get("clientId"))
+                    .append_pair("redirect_uri", &callback)
+                    .append_pair("state", &state);
                 if !get("scope").is_empty() {
                     q.append_pair("scope", &get("scope"));
                 }
@@ -148,7 +156,8 @@ pub async fn fetch_token(params: HashMap<String, String>, opts: Options, open_br
             })
             .await
             .map_err(|_| "Se ha agotado el tiempo de espera de la autorización (5 minutos)".to_string())??;
-            let mut form = vec![("grant_type".into(), "authorization_code".into()), ("code".into(), code), ("redirect_uri".into(), callback)];
+            let mut form =
+                vec![("grant_type".into(), "authorization_code".into()), ("code".into(), code), ("redirect_uri".into(), callback)];
             if pkce {
                 form.push(("code_verifier".into(), verifier));
             }

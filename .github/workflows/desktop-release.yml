@@ -1,0 +1,112 @@
+name: Desktop · instaladores
+
+# Con una etiqueta desktop-vX.Y.Z publica una release con los instaladores.
+# A mano (Actions → Run workflow) genera los instaladores en un borrador de release, sin publicar.
+on:
+  push:
+    tags: ['desktop-v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+defaults:
+  run:
+    working-directory: desktop
+
+jobs:
+  macos:
+    runs-on: macos-14
+    env:
+      MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin, x86_64-apple-darwin
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: desktop
+      - name: Certificado de firma (si está configurado)
+        if: env.MACOS_CERTIFICATE != ''
+        env:
+          MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+        run: |
+          echo "$MACOS_CERTIFICATE" | base64 --decode > cert.p12
+          security create-keychain -p ci build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p ci build.keychain
+          security import cert.p12 -k build.keychain -P "$MACOS_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -s -k ci build.keychain
+          rm cert.p12
+      - name: Cartero.app y .dmg
+        env:
+          MACOS_SIGN_IDENTITY: ${{ secrets.MACOS_SIGN_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+        run: packaging/macos/package.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cartero-macos
+          path: desktop/target/dist/*.dmg
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: desktop
+      - run: cargo build --release -p cartero-desktop
+      - name: Instalador (Inno Setup)
+        shell: pwsh
+        run: |
+          $version = (Select-String -Path Cargo.toml -Pattern '^version = "(.+)"' | Select-Object -First 1).Matches.Groups[1].Value
+          choco install innosetup --no-progress -y | Out-Null
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" "/DVersion=$version" packaging\windows\cartero.iss
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cartero-windows
+          path: desktop/target/dist/*.exe
+
+  linux:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: desktop
+      - run: sudo apt-get update && sudo apt-get install -y libxkbcommon-dev libxkbcommon-x11-dev libwayland-dev libvulkan-dev libfontconfig-dev libx11-xcb-dev libxcb1-dev libfuse2
+      - run: packaging/linux/package.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cartero-linux
+          path: |
+            desktop/target/dist/*.deb
+            desktop/target/dist/*.AppImage
+
+  release:
+    needs: [macos, windows, linux]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Release (borrador si es manual)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_type == 'tag' && github.ref_name || format('desktop-build-{0}', github.run_number) }}
+          name: ${{ github.ref_type == 'tag' && format('Cartero de escritorio {0}', github.ref_name) || format('Cartero de escritorio · compilación {0}', github.run_number) }}
+          draft: ${{ github.ref_type != 'tag' }}
+          prerelease: ${{ github.ref_type != 'tag' }}
+          files: dist/*
+          body: |
+            Instaladores de la app de escritorio de Cartero.
+
+            - **macOS** (Apple Silicon e Intel): `Cartero-…-macos-universal.dmg`. Si no está firmada, la primera vez abre la app con clic derecho → Abrir.
+            - **Windows**: `Cartero-…-windows-x64-setup.exe`.
+            - **Linux**: `.deb` (Debian, Ubuntu) o `.AppImage` (cualquier distribución).

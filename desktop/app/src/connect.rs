@@ -12,7 +12,8 @@ pub async fn via_browser(server: String, open_browser: impl Fn(&str) + Send) -> 
     let port = listener.local_addr().map_err(|e| e.to_string())?.port();
     let state: String = uuid::Uuid::new_v4().simple().to_string();
     let device = gethostname::gethostname().to_string_lossy().to_string();
-    let mut url = url::Url::parse(&format!("{}/connect-desktop", server.trim_end_matches('/'))).map_err(|e| format!("URL no válida: {e}"))?;
+    let mut url =
+        url::Url::parse(&format!("{}/connect-desktop", server.trim_end_matches('/'))).map_err(|e| format!("URL no válida: {e}"))?;
     url.query_pairs_mut().append_pair("port", &port.to_string()).append_pair("state", &state).append_pair("device", &device);
     open_browser(url.as_str());
     tokio::time::timeout(Duration::from_secs(600), async {

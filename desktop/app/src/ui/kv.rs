@@ -153,7 +153,8 @@ impl KvEditor {
     }
 
     fn pick_file(&mut self, ix: usize, window: &mut Window, cx: &mut Context<Self>) {
-        let rx = cx.prompt_for_paths(PathPromptOptions { files: true, directories: false, multiple: false, prompt: Some(tr("Elegir fichero")) });
+        let rx =
+            cx.prompt_for_paths(PathPromptOptions { files: true, directories: false, multiple: false, prompt: Some(tr("Elegir fichero")) });
         cx.spawn_in(window, async move |this, cx| {
             if let Ok(Ok(Some(paths))) = rx.await
                 && let Some(p) = paths.first()
@@ -206,22 +207,36 @@ impl Render for KvEditor {
                 .border_color(border)
                 .when(!enabled && !is_trailing, |d| d.opacity(0.55))
                 .when(opts.checkbox, |d| {
-                    d.child(
-                        div().w_8().flex().justify_center().when(!is_trailing, |d| {
-                            d.child(Checkbox::new(("kv-check", ix)).checked(enabled).small().on_click(cx.listener(move |this, checked: &bool, _, cx| {
+                    d.child(div().w_8().flex().justify_center().when(!is_trailing, |d| {
+                        d.child(Checkbox::new(("kv-check", ix)).checked(enabled).small().on_click(cx.listener(
+                            move |this, checked: &bool, _, cx| {
                                 if let Some(r) = this.rows.get_mut(ix) {
                                     r.enabled = *checked;
                                     cx.emit(KvChanged);
                                     cx.notify();
                                 }
-                            })))
-                        }),
-                    )
+                            },
+                        )))
+                    }))
                 })
                 .child(div().flex_1().min_w_0().child(Input::new(&row.key).small().appearance(false).disabled(readonly)))
-                .child(div().flex_1().min_w_0().border_l_1().border_color(border).child(Input::new(&row.value).small().appearance(false).disabled(readonly)))
+                .child(
+                    div()
+                        .flex_1()
+                        .min_w_0()
+                        .border_l_1()
+                        .border_color(border)
+                        .child(Input::new(&row.value).small().appearance(false).disabled(readonly)),
+                )
                 .when(opts.description, |d| {
-                    d.child(div().flex_1().min_w_0().border_l_1().border_color(border).child(Input::new(&row.description).small().appearance(false).disabled(readonly)))
+                    d.child(
+                        div()
+                            .flex_1()
+                            .min_w_0()
+                            .border_l_1()
+                            .border_color(border)
+                            .child(Input::new(&row.description).small().appearance(false).disabled(readonly)),
+                    )
                 })
                 .child(
                     div()
@@ -236,7 +251,11 @@ impl Render for KvEditor {
                                     .ghost()
                                     .xsmall()
                                     .icon(if flag { IconName::EyeOff } else { IconName::Eye })
-                                    .tooltip(if flag { tr("Secreta: el valor se oculta y se guarda cifrado") } else { tr("Marcar como secreta") })
+                                    .tooltip(if flag {
+                                        tr("Secreta: el valor se oculta y se guarda cifrado")
+                                    } else {
+                                        tr("Marcar como secreta")
+                                    })
                                     .on_click(cx.listener(move |this, _, window, cx| {
                                         if let Some(r) = this.rows.get_mut(ix) {
                                             r.flag = !r.flag;

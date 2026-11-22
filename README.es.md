@@ -66,6 +66,10 @@ claude mcp add --transport http cartero https://cartero.ejemplo.com/mcp --header
 
 Más detalles en el [manual](docs/manual/es/13-ia-mcp.md).
 
+## App de escritorio
+
+Una app nativa para macOS, Windows y Linux, escrita en Rust. Funciona sola (tus colecciones se guardan en tu ordenador y las peticiones salen de tu equipo, así que llegan a `localhost` y a tu VPN) y puede sincronizar workspaces con un servidor de Cartero. Descárgala en [Releases](https://github.com/elrincondeisma/cartero/releases) y lee la [guía](docs/manual/es/18-app-de-escritorio.md).
+
 ## CLI
 
 ```bash
@@ -95,7 +99,7 @@ packages/
   mcp/        Servidor MCP (stdio y Streamable HTTP)
 docs/manual/  Manual de uso en inglés; en español, docs/manual/es (también en /ayuda)
 video/        Vídeo promocional (Remotion)
-desktop/      App de escritorio nativa en Rust (GPUI), en desarrollo: mira desktop/README.es.md
+desktop/      App de escritorio nativa en Rust (GPUI): mira desktop/README.es.md
 ```
 
 Las peticiones se envían **desde el servidor**. Así no hay problemas de CORS y puedes probar APIs de tu red local. Los scripts de usuario se ejecutan en un proceso hijo con límites de tiempo y memoria.

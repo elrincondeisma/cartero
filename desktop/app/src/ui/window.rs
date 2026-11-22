@@ -18,7 +18,23 @@ use crate::ui::settings::SettingsTab;
 use crate::ui::sidebar::{Panel, Sidebar, SidebarEvent};
 use crate::ui::widgets::method_label;
 
-gpui_kit::actions!(cartero, [NewRequest, CloseTab, SaveTab, SendRequest, CommandPalette, ImportData, ToggleSidebar, NextTab, PrevTab, FocusUrl, OpenSettings, SearchRequests]);
+gpui_kit::actions!(
+    cartero,
+    [
+        NewRequest,
+        CloseTab,
+        SaveTab,
+        SendRequest,
+        CommandPalette,
+        ImportData,
+        ToggleSidebar,
+        NextTab,
+        PrevTab,
+        FocusUrl,
+        OpenSettings,
+        SearchRequests
+    ]
+);
 
 /// Ctrl en Windows y Linux, Cmd en macOS.
 fn k(keys: &str) -> &'static str {
@@ -111,7 +127,8 @@ impl MainWindow {
             }
         }));
         let sync = cx.new(|cx| crate::sync_engine::SyncEngine::new(app.clone(), cx));
-        let mut this = Self { app, sidebar, tabs: vec![], active: 0, show_sidebar: true, focus: cx.focus_handle(), _sync: sync, _subs: subs };
+        let mut this =
+            Self { app, sidebar, tabs: vec![], active: 0, show_sidebar: true, focus: cx.focus_handle(), _sync: sync, _subs: subs };
         this.restore_session(window, cx);
         if this.app.read(cx).settings.check_updates {
             let app = this.app.clone();
@@ -152,7 +169,9 @@ impl MainWindow {
     }
 
     pub fn open_item(&mut self, collection: String, item_id: String, window: &mut Window, cx: &mut Context<Self>) {
-        if let Some(ix) = self.find_tab(|k, cx| matches!(k, TabKind::Request(t) if t.read(cx).item_id.as_deref() == Some(item_id.as_str())), cx) {
+        if let Some(ix) =
+            self.find_tab(|k, cx| matches!(k, TabKind::Request(t) if t.read(cx).item_id.as_deref() == Some(item_id.as_str())), cx)
+        {
             self.activate(ix, window, cx);
             return;
         }
@@ -179,7 +198,8 @@ impl MainWindow {
             self.open_item(cid, id.clone(), window, cx);
             return;
         }
-        let mut item: Item = serde_json::from_value(entry.request.clone()).unwrap_or_else(|_| Item::request("", Request::new(&entry.method, &entry.url)));
+        let mut item: Item =
+            serde_json::from_value(entry.request.clone()).unwrap_or_else(|_| Item::request("", Request::new(&entry.method, &entry.url)));
         item.id = Some(cartero_model::new_id());
         let app = self.app.clone();
         let tab = cx.new(|cx| RequestTab::new(app, None, item, false, window, cx));
@@ -197,7 +217,10 @@ impl MainWindow {
     }
 
     fn open_collection_settings(&mut self, collection: String, folder: Option<String>, window: &mut Window, cx: &mut Context<Self>) {
-        if let Some(ix) = self.find_tab(|k, cx| matches!(k, TabKind::Collection(t) if t.read(cx).collection_id == collection && t.read(cx).folder_id == folder), cx) {
+        if let Some(ix) = self.find_tab(
+            |k, cx| matches!(k, TabKind::Collection(t) if t.read(cx).collection_id == collection && t.read(cx).folder_id == folder),
+            cx,
+        ) {
             self.activate(ix, window, cx);
             return;
         }
@@ -207,7 +230,10 @@ impl MainWindow {
     }
 
     fn open_runner(&mut self, collection: String, folder: Option<String>, window: &mut Window, cx: &mut Context<Self>) {
-        if let Some(ix) = self.find_tab(|k, cx| matches!(k, TabKind::Runner(t) if t.read(cx).collection_id == collection && t.read(cx).folder_id == folder), cx) {
+        if let Some(ix) = self.find_tab(
+            |k, cx| matches!(k, TabKind::Runner(t) if t.read(cx).collection_id == collection && t.read(cx).folder_id == folder),
+            cx,
+        ) {
             self.activate(ix, window, cx);
             return;
         }
@@ -316,11 +342,13 @@ impl MainWindow {
         if self.tabs.is_empty()
             && let Some((cid, id)) = {
                 let app = self.app.read(cx);
-                app.collections.first().and_then(|m| app.trees.get(&m.id).and_then(|t| {
-                    let mut flat = vec![];
-                    cartero_model::tree::walk(&t.item, &mut flat, 0);
-                    flat.into_iter().find(|(i, _)| !i.is_folder()).map(|(i, _)| (m.id.clone(), i.id().to_string()))
-                }))
+                app.collections.first().and_then(|m| {
+                    app.trees.get(&m.id).and_then(|t| {
+                        let mut flat = vec![];
+                        cartero_model::tree::walk(&t.item, &mut flat, 0);
+                        flat.into_iter().find(|(i, _)| !i.is_folder()).map(|(i, _)| (m.id.clone(), i.id().to_string()))
+                    })
+                })
             }
             && self.app.read(cx).store.setting::<bool>("welcomed").is_none()
         {
@@ -337,9 +365,10 @@ impl MainWindow {
             SidebarEvent::OpenHistory(e) => self.open_history(e, window, cx),
             SidebarEvent::OpenEnvironment(id) => self.open_environment(Some(id.clone()), window, cx),
             SidebarEvent::OpenGlobals => self.open_environment(None, window, cx),
-            SidebarEvent::OpenCollectionSettings { collection, folder } => self.open_collection_settings(collection.clone(), folder.clone(), window, cx),
+            SidebarEvent::OpenCollectionSettings { collection, folder } => {
+                self.open_collection_settings(collection.clone(), folder.clone(), window, cx)
+            }
             SidebarEvent::RunCollection { collection, folder } => self.open_runner(collection.clone(), folder.clone(), window, cx),
-            SidebarEvent::NewRequest { .. } => self.new_request(window, cx),
         }
     }
 
@@ -351,7 +380,9 @@ impl MainWindow {
                 self.restore_session(window, cx);
             }
             StateEvent::ItemDeleted(id) => {
-                if let Some(ix) = self.find_tab(|k, cx| matches!(k, TabKind::Request(t) if t.read(cx).item_id.as_deref() == Some(id.as_str())), cx) {
+                if let Some(ix) =
+                    self.find_tab(|k, cx| matches!(k, TabKind::Request(t) if t.read(cx).item_id.as_deref() == Some(id.as_str())), cx)
+                {
                     self.force_close(ix, window, cx);
                 }
             }
@@ -386,14 +417,22 @@ impl MainWindow {
 
     fn new_workspace(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         let app = self.app.clone();
-        dialogs::prompt_text(tr("Nuevo workspace"), tr("Un workspace agrupa colecciones, entornos e historial (por ejemplo, uno por proyecto)."), String::new(), tr("Crear"), window, cx, move |name, _, cx| {
-            if let Ok(w) = app.read(cx).store.create_workspace(&name) {
-                app.update(cx, |a, cx| {
-                    a.refresh_workspaces(cx);
-                    a.switch_workspace(&w.id, cx);
-                });
-            }
-        });
+        dialogs::prompt_text(
+            tr("Nuevo workspace"),
+            tr("Un workspace agrupa colecciones, entornos e historial (por ejemplo, uno por proyecto)."),
+            String::new(),
+            tr("Crear"),
+            window,
+            cx,
+            move |name, _, cx| {
+                if let Ok(w) = app.read(cx).store.create_workspace(&name) {
+                    app.update(cx, |a, cx| {
+                        a.refresh_workspaces(cx);
+                        a.switch_workspace(&w.id, cx);
+                    });
+                }
+            },
+        );
     }
 
     fn rename_workspace(&mut self, window: &mut Window, cx: &mut Context<Self>) {
@@ -413,17 +452,27 @@ impl MainWindow {
             return;
         }
         let name = app.read(cx).workspace.name.clone();
-        dialogs::confirm(tr("Eliminar el workspace"), trf("Se borrará «{name}» con todas sus colecciones, entornos e historial de este ordenador. No se puede deshacer.", &[("name", &name)]), tr("Eliminar"), window, cx, move |_, cx| {
-            let id = app.read(cx).workspace.id.clone();
-            let _ = app.read(cx).store.delete_workspace(&id);
-            app.update(cx, |a, cx| {
-                a.refresh_workspaces(cx);
-                let next = a.workspaces.first().map(|w| w.id.clone());
-                if let Some(n) = next {
-                    a.switch_workspace(&n, cx);
-                }
-            });
-        });
+        dialogs::confirm(
+            tr("Eliminar el workspace"),
+            trf(
+                "Se borrará «{name}» con todas sus colecciones, entornos e historial de este ordenador. No se puede deshacer.",
+                &[("name", &name)],
+            ),
+            tr("Eliminar"),
+            window,
+            cx,
+            move |_, cx| {
+                let id = app.read(cx).workspace.id.clone();
+                let _ = app.read(cx).store.delete_workspace(&id);
+                app.update(cx, |a, cx| {
+                    a.refresh_workspaces(cx);
+                    let next = a.workspaces.first().map(|w| w.id.clone());
+                    if let Some(n) = next {
+                        a.switch_workspace(&n, cx);
+                    }
+                });
+            },
+        );
     }
 
     // ───────────────────────────── Vista ─────────────────────────────
@@ -436,7 +485,11 @@ impl MainWindow {
         let linked = app.workspace.server_id.is_some();
         let envs = app.environments.clone();
         let active_env = app.active_env.clone();
-        let env_name: SharedString = active_env.as_ref().and_then(|id| envs.iter().find(|e| &e.id == id)).map(|e| e.name.clone().into()).unwrap_or_else(|| tr("Sin entorno"));
+        let env_name: SharedString = active_env
+            .as_ref()
+            .and_then(|id| envs.iter().find(|e| &e.id == id))
+            .map(|e| e.name.clone().into())
+            .unwrap_or_else(|| tr("Sin entorno"));
         let this = cx.entity();
         let app_entity = self.app.clone();
         let ws_menu = Button::new("workspace")
@@ -453,41 +506,69 @@ impl MainWindow {
                     for w in &workspaces {
                         let app = app_entity.clone();
                         let id = w.id.clone();
-                        menu = menu.item(PopupMenuItem::new(w.name.clone()).checked(w.id == current_ws).icon(if w.server_id.is_some() { IconName::Cloud } else { IconName::Box }).on_click(move |_, _, cx| app.update(cx, |a, cx| a.switch_workspace(&id, cx))));
+                        menu = menu.item(
+                            PopupMenuItem::new(w.name.clone())
+                                .checked(w.id == current_ws)
+                                .icon(if w.server_id.is_some() { IconName::Cloud } else { IconName::Box })
+                                .on_click(move |_, _, cx| app.update(cx, |a, cx| a.switch_workspace(&id, cx))),
+                        );
                     }
                     let (t1, t2, t3, t4) = (this.clone(), this.clone(), this.clone(), this.clone());
                     menu.separator()
-                        .item(PopupMenuItem::new(tr("Nuevo workspace…")).icon(IconName::Plus).on_click(move |_, w, cx| t1.update(cx, |t, cx| t.new_workspace(w, cx))))
-                        .item(PopupMenuItem::new(tr("Renombrar…")).icon(IconName::Pencil).on_click(move |_, w, cx| t2.update(cx, |t, cx| t.rename_workspace(w, cx))))
-                        .item(PopupMenuItem::new(tr("Conectar con un servidor…")).icon(IconName::Cloud).on_click(move |_, w, cx| t4.update(cx, |t, cx| t.open_settings(Some(crate::ui::settings::Section::Servers), w, cx))))
-                        .item(PopupMenuItem::new(tr("Eliminar…")).icon(IconName::Trash).on_click(move |_, w, cx| t3.update(cx, |t, cx| t.delete_workspace(w, cx))))
+                        .item(
+                            PopupMenuItem::new(tr("Nuevo workspace…"))
+                                .icon(IconName::Plus)
+                                .on_click(move |_, w, cx| t1.update(cx, |t, cx| t.new_workspace(w, cx))),
+                        )
+                        .item(
+                            PopupMenuItem::new(tr("Renombrar…"))
+                                .icon(IconName::Pencil)
+                                .on_click(move |_, w, cx| t2.update(cx, |t, cx| t.rename_workspace(w, cx))),
+                        )
+                        .item(PopupMenuItem::new(tr("Conectar con un servidor…")).icon(IconName::Cloud).on_click(move |_, w, cx| {
+                            t4.update(cx, |t, cx| t.open_settings(Some(crate::ui::settings::Section::Servers), w, cx))
+                        }))
+                        .item(
+                            PopupMenuItem::new(tr("Eliminar…"))
+                                .icon(IconName::Trash)
+                                .on_click(move |_, w, cx| t3.update(cx, |t, cx| t.delete_workspace(w, cx))),
+                        )
                 }
             });
-        let env_menu = Button::new("environment").outline().small().icon(IconName::Layers).label(env_name).dropdown_caret(true).dropdown_menu({
-            let app_entity = app_entity.clone();
-            let this = this.clone();
-            move |mut menu, _, _| {
-                let app = app_entity.clone();
-                menu = menu.item(PopupMenuItem::new(tr("Sin entorno")).checked(active_env.is_none()).on_click(move |_, _, cx| app.update(cx, |a, cx| a.set_active_env(None, cx))));
-                for e in &envs {
+        let env_menu =
+            Button::new("environment").outline().small().icon(IconName::Layers).label(env_name).dropdown_caret(true).dropdown_menu({
+                let app_entity = app_entity.clone();
+                let this = this.clone();
+                move |mut menu, _, _| {
                     let app = app_entity.clone();
-                    let id = e.id.clone();
-                    menu = menu.item(PopupMenuItem::new(e.name.clone()).checked(active_env.as_deref() == Some(e.id.as_str())).on_click(move |_, _, cx| app.update(cx, |a, cx| a.set_active_env(Some(id.clone()), cx))));
+                    menu = menu.item(
+                        PopupMenuItem::new(tr("Sin entorno"))
+                            .checked(active_env.is_none())
+                            .on_click(move |_, _, cx| app.update(cx, |a, cx| a.set_active_env(None, cx))),
+                    );
+                    for e in &envs {
+                        let app = app_entity.clone();
+                        let id = e.id.clone();
+                        menu = menu.item(
+                            PopupMenuItem::new(e.name.clone())
+                                .checked(active_env.as_deref() == Some(e.id.as_str()))
+                                .on_click(move |_, _, cx| app.update(cx, |a, cx| a.set_active_env(Some(id.clone()), cx))),
+                        );
+                    }
+                    let t = this.clone();
+                    let ae = active_env.clone();
+                    menu.separator().item(PopupMenuItem::new(tr("Editar entornos…")).icon(IconName::Pencil).on_click(move |_, w, cx| {
+                        t.update(cx, |t, cx| {
+                            t.sidebar.update(cx, |s, cx| s.set_panel(Panel::Environments, cx));
+                            t.show_sidebar = true;
+                            if let Some(id) = ae.clone() {
+                                t.open_environment(Some(id), w, cx);
+                            }
+                            cx.notify();
+                        })
+                    }))
                 }
-                let t = this.clone();
-                let ae = active_env.clone();
-                menu.separator().item(PopupMenuItem::new(tr("Editar entornos…")).icon(IconName::Pencil).on_click(move |_, w, cx| {
-                    t.update(cx, |t, cx| {
-                        t.sidebar.update(cx, |s, cx| s.set_panel(Panel::Environments, cx));
-                        t.show_sidebar = true;
-                        if let Some(id) = ae.clone() {
-                            t.open_environment(Some(id), w, cx);
-                        }
-                        cx.notify();
-                    })
-                }))
-            }
-        });
+            });
         TitleBar::new().child(
             div()
                 .h_flex()
@@ -501,8 +582,22 @@ impl MainWindow {
                 .child(div().flex_1())
                 .child(crate::ui::sync_status::render(&self.app, cx))
                 .child(env_menu)
-                .child(Button::new("cookies").ghost().small().icon(IconName::Cookie).tooltip(tr("Cookies")).on_click(cx.listener(|this, _, w, cx| dialogs::cookies(this.app.clone(), w, cx))))
-                .child(Button::new("palette").ghost().small().icon(IconName::Search).tooltip(tr("Buscar y comandos (Ctrl+K)")).on_click(cx.listener(|this, _, w, cx| crate::ui::palette::open(cx.entity(), this.app.clone(), w, cx)))),
+                .child(
+                    Button::new("cookies")
+                        .ghost()
+                        .small()
+                        .icon(IconName::Cookie)
+                        .tooltip(tr("Cookies"))
+                        .on_click(cx.listener(|this, _, w, cx| dialogs::cookies(this.app.clone(), w, cx))),
+                )
+                .child(
+                    Button::new("palette")
+                        .ghost()
+                        .small()
+                        .icon(IconName::Search)
+                        .tooltip(tr("Buscar y comandos (Ctrl+K)"))
+                        .on_click(cx.listener(|this, _, w, cx| crate::ui::palette::open(cx.entity(), this.app.clone(), w, cx))),
+                ),
         )
     }
 
@@ -535,8 +630,20 @@ impl MainWindow {
             .child(btn("act-envs", IconName::Layers, tr("Entornos"), Panel::Environments, cx))
             .child(btn("act-history", IconName::Clock, tr("Historial"), Panel::History, cx))
             .child(div().flex_1())
-            .child(Button::new("act-new").ghost().icon(IconName::Plus).tooltip(tr("Petición nueva (Ctrl+T)")).on_click(cx.listener(|this, _, w, cx| this.new_request(w, cx))))
-            .child(Button::new("act-settings").ghost().icon(IconName::Settings).tooltip(tr("Ajustes")).on_click(cx.listener(|this, _, w, cx| this.open_settings(None, w, cx))))
+            .child(
+                Button::new("act-new")
+                    .ghost()
+                    .icon(IconName::Plus)
+                    .tooltip(tr("Petición nueva (Ctrl+T)"))
+                    .on_click(cx.listener(|this, _, w, cx| this.new_request(w, cx))),
+            )
+            .child(
+                Button::new("act-settings")
+                    .ghost()
+                    .icon(IconName::Settings)
+                    .tooltip(tr("Ajustes"))
+                    .on_click(cx.listener(|this, _, w, cx| this.open_settings(None, w, cx))),
+            )
     }
 
     fn render_tab_bar(&mut self, cx: &mut Context<Self>) -> impl IntoElement + use<> {
@@ -582,10 +689,12 @@ impl MainWindow {
                         .when(sending, |d| d.child(Icon::new(IconName::LoaderCircle).size_3()))
                         .when(!sending && dirty, |d| d.child(div().size_2().rounded_full().bg(brand)))
                         .when(!sending && !dirty, |d| {
-                            d.child(Button::new(("close-tab", ix)).ghost().xsmall().icon(IconName::X).on_click(cx.listener(move |this, _, w, cx| {
-                                cx.stop_propagation();
-                                this.close_tab(ix, w, cx)
-                            })))
+                            d.child(Button::new(("close-tab", ix)).ghost().xsmall().icon(IconName::X).on_click(cx.listener(
+                                move |this, _, w, cx| {
+                                    cx.stop_propagation();
+                                    this.close_tab(ix, w, cx)
+                                },
+                            )))
                         }),
                 )
                 .on_click(cx.listener(move |this, _, w, cx| this.activate(ix, w, cx)))
@@ -607,20 +716,43 @@ impl MainWindow {
             .border_color(border)
             .overflow_x_scroll()
             .children(tabs)
-            .child(Button::new("tab-new").ghost().small().icon(IconName::Plus).tooltip(tr("Petición nueva (Ctrl+T)")).mx_1().on_click(cx.listener(|this, _, w, cx| this.new_request(w, cx))))
+            .child(
+                Button::new("tab-new")
+                    .ghost()
+                    .small()
+                    .icon(IconName::Plus)
+                    .tooltip(tr("Petición nueva (Ctrl+T)"))
+                    .mx_1()
+                    .on_click(cx.listener(|this, _, w, cx| this.new_request(w, cx))),
+            )
             .child(div().flex_1())
             .when(self.tabs.len() > 1, |d| {
-                d.child(Button::new("tab-close-others").ghost().xsmall().icon(IconName::Ellipsis).tooltip(tr("Más")).mr_1().dropdown_menu(move |menu, _, _| {
-                    let (t1, t2) = (this.clone(), this.clone());
-                    menu.item(PopupMenuItem::new(tr("Cerrar las demás pestañas")).on_click(move |_, w, cx| t1.update(cx, |t, cx| t.close_others(active, w, cx))))
-                        .item(PopupMenuItem::new(tr("Cerrar esta pestaña")).on_click(move |_, w, cx| t2.update(cx, |t, cx| t.close_tab(active, w, cx))))
-                }))
+                d.child(Button::new("tab-close-others").ghost().xsmall().icon(IconName::Ellipsis).tooltip(tr("Más")).mr_1().dropdown_menu(
+                    move |menu, _, _| {
+                        let (t1, t2) = (this.clone(), this.clone());
+                        menu.item(
+                            PopupMenuItem::new(tr("Cerrar las demás pestañas"))
+                                .on_click(move |_, w, cx| t1.update(cx, |t, cx| t.close_others(active, w, cx))),
+                        )
+                        .item(
+                            PopupMenuItem::new(tr("Cerrar esta pestaña"))
+                                .on_click(move |_, w, cx| t2.update(cx, |t, cx| t.close_tab(active, w, cx))),
+                        )
+                    },
+                ))
             })
     }
 
     fn render_welcome(&mut self, cx: &mut Context<Self>) -> impl IntoElement + use<> {
         let muted = cx.theme().muted_foreground;
-        let tip = |keys: &'static str, text: SharedString| div().h_flex().gap_3().text_sm().child(div().w(px(110.)).text_right().font_family(cx.theme().mono_font_family.clone()).text_color(muted).child(keys)).child(text);
+        let tip = |keys: &'static str, text: SharedString| {
+            div()
+                .h_flex()
+                .gap_3()
+                .text_sm()
+                .child(div().w(px(110.)).text_right().font_family(cx.theme().mono_font_family.clone()).text_color(muted).child(keys))
+                .child(text)
+        };
         div()
             .size_full()
             .v_flex()
@@ -628,13 +760,32 @@ impl MainWindow {
             .justify_center()
             .gap_6()
             .child(img("cartero/logo.svg").size_16())
-            .child(div().v_flex().items_center().gap_1().child(div().text_2xl().font_semibold().child(tr("Tus APIs, desde tu ordenador"))).child(div().text_sm().text_color(muted).child(tr("Las peticiones salen de aquí: tu localhost, tu VPN y tu red."))))
+            .child(
+                div()
+                    .v_flex()
+                    .items_center()
+                    .gap_1()
+                    .child(div().text_2xl().font_semibold().child(tr("Tus APIs, desde tu ordenador")))
+                    .child(div().text_sm().text_color(muted).child(tr("Las peticiones salen de aquí: tu localhost, tu VPN y tu red."))),
+            )
             .child(
                 div()
                     .h_flex()
                     .gap_2()
-                    .child(Button::new("w-new").primary().icon(IconName::Plus).label(tr("Petición nueva")).on_click(cx.listener(|this, _, w, cx| this.new_request(w, cx))))
-                    .child(Button::new("w-import").outline().icon(IconName::Import).label(tr("Importar de Postman o cURL")).on_click(cx.listener(|this, _, w, cx| dialogs::import(this.app.clone(), w, cx)))),
+                    .child(
+                        Button::new("w-new")
+                            .primary()
+                            .icon(IconName::Plus)
+                            .label(tr("Petición nueva"))
+                            .on_click(cx.listener(|this, _, w, cx| this.new_request(w, cx))),
+                    )
+                    .child(
+                        Button::new("w-import")
+                            .outline()
+                            .icon(IconName::Import)
+                            .label(tr("Importar de Postman o cURL"))
+                            .on_click(cx.listener(|this, _, w, cx| dialogs::import(this.app.clone(), w, cx))),
+                    ),
             )
             .child(
                 div()
@@ -660,10 +811,6 @@ impl MainWindow {
         });
     }
 
-    pub fn sidebar(&self) -> &Entity<Sidebar> {
-        &self.sidebar
-    }
-
     pub fn show_panel(&mut self, panel: Panel, cx: &mut Context<Self>) {
         self.show_sidebar = true;
         self.sidebar.update(cx, |s, cx| s.set_panel(panel, cx));
@@ -672,10 +819,6 @@ impl MainWindow {
 
     pub fn open_import(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         dialogs::import(self.app.clone(), window, cx);
-    }
-
-    pub fn open_runner_for(&mut self, collection: String, window: &mut Window, cx: &mut Context<Self>) {
-        self.open_runner(collection, None, window, cx);
     }
 
     pub fn open_item_pub(&mut self, collection: String, item: String, window: &mut Window, cx: &mut Context<Self>) {
@@ -693,7 +836,11 @@ impl Render for MainWindow {
             Some(TabKind::Settings(t)) => t.clone().into_any_element(),
             None => self.render_welcome(cx).into_any_element(),
         };
-        let main = div().v_flex().size_full().when(!self.tabs.is_empty(), |d| d.child(self.render_tab_bar(cx))).child(div().flex_1().min_h_0().child(content));
+        let main = div()
+            .v_flex()
+            .size_full()
+            .when(!self.tabs.is_empty(), |d| d.child(self.render_tab_bar(cx)))
+            .child(div().flex_1().min_h_0().child(content));
         let body = if self.show_sidebar {
             h_resizable("main-split")
                 .child(resizable_panel().size(px(290.)).size_range(px(200.)..px(560.)).child(self.sidebar.clone()))
@@ -746,6 +893,8 @@ impl Render for MainWindow {
             .bg(cx.theme().background)
             .text_color(cx.theme().foreground)
             .child(self.render_title_bar(cx))
-            .child(div().flex_1().min_h_0().h_flex().child(self.render_activity_bar(cx)).child(div().flex_1().h_full().min_w_0().child(body)))
+            .child(
+                div().flex_1().min_h_0().h_flex().child(self.render_activity_bar(cx)).child(div().flex_1().h_full().min_w_0().child(body)),
+            )
     }
 }

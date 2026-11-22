@@ -27,7 +27,8 @@ async fn sube_baja_y_detecta_conflictos() {
     let c = a.create_collection(&wa.id, "Compartida").unwrap();
     let folder = a.create_item(&c, None, 0, &Item::folder("Carpeta")).unwrap();
     let req = a.create_item(&c, Some(&folder), 0, &Item::request("Ping", Request::new("GET", "https://x.io/ping"))).unwrap();
-    a.create_environment(&wa.id, &Environment { id: None, name: "Prod".into(), values: vec![Variable::new("base", "https://x.io")] }).unwrap();
+    a.create_environment(&wa.id, &Environment { id: None, name: "Prod".into(), values: vec![Variable::new("base", "https://x.io")] })
+        .unwrap();
     a.save_globals(&wa.id, &[Variable::new("g", "1")]).unwrap();
     let r = client.sync(&a, &wa.id, &remote.id).await.unwrap();
     assert_eq!(r.conflicts, 0, "{r:?}");

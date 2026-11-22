@@ -1,3 +1,4 @@
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 //! Cartero de escritorio: cliente de APIs nativo, con tus colecciones en este ordenador y,
 //! si quieres, sincronizadas con un servidor de Cartero.
 

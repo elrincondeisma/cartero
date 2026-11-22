@@ -66,6 +66,10 @@ claude mcp add --transport http cartero https://cartero.example.com/mcp --header
 
 More in the [user guide](docs/manual/13-ai-mcp.md).
 
+## Desktop app
+
+A native app for macOS, Windows and Linux, written in Rust. It works on its own (your collections live on your computer and requests leave from your machine, so they reach `localhost` and your VPN) and can sync workspaces with a Cartero server. Download it from [Releases](https://github.com/elrincondeisma/cartero/releases) and read the [guide](docs/manual/18-desktop-app.md).
+
 ## CLI
 
 ```bash
@@ -95,7 +99,7 @@ packages/
   mcp/        MCP server (stdio and Streamable HTTP)
 docs/manual/  User guide in English; Spanish in docs/manual/es (also served at /ayuda)
 video/        Promo video (Remotion)
-desktop/      Native desktop app in Rust (GPUI), in progress: see desktop/README.md
+desktop/      Native desktop app in Rust (GPUI): see desktop/README.md
 ```
 
 Requests are sent **from the server**. That means no CORS problems, and you can test APIs on your local network. User scripts run in a child process with time and memory limits.

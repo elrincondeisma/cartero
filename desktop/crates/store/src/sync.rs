@@ -103,9 +103,17 @@ impl Store {
         let mut out = vec![];
         {
             let db = self.db();
-            let mut st = db.prepare("SELECT id, name, data, base, deleted, remote_version FROM collections WHERE workspace_id = ?1 AND dirty = 1")?;
+            let mut st =
+                db.prepare("SELECT id, name, data, base, deleted, remote_version FROM collections WHERE workspace_id = ?1 AND dirty = 1")?;
             let rows = st.query_map([workspace], |r| {
-                Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?, r.get::<_, String>(2)?, r.get::<_, Option<String>>(3)?, r.get::<_, bool>(4)?, r.get::<_, Option<i64>>(5)?))
+                Ok((
+                    r.get::<_, String>(0)?,
+                    r.get::<_, String>(1)?,
+                    r.get::<_, String>(2)?,
+                    r.get::<_, Option<String>>(3)?,
+                    r.get::<_, bool>(4)?,
+                    r.get::<_, Option<i64>>(5)?,
+                ))
             })?;
             for row in rows {
                 let (id, name, data, base, deleted, rv) = row?;
@@ -113,7 +121,14 @@ impl Store {
                     continue;
                 }
                 let data: Value = serde_json::from_str(&data).unwrap_or(json!({}));
-                out.push(Pending { entity: Entity::Collection, force: is_forced(Entity::Collection, &id), id, delete: deleted, base: parse(base), data: json!({ "name": name, "data": data }) });
+                out.push(Pending {
+                    entity: Entity::Collection,
+                    force: is_forced(Entity::Collection, &id),
+                    id,
+                    delete: deleted,
+                    base: parse(base),
+                    data: json!({ "name": name, "data": data }),
+                });
             }
             let mut st = db.prepare(
                 "SELECT i.id, i.collection_id, i.parent_id, i.type, i.name, i.sort, i.data, i.base, i.deleted, i.remote_version
@@ -149,20 +164,35 @@ impl Store {
                 });
             }
         }
-        let envs: Vec<(String, String, String, Option<String>, bool, Option<i64>)> = {
+        type EnvRow = (String, String, String, Option<String>, bool, Option<i64>);
+        let envs: Vec<EnvRow> = {
             let db = self.db();
-            let mut st = db.prepare("SELECT id, name, \"values\", base, deleted, remote_version FROM environments WHERE workspace_id = ?1 AND dirty = 1")?;
-            st.query_map([workspace], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?, r.get(4)?, r.get(5)?)))?.collect::<std::result::Result<_, _>>()?
+            let mut st = db.prepare(
+                "SELECT id, name, \"values\", base, deleted, remote_version FROM environments WHERE workspace_id = ?1 AND dirty = 1",
+            )?;
+            st.query_map([workspace], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?, r.get(4)?, r.get(5)?)))?
+                .collect::<std::result::Result<_, _>>()?
         };
         for (id, name, values, base, deleted, rv) in envs {
             if deleted && rv.is_none() {
                 continue;
             }
             let values = self.open_values(&values);
-            out.push(Pending { entity: Entity::Environment, force: is_forced(Entity::Environment, &id), id, delete: deleted, base: self.open_json(base), data: json!({ "name": name, "values": values }) });
+            out.push(Pending {
+                entity: Entity::Environment,
+                force: is_forced(Entity::Environment, &id),
+                id,
+                delete: deleted,
+                base: self.open_json(base),
+                data: json!({ "name": name, "values": values }),
+            });
         }
-        let globals: Option<(String, Option<String>)> =
-            self.db().query_row("SELECT \"values\", base FROM globals WHERE workspace_id = ?1 AND dirty = 1", [workspace], |r| Ok((r.get(0)?, r.get(1)?))).optional()?;
+        let globals: Option<(String, Option<String>)> = self
+            .db()
+            .query_row("SELECT \"values\", base FROM globals WHERE workspace_id = ?1 AND dirty = 1", [workspace], |r| {
+                Ok((r.get(0)?, r.get(1)?))
+            })
+            .optional()?;
         if let Some((values, base)) = globals {
             out.push(Pending {
                 entity: Entity::Globals,
@@ -186,13 +216,22 @@ impl Store {
         } else {
             match p.entity {
                 Entity::Globals => {
-                    db.execute("UPDATE globals SET dirty = 0, base = ?2, remote_version = ?3 WHERE workspace_id = ?1", params![p.id, self.seal_json(&p.data), version])?;
+                    db.execute(
+                        "UPDATE globals SET dirty = 0, base = ?2, remote_version = ?3 WHERE workspace_id = ?1",
+                        params![p.id, self.seal_json(&p.data), version],
+                    )?;
                 }
                 Entity::Environment => {
-                    db.execute("UPDATE environments SET dirty = 0, base = ?2, remote_version = ?3 WHERE id = ?1", params![p.id, self.seal_json(&p.data), version])?;
+                    db.execute(
+                        "UPDATE environments SET dirty = 0, base = ?2, remote_version = ?3 WHERE id = ?1",
+                        params![p.id, self.seal_json(&p.data), version],
+                    )?;
                 }
                 e => {
-                    db.execute(&format!("UPDATE {} SET dirty = 0, base = ?2, remote_version = ?3 WHERE id = ?1", e.table()), params![p.id, p.data.to_string(), version])?;
+                    db.execute(
+                        &format!("UPDATE {} SET dirty = 0, base = ?2, remote_version = ?3 WHERE id = ?1", e.table()),
+                        params![p.id, p.data.to_string(), version],
+                    )?;
                 }
             }
         }
@@ -283,8 +322,10 @@ impl Store {
     /// Tras una sincronización completa: quita lo que ya se había subido y ya no está en el
     /// servidor (lo nuevo sin subir se queda).
     pub fn apply_remote_deletion_if_synced(&self, entity: Entity, id: &str) -> Result<bool> {
-        let synced: Option<Option<i64>> =
-            self.db().query_row(&format!("SELECT remote_version FROM {} WHERE id = ?1 AND dirty = 0", entity.table()), [id], |r| r.get(0)).optional()?;
+        let synced: Option<Option<i64>> = self
+            .db()
+            .query_row(&format!("SELECT remote_version FROM {} WHERE id = ?1 AND dirty = 0", entity.table()), [id], |r| r.get(0))
+            .optional()?;
         match synced {
             Some(Some(_)) => {
                 self.db().execute(&format!("DELETE FROM {} WHERE id = ?1", entity.table()), [id])?;
@@ -320,7 +361,8 @@ impl Store {
     pub fn conflicts(&self, workspace: &str) -> Result<Vec<Conflict>> {
         let rows: Vec<(String, String, String, String)> = {
             let db = self.db();
-            let mut st = db.prepare("SELECT entity, id, name, remote FROM conflicts WHERE workspace_id = ?1 AND force = 0 ORDER BY created_at")?;
+            let mut st =
+                db.prepare("SELECT entity, id, name, remote FROM conflicts WHERE workspace_id = ?1 AND force = 0 ORDER BY created_at")?;
             st.query_map([workspace], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?)))?.collect::<std::result::Result<_, _>>()?
         };
         let pending = self.pending(workspace)?;
@@ -329,7 +371,14 @@ impl Store {
             .filter_map(|(e, id, name, remote)| {
                 let entity = Entity::parse(&e)?;
                 let local = pending.iter().find(|p| p.entity == entity && p.id == id).map(|p| p.data.clone()).unwrap_or(Value::Null);
-                Some(Conflict { entity, id, workspace_id: workspace.to_string(), name, local, remote: serde_json::from_str(&remote).unwrap_or(Value::Null) })
+                Some(Conflict {
+                    entity,
+                    id,
+                    workspace_id: workspace.to_string(),
+                    name,
+                    local,
+                    remote: serde_json::from_str(&remote).unwrap_or(Value::Null),
+                })
             })
             .collect())
     }

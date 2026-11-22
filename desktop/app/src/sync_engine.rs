@@ -50,7 +50,11 @@ impl SyncEngine {
         let Some((client, remote, _)) = self.app.read(cx).sync_client() else {
             let linked = self.app.read(cx).workspace.server_id.is_some();
             self.app.update(cx, |a, cx| {
-                a.sync_status = if linked { SyncStatus::Error(tr("Vuelve a conectar el servidor en Ajustes → Servidores").to_string()) } else { SyncStatus::Local };
+                a.sync_status = if linked {
+                    SyncStatus::Error(tr("Vuelve a conectar el servidor en Ajustes → Servidores").to_string())
+                } else {
+                    SyncStatus::Local
+                };
                 a.presence.clear();
                 cx.notify();
             });
@@ -79,7 +83,11 @@ impl SyncEngine {
                     }
                     match &result {
                         Ok(r) => {
-                            a.sync_status = if r.errors.is_empty() { SyncStatus::Synced(chrono::Local::now().format("%H:%M").to_string()) } else { SyncStatus::Error(r.errors.join("; ")) };
+                            a.sync_status = if r.errors.is_empty() {
+                                SyncStatus::Synced(chrono::Local::now().format("%H:%M").to_string())
+                            } else {
+                                SyncStatus::Error(r.errors.join("; "))
+                            };
                             if r.pulled > 0 {
                                 a.reload_collections(cx);
                                 a.reload_environments(cx);

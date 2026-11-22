@@ -7,8 +7,8 @@
 
 mod schema;
 pub mod secrets;
-pub mod sync;
 pub mod sort;
+pub mod sync;
 
 use std::path::Path;
 use std::sync::{Mutex, MutexGuard};

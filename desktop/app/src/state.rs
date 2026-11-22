@@ -308,7 +308,10 @@ impl AppState {
             collection,
             options: self.settings.http_options(),
             jar: self.jar.clone(),
-            limits: cartero_script::Limits { timeout: std::time::Duration::from_secs(self.settings.script_timeout_s.max(1)), ..Default::default() },
+            limits: cartero_script::Limits {
+                timeout: std::time::Duration::from_secs(self.settings.script_timeout_s.max(1)),
+                ..Default::default()
+            },
         }
     }
 

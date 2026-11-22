@@ -97,7 +97,10 @@ impl Client {
             200..=299 => Ok(json),
             401 => Err(SyncError::Unauthorized),
             403 => Err(SyncError::Forbidden),
-            s => Err(SyncError::Server { status: s, message: json["message"].as_str().map(String::from).unwrap_or_else(|| res.text().chars().take(200).collect()) }),
+            s => Err(SyncError::Server {
+                status: s,
+                message: json["message"].as_str().map(String::from).unwrap_or_else(|| res.text().chars().take(200).collect()),
+            }),
         }
     }
 
@@ -119,7 +122,10 @@ impl Client {
     /// Baja los cambios desde `cursor` y los aplica. Devuelve el cursor nuevo y cuántos aplicó.
     pub async fn pull(&self, store: &Store, local_ws: &str, remote_ws: &str, cursor: Option<&str>) -> Result<(String, usize)> {
         let path = match cursor {
-            Some(c) => format!("/api/workspaces/{remote_ws}/changes?since={}", url::form_urlencoded::byte_serialize(c.as_bytes()).collect::<String>()),
+            Some(c) => format!(
+                "/api/workspaces/{remote_ws}/changes?since={}",
+                url::form_urlencoded::byte_serialize(c.as_bytes()).collect::<String>()
+            ),
             None => format!("/api/workspaces/{remote_ws}/changes"),
         };
         let v = self.call("GET", &path, None).await?;
@@ -127,13 +133,15 @@ impl Client {
         let content = |row: &Value| strip_version(row);
         let ver = |row: &Value| row["version"].as_i64().unwrap_or(1);
         for c in v["collections"].as_array().into_iter().flatten() {
-            applied += usize::from(store.apply_remote_collection(local_ws, c["id"].as_str().unwrap_or_default(), &content(c), ver(c), false)?);
+            applied +=
+                usize::from(store.apply_remote_collection(local_ws, c["id"].as_str().unwrap_or_default(), &content(c), ver(c), false)?);
         }
         for i in v["items"].as_array().into_iter().flatten() {
             applied += usize::from(store.apply_remote_item(i["id"].as_str().unwrap_or_default(), &content(i), ver(i), false)?);
         }
         for e in v["environments"].as_array().into_iter().flatten() {
-            applied += usize::from(store.apply_remote_environment(local_ws, e["id"].as_str().unwrap_or_default(), &content(e), ver(e), false)?);
+            applied +=
+                usize::from(store.apply_remote_environment(local_ws, e["id"].as_str().unwrap_or_default(), &content(e), ver(e), false)?);
         }
         if v["globals"].is_object() {
             let g = &v["globals"];
@@ -152,7 +160,8 @@ impl Client {
     }
 
     fn prune_missing(&self, store: &Store, local_ws: &str, v: &Value) -> Result<usize> {
-        let ids = |k: &str| -> Vec<String> { v[k].as_array().into_iter().flatten().filter_map(|r| r["id"].as_str().map(String::from)).collect() };
+        let ids =
+            |k: &str| -> Vec<String> { v[k].as_array().into_iter().flatten().filter_map(|r| r["id"].as_str().map(String::from)).collect() };
         let (cols, items, envs) = (ids("collections"), ids("items"), ids("environments"));
         let mut removed = 0;
         for meta in store.collections(local_ws)? {
@@ -205,7 +214,12 @@ impl Client {
                         store.add_conflict(local_ws, p, &r["remote"])?;
                         report.conflicts += 1;
                     }
-                    _ => report.errors.push(format!("{} «{}»: {}", p.entity.as_str(), p.data["name"].as_str().unwrap_or(&p.id), r["message"].as_str().unwrap_or("error"))),
+                    _ => report.errors.push(format!(
+                        "{} «{}»: {}",
+                        p.entity.as_str(),
+                        p.data["name"].as_str().unwrap_or(&p.id),
+                        r["message"].as_str().unwrap_or("error")
+                    )),
                 }
             }
         }

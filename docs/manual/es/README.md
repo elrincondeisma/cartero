@@ -18,4 +18,5 @@
 - [Atajos de teclado](14-atajos.md)
 - [Instalación y administración](15-autoalojamiento.md)
 - [Administración](17-administracion-y-login-social.md)
+- [App de escritorio](18-app-de-escritorio.md)
 - [Preguntas frecuentes](16-preguntas-frecuentes.md)

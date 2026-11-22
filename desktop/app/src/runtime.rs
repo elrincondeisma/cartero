@@ -15,11 +15,3 @@ where
 {
     RUNTIME.spawn(fut)
 }
-
-pub fn spawn_blocking<F, R>(f: F) -> tokio::task::JoinHandle<R>
-where
-    F: FnOnce() -> R + Send + 'static,
-    R: Send + 'static,
-{
-    RUNTIME.spawn_blocking(f)
-}

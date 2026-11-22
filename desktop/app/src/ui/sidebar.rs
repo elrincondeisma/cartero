@@ -30,8 +30,9 @@ pub enum SidebarEvent {
     OpenGlobals,
     OpenCollectionSettings { collection: String, folder: Option<String> },
     RunCollection { collection: String, folder: Option<String> },
-    NewRequest { collection: String, folder: Option<String> },
 }
+
+type MenuAction = Box<dyn Fn(&mut Sidebar, &mut Window, &mut Context<Sidebar>)>;
 
 /// Lo que se arrastra en el árbol.
 #[derive(Clone)]
@@ -43,7 +44,16 @@ struct DragNode {
 
 impl Render for DragNode {
     fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        div().px_2().py_1().rounded(px(4.)).bg(cx.theme().popover).border_1().border_color(cx.theme().border).text_sm().shadow_md().child(self.label.clone())
+        div()
+            .px_2()
+            .py_1()
+            .rounded(px(4.))
+            .bg(cx.theme().popover)
+            .border_1()
+            .border_color(cx.theme().border)
+            .text_sm()
+            .shadow_md()
+            .child(self.label.clone())
     }
 }
 
@@ -189,11 +199,19 @@ impl Sidebar {
 
     fn new_collection(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         let app = self.app.clone();
-        dialogs::prompt_text(tr("Nueva colección"), tr("Nombre de la colección"), tr("Mi colección").to_string(), tr("Crear"), window, cx, move |name, _, cx| {
-            let ws = app.read(cx).workspace.id.clone();
-            let _ = app.read(cx).store.create_collection(&ws, &name);
-            app.update(cx, |a, cx| a.reload_collections(cx));
-        });
+        dialogs::prompt_text(
+            tr("Nueva colección"),
+            tr("Nombre de la colección"),
+            tr("Mi colección").to_string(),
+            tr("Crear"),
+            window,
+            cx,
+            move |name, _, cx| {
+                let ws = app.read(cx).workspace.id.clone();
+                let _ = app.read(cx).store.create_collection(&ws, &name);
+                app.update(cx, |a, cx| a.reload_collections(cx));
+            },
+        );
     }
 
     fn new_folder(&mut self, collection: String, parent: Option<String>, window: &mut Window, cx: &mut Context<Self>) {
@@ -203,10 +221,18 @@ impl Sidebar {
             None => Node::Collection(collection.clone()).id(),
         };
         self.expanded.insert(node_id);
-        dialogs::prompt_text(tr("Nueva carpeta"), tr("Nombre de la carpeta"), tr("Carpeta nueva").to_string(), tr("Crear"), window, cx, move |name, _, cx| {
-            let _ = app.read(cx).store.create_item(&collection, parent.as_deref(), usize::MAX, &Item::folder(&name));
-            app.update(cx, |a, cx| a.reload_collections(cx));
-        });
+        dialogs::prompt_text(
+            tr("Nueva carpeta"),
+            tr("Nombre de la carpeta"),
+            tr("Carpeta nueva").to_string(),
+            tr("Crear"),
+            window,
+            cx,
+            move |name, _, cx| {
+                let _ = app.read(cx).store.create_item(&collection, parent.as_deref(), usize::MAX, &Item::folder(&name));
+                app.update(cx, |a, cx| a.reload_collections(cx));
+            },
+        );
     }
 
     fn new_request_in(&mut self, collection: String, parent: Option<String>, cx: &mut Context<Self>) {
@@ -229,7 +255,9 @@ impl Sidebar {
             let a = app.read(cx);
             match &node {
                 Node::Collection(c) => a.collections.iter().find(|m| &m.id == c).map(|m| m.name.clone()),
-                Node::Folder(c, i) | Node::Request(c, i) => a.trees.get(c).and_then(|t| cartero_model::tree::find(&t.item, i)).map(|i| i.name.clone()),
+                Node::Folder(c, i) | Node::Request(c, i) => {
+                    a.trees.get(c).and_then(|t| cartero_model::tree::find(&t.item, i)).map(|i| i.name.clone())
+                }
             }
         }
         .unwrap_or_default();
@@ -264,7 +292,9 @@ impl Sidebar {
     fn delete(&mut self, node: Node, window: &mut Window, cx: &mut Context<Self>) {
         let app = self.app.clone();
         let (title, body) = match &node {
-            Node::Collection(_) => (tr("Eliminar la colección"), tr("Se borrarán la colección y todas sus peticiones. No se puede deshacer.")),
+            Node::Collection(_) => {
+                (tr("Eliminar la colección"), tr("Se borrarán la colección y todas sus peticiones. No se puede deshacer."))
+            }
             Node::Folder(..) => (tr("Eliminar la carpeta"), tr("Se borrarán la carpeta y todo lo que contiene. No se puede deshacer.")),
             Node::Request(..) => (tr("Eliminar la petición"), tr("La petición se borrará. No se puede deshacer.")),
         };
@@ -340,7 +370,9 @@ impl Sidebar {
                 let Some(tree) = app.trees.get(c) else { return };
                 let parent = cartero_model::tree::ancestors(&tree.item, r).and_then(|a| a.last().map(|p| p.id().to_string()));
                 let siblings: Vec<String> = match &parent {
-                    Some(p) => cartero_model::tree::find(&tree.item, p).map(|f| f.children().iter().map(|i| i.id().to_string()).collect()).unwrap_or_default(),
+                    Some(p) => cartero_model::tree::find(&tree.item, p)
+                        .map(|f| f.children().iter().map(|i| i.id().to_string()).collect())
+                        .unwrap_or_default(),
                     None => tree.item.iter().map(|i| i.id().to_string()).collect(),
                 };
                 let siblings: Vec<String> = siblings.into_iter().filter(|s| *s != drag.item).collect();
@@ -371,17 +403,48 @@ impl Sidebar {
             .pt_3()
             .pb_2()
             .child(div().flex_1().text_sm().font_semibold().child(tr("Colecciones")))
-            .child(Button::new("new-collection").ghost().xsmall().icon(IconName::Plus).tooltip(tr("Nueva colección")).on_click(cx.listener(|this, _, w, cx| this.new_collection(w, cx))))
-            .child(Button::new("import").ghost().xsmall().icon(IconName::Import).tooltip(tr("Importar (Postman, cURL…)")).on_click(cx.listener(|this, _, w, cx| dialogs::import(this.app.clone(), w, cx))));
+            .child(
+                Button::new("new-collection")
+                    .ghost()
+                    .xsmall()
+                    .icon(IconName::Plus)
+                    .tooltip(tr("Nueva colección"))
+                    .on_click(cx.listener(|this, _, w, cx| this.new_collection(w, cx))),
+            )
+            .child(
+                Button::new("import")
+                    .ghost()
+                    .xsmall()
+                    .icon(IconName::Import)
+                    .tooltip(tr("Importar (Postman, cURL…)"))
+                    .on_click(cx.listener(|this, _, w, cx| dialogs::import(this.app.clone(), w, cx))),
+            );
         if !has {
             return div()
                 .v_flex()
                 .size_full()
                 .child(header)
                 .child(
-                    empty_state(IconName::Folder, tr("Sin colecciones"), tr("Crea una colección para guardar tus peticiones, o importa una de Postman."), cx)
-                        .child(Button::new("empty-new").primary().small().label(tr("Nueva colección")).on_click(cx.listener(|this, _, w, cx| this.new_collection(w, cx))))
-                        .child(Button::new("empty-import").outline().small().label(tr("Importar")).on_click(cx.listener(|this, _, w, cx| dialogs::import(this.app.clone(), w, cx)))),
+                    empty_state(
+                        IconName::Folder,
+                        tr("Sin colecciones"),
+                        tr("Crea una colección para guardar tus peticiones, o importa una de Postman."),
+                        cx,
+                    )
+                    .child(
+                        Button::new("empty-new")
+                            .primary()
+                            .small()
+                            .label(tr("Nueva colección"))
+                            .on_click(cx.listener(|this, _, w, cx| this.new_collection(w, cx))),
+                    )
+                    .child(
+                        Button::new("empty-import")
+                            .outline()
+                            .small()
+                            .label(tr("Importar"))
+                            .on_click(cx.listener(|this, _, w, cx| dialogs::import(this.app.clone(), w, cx))),
+                    ),
                 )
                 .into_any_element();
         }
@@ -402,13 +465,27 @@ impl Sidebar {
                         _ => IconName::Folder,
                     };
                     row = row
-                        .child(div().text_color(cx.theme().muted_foreground).child(Icon::new(if expanded { IconName::ChevronDown } else { IconName::ChevronRight }).size_3()))
+                        .child(
+                            div()
+                                .text_color(cx.theme().muted_foreground)
+                                .child(Icon::new(if expanded { IconName::ChevronDown } else { IconName::ChevronRight }).size_3()),
+                        )
                         .child(div().text_color(cx.theme().muted_foreground).child(Icon::new(icon).size_4()))
-                        .child(div().flex_1().min_w_0().truncate().when(matches!(node, Some(Node::Collection(_))), |d| d.font_semibold()).child(label.clone()));
+                        .child(
+                            div()
+                                .flex_1()
+                                .min_w_0()
+                                .truncate()
+                                .when(matches!(node, Some(Node::Collection(_))), |d| d.font_semibold())
+                                .child(label.clone()),
+                        );
                 }
                 Some(Node::Request(c, i)) => {
                     let method = entity.read(cx).method_of(c, i, cx).unwrap_or_else(|| "GET".into());
-                    row = row.child(div().w(px(16.))).child(method_label(&method, cx)).child(div().flex_1().min_w_0().truncate().child(label.clone()));
+                    row = row
+                        .child(div().w(px(16.)))
+                        .child(method_label(&method, cx))
+                        .child(div().flex_1().min_w_0().truncate().child(label.clone()));
                 }
                 None => {}
             }
@@ -424,10 +501,12 @@ impl Sidebar {
             }
             if let Some(target) = drop_target {
                 let brand = crate::theme::brand();
-                wrapper = wrapper.drag_over::<DragNode>(move |s, _, _, _| s.border_t_2().border_color(brand)).on_drop(move |drag: &DragNode, window, cx| {
-                    let target = target.clone();
-                    drop_entity.update(cx, |this, cx| this.drop_on(drag, target, window, cx));
-                });
+                wrapper = wrapper.drag_over::<DragNode>(move |s, _, _, _| s.border_t_2().border_color(brand)).on_drop(
+                    move |drag: &DragNode, window, cx| {
+                        let target = target.clone();
+                        drop_entity.update(cx, |this, cx| this.drop_on(drag, target, window, cx));
+                    },
+                );
             }
             let click_node = node.clone();
             ListItem::new(ix).py_0p5().child(wrapper).on_click(move |ev, _, cx| {
@@ -440,7 +519,7 @@ impl Sidebar {
         .context_menu(move |_, entry, menu, window, cx| {
             let Some(node) = Node::parse(&entry.item().id) else { return menu };
             let e = entity.clone();
-            let item = |label: SharedString, icon: IconName, f: Box<dyn Fn(&mut Sidebar, &mut Window, &mut Context<Sidebar>)>| {
+            let item = |label: SharedString, icon: IconName, f: MenuAction| {
                 let e = e.clone();
                 PopupMenuItem::new(label).icon(icon).on_click(move |_, window, cx| e.update(cx, |this, cx| f(this, window, cx)))
             };
@@ -451,81 +530,169 @@ impl Sidebar {
                 Node::Collection(cid) => {
                     let (c1, c2, c3, c4, c5, c6) = (cid.clone(), cid.clone(), cid.clone(), cid.clone(), cid.clone(), cid.clone());
                     menu = menu
-                        .item(item(tr("Nueva petición"), IconName::FilePlus, Box::new(move |s, _, cx| s.new_request_in(c1.clone(), None, cx))))
-                        .item(item(tr("Nueva carpeta"), IconName::FolderPlus, Box::new(move |s, w, cx| s.new_folder(c2.clone(), None, w, cx))))
+                        .item(item(
+                            tr("Nueva petición"),
+                            IconName::FilePlus,
+                            Box::new(move |s, _, cx| s.new_request_in(c1.clone(), None, cx)),
+                        ))
+                        .item(item(
+                            tr("Nueva carpeta"),
+                            IconName::FolderPlus,
+                            Box::new(move |s, w, cx| s.new_folder(c2.clone(), None, w, cx)),
+                        ))
                         .separator()
-                        .item(item(tr("Ejecutar la colección"), IconName::Play, Box::new(move |_, _, cx| cx.emit(SidebarEvent::RunCollection { collection: c3.clone(), folder: None }))))
-                        .item(item(tr("Auth, scripts y variables"), IconName::Settings, Box::new(move |_, _, cx| cx.emit(SidebarEvent::OpenCollectionSettings { collection: c4.clone(), folder: None }))))
-                        .item(item(tr("Exportar (Postman v2.1)"), IconName::Download, Box::new(move |s, w, cx| s.export(c5.clone(), w, cx))))
+                        .item(item(
+                            tr("Ejecutar la colección"),
+                            IconName::Play,
+                            Box::new(move |_, _, cx| cx.emit(SidebarEvent::RunCollection { collection: c3.clone(), folder: None })),
+                        ))
+                        .item(item(
+                            tr("Auth, scripts y variables"),
+                            IconName::Settings,
+                            Box::new(move |_, _, cx| {
+                                cx.emit(SidebarEvent::OpenCollectionSettings { collection: c4.clone(), folder: None })
+                            }),
+                        ))
+                        .item(item(
+                            tr("Exportar (Postman v2.1)"),
+                            IconName::Download,
+                            Box::new(move |s, w, cx| s.export(c5.clone(), w, cx)),
+                        ))
                         .separator()
-                        .item(item(tr("Renombrar"), IconName::Pencil, Box::new({
-                            let n = node.clone();
-                            move |s, w, cx| s.rename(n.clone(), w, cx)
-                        })))
-                        .item(item(tr("Duplicar"), IconName::Copy, Box::new({
-                            let n = node.clone();
-                            move |s, _, cx| s.duplicate(n.clone(), cx)
-                        })))
-                        .item(item(tr("Eliminar"), IconName::Trash, Box::new({
-                            let n = Node::Collection(c6.clone());
-                            move |s, w, cx| s.delete(n.clone(), w, cx)
-                        })));
+                        .item(item(
+                            tr("Renombrar"),
+                            IconName::Pencil,
+                            Box::new({
+                                let n = node.clone();
+                                move |s, w, cx| s.rename(n.clone(), w, cx)
+                            }),
+                        ))
+                        .item(item(
+                            tr("Duplicar"),
+                            IconName::Copy,
+                            Box::new({
+                                let n = node.clone();
+                                move |s, _, cx| s.duplicate(n.clone(), cx)
+                            }),
+                        ))
+                        .item(item(
+                            tr("Eliminar"),
+                            IconName::Trash,
+                            Box::new({
+                                let n = Node::Collection(c6.clone());
+                                move |s, w, cx| s.delete(n.clone(), w, cx)
+                            }),
+                        ));
                 }
                 Node::Folder(_, fid) => {
                     let (c1, c2, c3, c4) = (c.clone(), c.clone(), c.clone(), c.clone());
                     let (f1, f2, f3, f4) = (fid.clone(), fid.clone(), fid.clone(), fid.clone());
                     menu = menu
-                        .item(item(tr("Nueva petición"), IconName::FilePlus, Box::new(move |s, _, cx| s.new_request_in(c1.clone(), Some(f1.clone()), cx))))
-                        .item(item(tr("Nueva carpeta"), IconName::FolderPlus, Box::new(move |s, w, cx| s.new_folder(c2.clone(), Some(f2.clone()), w, cx))))
+                        .item(item(
+                            tr("Nueva petición"),
+                            IconName::FilePlus,
+                            Box::new(move |s, _, cx| s.new_request_in(c1.clone(), Some(f1.clone()), cx)),
+                        ))
+                        .item(item(
+                            tr("Nueva carpeta"),
+                            IconName::FolderPlus,
+                            Box::new(move |s, w, cx| s.new_folder(c2.clone(), Some(f2.clone()), w, cx)),
+                        ))
                         .separator()
-                        .item(item(tr("Ejecutar la carpeta"), IconName::Play, Box::new(move |_, _, cx| cx.emit(SidebarEvent::RunCollection { collection: c3.clone(), folder: Some(f3.clone()) }))))
-                        .item(item(tr("Auth y scripts de la carpeta"), IconName::Settings, Box::new(move |_, _, cx| cx.emit(SidebarEvent::OpenCollectionSettings { collection: c4.clone(), folder: Some(f4.clone()) }))))
+                        .item(item(
+                            tr("Ejecutar la carpeta"),
+                            IconName::Play,
+                            Box::new(move |_, _, cx| {
+                                cx.emit(SidebarEvent::RunCollection { collection: c3.clone(), folder: Some(f3.clone()) })
+                            }),
+                        ))
+                        .item(item(
+                            tr("Auth y scripts de la carpeta"),
+                            IconName::Settings,
+                            Box::new(move |_, _, cx| {
+                                cx.emit(SidebarEvent::OpenCollectionSettings { collection: c4.clone(), folder: Some(f4.clone()) })
+                            }),
+                        ))
                         .separator();
-                    for (label, icon, kind) in [(tr("Renombrar"), IconName::Pencil, 0), (tr("Duplicar"), IconName::Copy, 1), (tr("Eliminar"), IconName::Trash, 2)] {
+                    for (label, icon, kind) in
+                        [(tr("Renombrar"), IconName::Pencil, 0), (tr("Duplicar"), IconName::Copy, 1), (tr("Eliminar"), IconName::Trash, 2)]
+                    {
                         let n = node.clone();
-                        menu = menu.item(item(label, icon, Box::new(move |s, w, cx| match kind {
-                            0 => s.rename(n.clone(), w, cx),
-                            1 => s.duplicate(n.clone(), cx),
-                            _ => s.delete(n.clone(), w, cx),
-                        })));
+                        menu = menu.item(item(
+                            label,
+                            icon,
+                            Box::new(move |s, w, cx| match kind {
+                                0 => s.rename(n.clone(), w, cx),
+                                1 => s.duplicate(n.clone(), cx),
+                                _ => s.delete(n.clone(), w, cx),
+                            }),
+                        ));
                     }
                 }
                 Node::Request(_, rid) => {
                     let (c1, c2, r1, r2) = (c.clone(), c.clone(), rid.clone(), rid.clone());
                     menu = menu
-                        .item(item(tr("Abrir"), IconName::ArrowUpRight, Box::new(move |_, _, cx| cx.emit(SidebarEvent::OpenItem { collection: c1.clone(), item: r1.clone() }))))
-                        .item(item(tr("Copiar como cURL"), IconName::Terminal, Box::new(move |s, w, cx| s.copy_curl(c2.clone(), r2.clone(), w, cx))))
+                        .item(item(
+                            tr("Abrir"),
+                            IconName::ArrowUpRight,
+                            Box::new(move |_, _, cx| cx.emit(SidebarEvent::OpenItem { collection: c1.clone(), item: r1.clone() })),
+                        ))
+                        .item(item(
+                            tr("Copiar como cURL"),
+                            IconName::Terminal,
+                            Box::new(move |s, w, cx| s.copy_curl(c2.clone(), r2.clone(), w, cx)),
+                        ))
                         .separator();
-                    for (label, icon, kind) in [(tr("Renombrar"), IconName::Pencil, 0), (tr("Duplicar"), IconName::Copy, 1), (tr("Eliminar"), IconName::Trash, 2)] {
+                    for (label, icon, kind) in
+                        [(tr("Renombrar"), IconName::Pencil, 0), (tr("Duplicar"), IconName::Copy, 1), (tr("Eliminar"), IconName::Trash, 2)]
+                    {
                         let n = node.clone();
-                        menu = menu.item(item(label, icon, Box::new(move |s, w, cx| match kind {
-                            0 => s.rename(n.clone(), w, cx),
-                            1 => s.duplicate(n.clone(), cx),
-                            _ => s.delete(n.clone(), w, cx),
-                        })));
+                        menu = menu.item(item(
+                            label,
+                            icon,
+                            Box::new(move |s, w, cx| match kind {
+                                0 => s.rename(n.clone(), w, cx),
+                                1 => s.duplicate(n.clone(), cx),
+                                _ => s.delete(n.clone(), w, cx),
+                            }),
+                        ));
                     }
                 }
             }
             menu
         });
         let _ = muted;
-        div().v_flex().size_full().child(header).child(div().px_3().pb_2().child(Input::new(&self.filter).small().prefix(Icon::new(IconName::Search).size_3()))).child(div().flex_1().min_h_0().px_1().child(tree_el)).into_any_element()
+        div()
+            .v_flex()
+            .size_full()
+            .child(header)
+            .child(div().px_3().pb_2().child(Input::new(&self.filter).small().prefix(Icon::new(IconName::Search).size_3())))
+            .child(div().flex_1().min_h_0().px_1().child(tree_el))
+            .into_any_element()
     }
 
     fn new_environment(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         let app = self.app.clone();
-        dialogs::prompt_text(tr("Nuevo entorno"), tr("Nombre del entorno (por ejemplo, Local o Producción)"), tr("Local").to_string(), tr("Crear"), window, cx, move |name, _, cx| {
-            let ws = app.read(cx).workspace.id.clone();
-            let env = cartero_model::Environment { id: None, name, values: vec![] };
-            let id = app.read(cx).store.create_environment(&ws, &env).ok();
-            app.update(cx, |a, cx| {
-                a.reload_environments(cx);
-                if let Some(id) = id {
-                    cx.emit(StateEvent::Environments);
-                    a.set_active_env(Some(id), cx);
-                }
-            });
-        });
+        dialogs::prompt_text(
+            tr("Nuevo entorno"),
+            tr("Nombre del entorno (por ejemplo, Local o Producción)"),
+            tr("Local").to_string(),
+            tr("Crear"),
+            window,
+            cx,
+            move |name, _, cx| {
+                let ws = app.read(cx).workspace.id.clone();
+                let env = cartero_model::Environment { id: None, name, values: vec![] };
+                let id = app.read(cx).store.create_environment(&ws, &env).ok();
+                app.update(cx, |a, cx| {
+                    a.reload_environments(cx);
+                    if let Some(id) = id {
+                        cx.emit(StateEvent::Environments);
+                        a.set_active_env(Some(id), cx);
+                    }
+                });
+            },
+        );
     }
 
     fn render_environments(&mut self, cx: &mut Context<Self>) -> AnyElement {
@@ -545,7 +712,13 @@ impl Sidebar {
                         .gap_2()
                         .w_full()
                         .text_sm()
-                        .child(div().size_2().rounded_full().when(is_active, |d| d.bg(brand)).when(!is_active, |d| d.border_1().border_color(muted)))
+                        .child(
+                            div()
+                                .size_2()
+                                .rounded_full()
+                                .when(is_active, |d| d.bg(brand))
+                                .when(!is_active, |d| d.border_1().border_color(muted)),
+                        )
                         .child(div().flex_1().truncate().child(e.name.clone()))
                         .child(
                             Button::new(("env-use", i))
@@ -558,14 +731,23 @@ impl Sidebar {
                                     this.app.update(cx, |a, cx| a.set_active_env(Some(id), cx));
                                 })),
                         )
-                        .child(Button::new(("env-del", i)).ghost().xsmall().icon(IconName::Trash).tooltip(tr("Eliminar")).on_click(cx.listener(move |this, _, window, cx| {
-                            let app = this.app.clone();
-                            let id = id3.clone();
-                            dialogs::confirm(tr("Eliminar el entorno"), tr("Se borrará el entorno con todas sus variables. No se puede deshacer."), tr("Eliminar"), window, cx, move |_, cx| {
-                                let _ = app.read(cx).store.delete_environment(&id);
-                                app.update(cx, |a, cx| a.reload_environments(cx));
-                            });
-                        }))),
+                        .child(Button::new(("env-del", i)).ghost().xsmall().icon(IconName::Trash).tooltip(tr("Eliminar")).on_click(
+                            cx.listener(move |this, _, window, cx| {
+                                let app = this.app.clone();
+                                let id = id3.clone();
+                                dialogs::confirm(
+                                    tr("Eliminar el entorno"),
+                                    tr("Se borrará el entorno con todas sus variables. No se puede deshacer."),
+                                    tr("Eliminar"),
+                                    window,
+                                    cx,
+                                    move |_, cx| {
+                                        let _ = app.read(cx).store.delete_environment(&id);
+                                        app.update(cx, |a, cx| a.reload_environments(cx));
+                                    },
+                                );
+                            }),
+                        )),
                 )
                 .on_click(cx.listener(move |_, _, _, cx| cx.emit(SidebarEvent::OpenEnvironment(id2.clone()))))
         });
@@ -573,24 +755,45 @@ impl Sidebar {
             .v_flex()
             .size_full()
             .child(
-                div()
-                    .h_flex()
-                    .px_3()
-                    .pt_3()
-                    .pb_2()
-                    .child(div().flex_1().text_sm().font_semibold().child(tr("Entornos")))
-                    .child(Button::new("new-env").ghost().xsmall().icon(IconName::Plus).tooltip(tr("Nuevo entorno")).on_click(cx.listener(|this, _, w, cx| this.new_environment(w, cx)))),
+                div().h_flex().px_3().pt_3().pb_2().child(div().flex_1().text_sm().font_semibold().child(tr("Entornos"))).child(
+                    Button::new("new-env")
+                        .ghost()
+                        .xsmall()
+                        .icon(IconName::Plus)
+                        .tooltip(tr("Nuevo entorno"))
+                        .on_click(cx.listener(|this, _, w, cx| this.new_environment(w, cx))),
+                ),
             )
-            .child(div().px_3().pb_2().text_xs().text_color(muted).child(tr("Un entorno es un juego de variables (URL base, tokens…). El activo se usa al enviar.")))
-            .child(div().id("env-list").flex_1().overflow_y_scroll().px_1().children(rows).child(
-                ListItem::new("globals").child(div().h_flex().gap_2().text_sm().child(Icon::new(IconName::Globe).size_4()).child(div().flex_1().child(tr("Variables globales"))).child(div().text_xs().text_color(muted).child(globals.to_string()))).on_click(cx.listener(|_, _, _, cx| cx.emit(SidebarEvent::OpenGlobals))),
-            ))
+            .child(
+                div()
+                    .px_3()
+                    .pb_2()
+                    .text_xs()
+                    .text_color(muted)
+                    .child(tr("Un entorno es un juego de variables (URL base, tokens…). El activo se usa al enviar.")),
+            )
+            .child(
+                div().id("env-list").flex_1().overflow_y_scroll().px_1().children(rows).child(
+                    ListItem::new("globals")
+                        .child(
+                            div()
+                                .h_flex()
+                                .gap_2()
+                                .text_sm()
+                                .child(Icon::new(IconName::Globe).size_4())
+                                .child(div().flex_1().child(tr("Variables globales")))
+                                .child(div().text_xs().text_color(muted).child(globals.to_string())),
+                        )
+                        .on_click(cx.listener(|_, _, _, cx| cx.emit(SidebarEvent::OpenGlobals))),
+                ),
+            )
             .into_any_element()
     }
 
     fn render_history(&mut self, cx: &mut Context<Self>) -> AnyElement {
         let q = self.history_filter.read(cx).value().to_lowercase();
-        let history: Vec<cartero_store::HistoryEntry> = self.app.read(cx).history.iter().filter(|h| q.is_empty() || h.url.to_lowercase().contains(&q)).take(300).cloned().collect();
+        let history: Vec<cartero_store::HistoryEntry> =
+            self.app.read(cx).history.iter().filter(|h| q.is_empty() || h.url.to_lowercase().contains(&q)).take(300).cloned().collect();
         let muted = cx.theme().muted_foreground;
         let empty = history.is_empty();
         let rows = history.into_iter().enumerate().map(|(i, h)| {
@@ -601,7 +804,14 @@ impl Sidebar {
                     div()
                         .v_flex()
                         .w_full()
-                        .child(div().h_flex().gap_1().text_sm().child(method_label(&h.method, cx)).child(div().flex_1().min_w_0().truncate().child(h.url.clone())))
+                        .child(
+                            div()
+                                .h_flex()
+                                .gap_1()
+                                .text_sm()
+                                .child(method_label(&h.method, cx))
+                                .child(div().flex_1().min_w_0().truncate().child(h.url.clone())),
+                        )
                         .child(
                             div()
                                 .h_flex()
@@ -609,7 +819,11 @@ impl Sidebar {
                                 .pl(px(38.))
                                 .text_xs()
                                 .text_color(muted)
-                                .child(div().text_color(status_color).child(h.status.map(|s| s.to_string()).unwrap_or_else(|| tr("error").to_string())))
+                                .child(
+                                    div()
+                                        .text_color(status_color)
+                                        .child(h.status.map(|s| s.to_string()).unwrap_or_else(|| tr("error").to_string())),
+                                )
                                 .when_some(h.time_ms, |d, t| d.child(format!("{t} ms")))
                                 .child(relative_time(&h.created_at)),
                         ),
@@ -619,21 +833,29 @@ impl Sidebar {
         div()
             .v_flex()
             .size_full()
-            .child(
-                div().h_flex().px_3().pt_3().pb_2().child(div().flex_1().text_sm().font_semibold().child(tr("Historial"))).child(Button::new("clear-history").ghost().xsmall().icon(IconName::Trash).tooltip(tr("Vaciar el historial")).on_click(
+            .child(div().h_flex().px_3().pt_3().pb_2().child(div().flex_1().text_sm().font_semibold().child(tr("Historial"))).child(
+                Button::new("clear-history").ghost().xsmall().icon(IconName::Trash).tooltip(tr("Vaciar el historial")).on_click(
                     cx.listener(|this, _, window, cx| {
                         let app = this.app.clone();
-                        dialogs::confirm(tr("Vaciar el historial"), tr("Se borrarán todas las peticiones del historial de este workspace."), tr("Vaciar"), window, cx, move |_, cx| {
-                            let ws = app.read(cx).workspace.id.clone();
-                            let _ = app.read(cx).store.clear_history(&ws);
-                            app.update(cx, |a, cx| a.reload_history(cx));
-                        });
+                        dialogs::confirm(
+                            tr("Vaciar el historial"),
+                            tr("Se borrarán todas las peticiones del historial de este workspace."),
+                            tr("Vaciar"),
+                            window,
+                            cx,
+                            move |_, cx| {
+                                let ws = app.read(cx).workspace.id.clone();
+                                let _ = app.read(cx).store.clear_history(&ws);
+                                app.update(cx, |a, cx| a.reload_history(cx));
+                            },
+                        );
                     }),
-                )),
-            )
+                ),
+            ))
             .child(div().px_3().pb_2().child(Input::new(&self.history_filter).small().prefix(Icon::new(IconName::Search).size_3())))
             .child(if empty {
-                empty_state(IconName::Clock, tr("Historial vacío"), tr("Cada petición que envíes queda aquí para repetirla."), cx).into_any_element()
+                empty_state(IconName::Clock, tr("Historial vacío"), tr("Cada petición que envíes queda aquí para repetirla."), cx)
+                    .into_any_element()
             } else {
                 div().id("history-list").flex_1().overflow_y_scroll().px_1().children(rows).into_any_element()
             })

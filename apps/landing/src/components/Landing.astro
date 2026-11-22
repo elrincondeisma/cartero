@@ -265,6 +265,23 @@ const stack = ['TypeScript', 'React 19', 'Fastify', 'PostgreSQL', 'Redis', 'post
     </div>
   </section>
 
+  <!-- DESKTOP -->
+  <section id="desktop" class="scroll-mt-16 py-24">
+    <div class="reveal mx-auto max-w-3xl px-6 text-center">
+      <p class="text-sm font-semibold tracking-wide text-brand-600 uppercase">{t.desktop.kicker}</p>
+      <h2 class="mt-2 text-4xl font-bold tracking-tight">{t.desktop.title}</h2>
+      <p class="mt-4 text-lg text-zinc-600">{t.desktop.text}</p>
+      <div class="mt-8 flex flex-wrap justify-center gap-3">
+        {[t.desktop.mac, t.desktop.win, t.desktop.linux].map((os) => (
+          <a href={`${REPO_URL}/releases`} class="inline-flex items-center gap-2 rounded-xl bg-ink-950 px-5 py-3 text-sm font-semibold text-white shadow-lg hover:bg-zinc-800">
+            <Icon name="download" class="size-4" />{os}
+          </a>
+        ))}
+      </div>
+      <p class="mt-4 text-sm text-zinc-500">{t.desktop.note}</p>
+    </div>
+  </section>
+
   <!-- CLI -->
   <section class="py-24">
     <div class="mx-auto grid max-w-7xl items-center gap-12 px-6 lg:grid-cols-2">

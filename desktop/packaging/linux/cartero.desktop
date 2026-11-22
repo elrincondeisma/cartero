@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=Cartero
+GenericName=API client
+GenericName[es]=Cliente de APIs
+Comment=Test and document HTTP APIs
+Comment[es]=Prueba y documenta APIs HTTP
+Exec=cartero
+Icon=cartero
+Terminal=false
+Categories=Development;Network;
+StartupWMClass=cartero

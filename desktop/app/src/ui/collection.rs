@@ -42,7 +42,13 @@ pub struct CollectionTab {
 impl EventEmitter<TabEvent> for CollectionTab {}
 
 impl CollectionTab {
-    pub fn new(app: Entity<AppState>, collection_id: String, folder_id: Option<String>, window: &mut Window, cx: &mut Context<Self>) -> Self {
+    pub fn new(
+        app: Entity<AppState>,
+        collection_id: String,
+        folder_id: Option<String>,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> Self {
         let c = app.read(cx).store.collection(&collection_id).unwrap_or_default();
         let folder = folder_id.as_ref().and_then(|f| cartero_model::tree::find(&c.item, f).cloned());
         let (name, auth, events, variables, description) = match &folder {
@@ -59,7 +65,14 @@ impl CollectionTab {
         let pre = ed(script_of(&events, "prerequest").unwrap_or_default(), "javascript", window, cx);
         let post = ed(script_of(&events, "test").unwrap_or_default(), "javascript", window, cx);
         let docs = ed(cartero_model::description_text(&description), "text", window, cx);
-        let vars = cx.new(|cx| KvEditor::new(vars_to_kv(variables.as_deref().unwrap_or_default()), KvOptions { key_placeholder: tr("Variable"), flag: FlagKind::Secret, ..Default::default() }, window, cx));
+        let vars = cx.new(|cx| {
+            KvEditor::new(
+                vars_to_kv(variables.as_deref().unwrap_or_default()),
+                KvOptions { key_placeholder: tr("Variable"), flag: FlagKind::Secret, ..Default::default() },
+                window,
+                cx,
+            )
+        });
         let mut subs = vec![];
         subs.push(cx.subscribe_in(&auth, window, |this, _, _: &AuthChanged, _, cx| this.mark_dirty(cx)));
         subs.push(cx.subscribe_in(&vars, window, |this, _, _: &KvChanged, _, cx| this.mark_dirty(cx)));
@@ -70,7 +83,21 @@ impl CollectionTab {
                 }
             }));
         }
-        Self { app, collection_id, folder_id, name, section: Section::Auth, auth, pre, post, vars, docs, dirty: false, focus: cx.focus_handle(), _subs: subs }
+        Self {
+            app,
+            collection_id,
+            folder_id,
+            name,
+            section: Section::Auth,
+            auth,
+            pre,
+            post,
+            vars,
+            docs,
+            dirty: false,
+            focus: cx.focus_handle(),
+            _subs: subs,
+        }
     }
 
     fn mark_dirty(&mut self, cx: &mut Context<Self>) {
@@ -137,17 +164,25 @@ impl Render for CollectionTab {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let muted = cx.theme().muted_foreground;
         let is_folder = self.folder_id.is_some();
-        let mut sections = vec![(Section::Auth, tr("Autorización")), (Section::Pre, tr("Antes de enviar")), (Section::Post, tr("Después de la respuesta"))];
+        let mut sections = vec![
+            (Section::Auth, tr("Autorización")),
+            (Section::Pre, tr("Antes de enviar")),
+            (Section::Post, tr("Después de la respuesta")),
+        ];
         if !is_folder {
             sections.push((Section::Variables, tr("Variables")));
         }
         sections.push((Section::Docs, tr("Descripción")));
         let selected = sections.iter().position(|(s, _)| *s == self.section).unwrap_or(0);
         let ids: Vec<Section> = sections.iter().map(|(s, _)| *s).collect();
-        let tabs = TabBar::new("collection-sections").underline().selected_index(selected).children(sections.into_iter().map(|(_, l)| Tab::new().label(l))).on_click(cx.listener(move |this, ix: &usize, _, cx| {
-            this.section = ids[*ix];
-            cx.notify();
-        }));
+        let tabs = TabBar::new("collection-sections")
+            .underline()
+            .selected_index(selected)
+            .children(sections.into_iter().map(|(_, l)| Tab::new().label(l)))
+            .on_click(cx.listener(move |this, ix: &usize, _, cx| {
+                this.section = ids[*ix];
+                cx.notify();
+            }));
         let help = match self.section {
             Section::Auth => tr("Las peticiones que hereden la autenticación usarán esta."),
             Section::Pre => tr("Se ejecuta antes de cada petición de dentro, antes que el script de la propia petición."),
@@ -176,7 +211,15 @@ impl Render for CollectionTab {
                     .child(Icon::new(if is_folder { IconName::Folder } else { IconName::Package }).size_5())
                     .child(div().text_lg().font_semibold().child(self.name.clone()))
                     .child(div().flex_1())
-                    .child(Button::new("col-save").primary().small().icon(IconName::Save).label(tr("Guardar")).disabled(!self.dirty).on_click(cx.listener(|this, _, w, cx| this.save(w, cx)))),
+                    .child(
+                        Button::new("col-save")
+                            .primary()
+                            .small()
+                            .icon(IconName::Save)
+                            .label(tr("Guardar"))
+                            .disabled(!self.dirty)
+                            .on_click(cx.listener(|this, _, w, cx| this.save(w, cx))),
+                    ),
             )
             .child(div().px_2().child(tabs))
             .child(div().px_4().py_2().text_sm().text_color(muted).child(help))
