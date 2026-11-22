@@ -50,6 +50,25 @@ const og = new URL('/og.png', site).href
           setTimeout(() => (b.innerHTML = old), 1200)
         }),
       )
+      // Vídeo de la hero: en silencio y en bucle si se puede; el botón lo reinicia con sonido
+      const promo = document.querySelector<HTMLVideoElement>('#promo')
+      const sound = document.querySelector<HTMLButtonElement>('#promo-sound')
+      if (promo && sound && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        promo.controls = false
+        promo.preload = 'auto'
+        promo.play().then(
+          () => (sound.hidden = false),
+          () => (promo.controls = true),
+        )
+        sound.addEventListener('click', () => {
+          promo.muted = false
+          promo.loop = false
+          promo.currentTime = 0
+          promo.controls = true
+          sound.hidden = true
+          promo.play()
+        })
+      }
     </script>
   </body>
 </html>

@@ -20,9 +20,8 @@ export const ui = {
         'Peticiones, tests, runner, mock servers, monitores, documentación pública, equipos en tiempo real y un servidor MCP para tu asistente de IA. Sin límites, sin cuentas en la nube, en tu propio servidor.',
       cta: 'Instálalo en un minuto',
       github: 'Ver en GitHub',
-      light: 'Claro',
-      dark: 'Oscuro',
-      alt: 'Editor de peticiones de Cartero con una respuesta JSON',
+      sound: 'Ver con sonido',
+      alt: 'Vídeo de presentación de Cartero (1 minuto)',
     },
     imports: { title: 'Trae lo que ya tienes. Sin perder nada.', note: 'Colecciones, entornos, scripts, tests, ejemplos y el ZIP de exportación completo.' },
     features: {
@@ -138,9 +137,8 @@ export const ui = {
         'Requests, tests, collection runner, mock servers, monitors, public docs, real-time teams and an MCP server for your AI assistant. No limits, no cloud accounts, on your own server.',
       cta: 'Install in one minute',
       github: 'View on GitHub',
-      light: 'Light',
-      dark: 'Dark',
-      alt: 'Cartero request editor showing a JSON response',
+      sound: 'Watch with sound',
+      alt: 'Cartero product video (1 minute)',
     },
     imports: { title: 'Bring what you already have. Lose nothing.', note: 'Collections, environments, scripts, tests, examples and the full data-export ZIP.' },
     features: {

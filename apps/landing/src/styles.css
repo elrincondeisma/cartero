@@ -70,18 +70,6 @@ body {
     scroll-behavior: auto;
   }
 }
-/* Selector de tema de la captura (sin JS) */
-#theme-dark:checked ~ .shots .light-shot {
-  display: none;
-}
-#theme-dark:not(:checked) ~ .shots .dark-shot {
-  display: none;
-}
-#theme-light:checked ~ .theme-tabs label[for='theme-light'],
-#theme-dark:checked ~ .theme-tabs label[for='theme-dark'] {
-  background: rgb(255 255 255 / 0.12);
-  color: #fff;
-}
 details summary::-webkit-details-marker {
   display: none;
 }

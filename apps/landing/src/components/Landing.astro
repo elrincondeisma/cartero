@@ -13,10 +13,6 @@ import monitorsEs from '../assets/screens/monitors.png'
 import monitorsEn from '../assets/screens/en/monitors.png'
 import paletteEs from '../assets/screens/palette.png'
 import paletteEn from '../assets/screens/en/palette.png'
-import requestDarkEs from '../assets/screens/request-dark.png'
-import requestDarkEn from '../assets/screens/en/request-dark.png'
-import requestLightEs from '../assets/screens/request-light.png'
-import requestLightEn from '../assets/screens/en/request-light.png'
 import runnerEs from '../assets/screens/runner.png'
 import runnerEn from '../assets/screens/en/runner.png'
 import scriptsEs from '../assets/screens/scripts.png'
@@ -30,8 +26,8 @@ const { lang } = Astro.props
 const t = ui[lang]
 const other: Lang = lang === 'es' ? 'en' : 'es'
 const S = lang === 'en'
-  ? { scripts: scriptsEn, runner: runnerEn, mocks: mocksEn, monitors: monitorsEn, collab: collabEn, docs: docsEn, mcp: mcpEn, palette: paletteEn, requestLight: requestLightEn, requestDark: requestDarkEn }
-  : { scripts: scriptsEs, runner: runnerEs, mocks: mocksEs, monitors: monitorsEs, collab: collabEs, docs: docsEs, mcp: mcpEs, palette: paletteEs, requestLight: requestLightEs, requestDark: requestDarkEs }
+  ? { scripts: scriptsEn, runner: runnerEn, mocks: mocksEn, monitors: monitorsEn, collab: collabEn, docs: docsEn, mcp: mcpEn, palette: paletteEn }
+  : { scripts: scriptsEs, runner: runnerEs, mocks: mocksEs, monitors: monitorsEs, collab: collabEs, docs: docsEs, mcp: mcpEs, palette: paletteEs }
 const shots: Record<string, ImageMetadata> = S
 const manualUrl = `${REPO_URL}/tree/main/docs/manual`
 
@@ -104,18 +100,35 @@ const stack = ['TypeScript', 'React 19', 'Fastify', 'PostgreSQL', 'Redis', 'post
       </div>
 
       <div class="relative mx-auto mt-16 max-w-6xl">
-        <input type="radio" name="theme" id="theme-light" class="sr-only" checked />
-        <input type="radio" name="theme" id="theme-dark" class="sr-only" />
-        <div class="theme-tabs mb-4 flex justify-center gap-1 text-sm text-zinc-400">
-          <label for="theme-light" class="cursor-pointer rounded-md px-3 py-1">{t.hero.light}</label>
-          <label for="theme-dark" class="cursor-pointer rounded-md px-3 py-1">{t.hero.dark}</label>
-        </div>
-        <div class="shots overflow-hidden rounded-xl border border-white/10 bg-ink-900 p-1.5">
+        <div class="overflow-hidden rounded-xl border border-white/10 bg-ink-900 p-1.5 shadow-2xl shadow-brand-600/10">
           <div class="flex items-center gap-1.5 px-2 pt-1 pb-2.5">
             <span class="size-2.5 rounded-full bg-zinc-700"></span><span class="size-2.5 rounded-full bg-zinc-700"></span><span class="size-2.5 rounded-full bg-zinc-700"></span>
           </div>
-          <Image src={S.requestLight} alt={t.hero.alt} widths={[800, 1440, 2160]} sizes="(max-width: 1200px) 100vw, 1150px" class="light-shot w-full rounded-lg" loading="eager" fetchpriority="high" />
-          <Image src={S.requestDark} alt={t.hero.alt} widths={[800, 1440, 2160]} sizes="(max-width: 1200px) 100vw, 1150px" class="dark-shot w-full rounded-lg" />
+          <div class="relative">
+            <video
+              id="promo"
+              class="aspect-video w-full rounded-lg bg-black"
+              src={`/video/cartero-${lang}.mp4`}
+              poster={`/video/poster-${lang}.jpg`}
+              width="1600"
+              height="900"
+              controls
+              loop
+              muted
+              playsinline
+              preload="none"
+              aria-label={t.hero.alt}
+            ></video>
+            <button
+              id="promo-sound"
+              type="button"
+              hidden
+              class="absolute right-4 bottom-4 inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/70 px-4 py-2 text-sm font-medium text-white backdrop-blur hover:bg-black/85"
+            >
+              <svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4z" /><path d="M15.5 8.5a5 5 0 0 1 0 7" /><path d="M19 5a10 10 0 0 1 0 14" /></svg>
+              {t.hero.sound}
+            </button>
+          </div>
         </div>
       </div>
     </div>

@@ -1,6 +1,7 @@
 import { loadFont } from '@remotion/google-fonts/Inter'
 import { loadFont as loadMono } from '@remotion/google-fonts/JetBrainsMono'
 import type React from 'react'
+import { useLang } from './i18n'
 import { AbsoluteFill, Easing, Img, interpolate, spring, staticFile, useCurrentFrame, useVideoConfig } from 'remotion'
 
 export const inter = loadFont('normal', { weights: ['400', '500', '600', '700', '800'], subsets: ['latin'] }).fontFamily
@@ -164,7 +165,9 @@ export const Browser: React.FC<{ src: string; width: number; url?: string; style
   url = 'cartero.local',
   style,
   imgStyle,
-}) => (
+}) => {
+  const lang = useLang()
+  return (
   <div
     style={{
       width,
@@ -185,10 +188,11 @@ export const Browser: React.FC<{ src: string; width: number; url?: string; style
       </div>
     </div>
     <div style={{ overflow: 'hidden' }}>
-      <Img src={staticFile(`shots/${src}.png`)} style={{ display: 'block', width: '100%', ...imgStyle }} />
+      <Img src={staticFile(`shots/${lang}/${src}.png`)} style={{ display: 'block', width: '100%', ...imgStyle }} />
     </div>
   </div>
-)
+  )
+}
 
 export const Chip: React.FC<{ children: React.ReactNode; color?: string; delay?: number; size?: number; style?: React.CSSProperties }> = ({
   children,

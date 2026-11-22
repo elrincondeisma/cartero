@@ -1,4 +1,5 @@
 import { AbsoluteFill, Audio, Sequence, interpolate, staticFile, useVideoConfig } from 'remotion'
+import { type Lang, LangCtx } from './i18n'
 import { Background } from './kit'
 import { Cta, Hook, Import, Mcp, MocksMonitors, Recap, Request, Reveal, Runner, Scripts, Teams } from './scenes'
 
@@ -25,7 +26,7 @@ const POPS = [
   ...[0, 1, 2, 3, 4].map((i) => 885 + 82 + i * 6),
 ]
 
-export const Promo: React.FC = () => {
+export const Promo: React.FC<{ lang?: Lang }> = ({ lang = 'en' }) => {
   const { durationInFrames } = useVideoConfig()
   let at = 0
   const starts = SCENES.map((s) => {
@@ -34,6 +35,7 @@ export const Promo: React.FC = () => {
     return x
   })
   return (
+    <LangCtx.Provider value={lang}>
     <AbsoluteFill>
       <Background />
       {SCENES.map(({ C, d }, i) => (
@@ -56,5 +58,6 @@ export const Promo: React.FC = () => {
         </Sequence>
       ))}
     </AbsoluteFill>
+    </LangCtx.Provider>
   )
 }

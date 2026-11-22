@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "remotion studio",
     "typecheck": "tsc --noEmit",
-    "render": "remotion render Promo out/cartero-promo.mp4"
+    "render": "remotion render Promo out/cartero-promo-en.mp4",
+    "render:es": "remotion render PromoEs out/cartero-promo-es.mp4",
+    "render:all": "bash scripts/render-all.sh"
   },
   "dependencies": {
     "@remotion/cli": "4.0.503",
