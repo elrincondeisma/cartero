@@ -21,9 +21,10 @@ import { environmentRoutes } from './routes/environments.js'
 import { executeRoutes } from './routes/execute.js'
 import { mcpRoutes } from './routes/mcp.js'
 import { mockRoutes } from './routes/mocks.js'
+import { monitorRoutes } from './routes/monitors.js'
 import { oauthRoutes } from './routes/oauth.js'
 import { setupRoutes } from './routes/setup.js'
-import { monitorRoutes } from './routes/monitors.js'
+import { syncRoutes } from './routes/sync.js'
 import { toolRoutes } from './routes/tools.js'
 import { workspaceRoutes } from './routes/workspaces.js'
 
@@ -47,10 +48,13 @@ export async function buildApp(opts: { logger?: boolean } = {}) {
         message: err.issues.map((i) => `${i.path.join('.') || 'body'}: ${i.message}`).join('; '),
       })
     }
-    if (err instanceof HttpError) return reply.code(err.statusCode).send({ error: err.code, message: err.message })
+    if (err instanceof HttpError)
+      return reply.code(err.statusCode).send({ error: err.code, message: err.message })
     const status = (err as FastifyError).statusCode ?? 500
     if (status >= 500) req.log.error(err)
-    return reply.code(status).send({ error: 'error', message: status >= 500 ? 'Error interno del servidor' : err.message })
+    return reply
+      .code(status)
+      .send({ error: 'error', message: status >= 500 ? 'Error interno del servidor' : err.message })
   })
 
   app.get('/api/health', async () => ({ ok: true, version: '0.1.0' }))
@@ -62,6 +66,7 @@ export async function buildApp(opts: { logger?: boolean } = {}) {
   await app.register(workspaceRoutes)
   await app.register(collectionRoutes)
   await app.register(environmentRoutes)
+  await app.register(syncRoutes)
   await app.register(executeRoutes)
   await app.register(mockRoutes)
   await app.register(monitorRoutes)

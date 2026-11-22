@@ -1,5 +1,14 @@
-
-import { boolean, index, integer, jsonb, pgTable, primaryKey, text, timestamp, uuid } from 'drizzle-orm/pg-core'
+import {
+  boolean,
+  index,
+  integer,
+  jsonb,
+  pgTable,
+  primaryKey,
+  text,
+  timestamp,
+  uuid,
+} from 'drizzle-orm/pg-core'
 
 const id = () => uuid('id').primaryKey().defaultRandom()
 const createdAt = () => timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
@@ -28,11 +37,16 @@ export const identities = pgTable(
   {
     provider: text('provider').$type<OAuthProvider>().notNull(),
     providerUserId: text('provider_user_id').notNull(),
-    userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
     email: text('email'),
     createdAt: createdAt(),
   },
-  (t) => [primaryKey({ columns: [t.provider, t.providerUserId] }), index('user_identities_user_idx').on(t.userId)],
+  (t) => [
+    primaryKey({ columns: [t.provider, t.providerUserId] }),
+    index('user_identities_user_idx').on(t.userId),
+  ],
 )
 
 /** Ajustes de la instancia que se cambian desde el panel de administración */
@@ -44,14 +58,18 @@ export const instanceSettings = pgTable('instance_settings', {
 
 export const sessions = pgTable('sessions', {
   id: text('id').primaryKey(), // sha256 del token
-  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
   expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
   createdAt: createdAt(),
 })
 
 export const apiTokens = pgTable('api_tokens', {
   id: id(),
-  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
   name: text('name').notNull(),
   tokenHash: text('token_hash').notNull().unique(),
   prefix: text('prefix').notNull(),
@@ -64,6 +82,9 @@ export const workspaces = pgTable('workspaces', {
   name: text('name').notNull(),
   type: text('type').$type<'personal' | 'team'>().notNull().default('team'),
   globals: jsonb('globals').$type<any[]>().notNull().default([]),
+  /** Versión de las globales, para sincronizar con la app de escritorio */
+  globalsVersion: integer('globals_version').notNull().default(1),
+  globalsUpdatedAt: timestamp('globals_updated_at', { withTimezone: true }).notNull().defaultNow(),
   createdAt: createdAt(),
 })
 
@@ -72,8 +93,12 @@ export type Role = 'owner' | 'admin' | 'editor' | 'viewer'
 export const members = pgTable(
   'workspace_members',
   {
-    workspaceId: uuid('workspace_id').notNull().references(() => workspaces.id, { onDelete: 'cascade' }),
-    userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    workspaceId: uuid('workspace_id')
+      .notNull()
+      .references(() => workspaces.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
     role: text('role').$type<Role>().notNull(),
     createdAt: createdAt(),
   },
@@ -82,7 +107,9 @@ export const members = pgTable(
 
 export const invitations = pgTable('invitations', {
   id: id(),
-  workspaceId: uuid('workspace_id').notNull().references(() => workspaces.id, { onDelete: 'cascade' }),
+  workspaceId: uuid('workspace_id')
+    .notNull()
+    .references(() => workspaces.id, { onDelete: 'cascade' }),
   email: text('email').notNull(),
   role: text('role').$type<Role>().notNull(),
   token: text('token').notNull().unique(),
@@ -95,7 +122,9 @@ export const collections = pgTable(
   'collections',
   {
     id: id(),
-    workspaceId: uuid('workspace_id').notNull().references(() => workspaces.id, { onDelete: 'cascade' }),
+    workspaceId: uuid('workspace_id')
+      .notNull()
+      .references(() => workspaces.id, { onDelete: 'cascade' }),
     name: text('name').notNull(),
     /** info, auth, event, variable, protocolProfileBehavior, description */
     data: jsonb('data').$type<Record<string, any>>().notNull().default({}),
@@ -111,7 +140,9 @@ export const items = pgTable(
   'items',
   {
     id: uuid('id').primaryKey(),
-    collectionId: uuid('collection_id').notNull().references(() => collections.id, { onDelete: 'cascade' }),
+    collectionId: uuid('collection_id')
+      .notNull()
+      .references(() => collections.id, { onDelete: 'cascade' }),
     parentId: uuid('parent_id'),
     type: text('type').$type<'folder' | 'request'>().notNull(),
     name: text('name').notNull(),
@@ -130,7 +161,9 @@ export const environments = pgTable(
   'environments',
   {
     id: id(),
-    workspaceId: uuid('workspace_id').notNull().references(() => workspaces.id, { onDelete: 'cascade' }),
+    workspaceId: uuid('workspace_id')
+      .notNull()
+      .references(() => workspaces.id, { onDelete: 'cascade' }),
     name: text('name').notNull(),
     values: jsonb('values').$type<any[]>().notNull().default([]),
     version: integer('version').notNull().default(1),
@@ -143,8 +176,12 @@ export const environments = pgTable(
 export const cookieJars = pgTable(
   'cookie_jars',
   {
-    workspaceId: uuid('workspace_id').notNull().references(() => workspaces.id, { onDelete: 'cascade' }),
-    userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    workspaceId: uuid('workspace_id')
+      .notNull()
+      .references(() => workspaces.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
     jar: jsonb('jar').notNull(),
     updatedAt: updatedAt(),
   },
@@ -155,8 +192,12 @@ export const history = pgTable(
   'history',
   {
     id: id(),
-    workspaceId: uuid('workspace_id').notNull().references(() => workspaces.id, { onDelete: 'cascade' }),
-    userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    workspaceId: uuid('workspace_id')
+      .notNull()
+      .references(() => workspaces.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
     itemId: uuid('item_id'),
     method: text('method').notNull(),
     url: text('url').notNull(),
@@ -173,12 +214,14 @@ export const runs = pgTable(
   'runs',
   {
     id: id(),
-    workspaceId: uuid('workspace_id').notNull().references(() => workspaces.id, { onDelete: 'cascade' }),
+    workspaceId: uuid('workspace_id')
+      .notNull()
+      .references(() => workspaces.id, { onDelete: 'cascade' }),
     collectionId: uuid('collection_id').references(() => collections.id, { onDelete: 'set null' }),
     environmentId: uuid('environment_id'),
     monitorId: uuid('monitor_id'),
     userId: uuid('user_id').references(() => users.id, { onDelete: 'set null' }),
-    source: text('source').$type<'app' | 'cli' | 'monitor'>().notNull(),
+    source: text('source').$type<'app' | 'cli' | 'monitor' | 'desktop'>().notNull(),
     name: text('name').notNull(),
     status: text('status').$type<'running' | 'passed' | 'failed' | 'error' | 'aborted'>().notNull(),
     stats: jsonb('stats'),
@@ -186,13 +229,20 @@ export const runs = pgTable(
     startedAt: timestamp('started_at', { withTimezone: true }).notNull().defaultNow(),
     finishedAt: timestamp('finished_at', { withTimezone: true }),
   },
-  (t) => [index('runs_ws_idx').on(t.workspaceId, t.startedAt), index('runs_monitor_idx').on(t.monitorId, t.startedAt)],
+  (t) => [
+    index('runs_ws_idx').on(t.workspaceId, t.startedAt),
+    index('runs_monitor_idx').on(t.monitorId, t.startedAt),
+  ],
 )
 
 export const mocks = pgTable('mocks', {
   id: id(),
-  workspaceId: uuid('workspace_id').notNull().references(() => workspaces.id, { onDelete: 'cascade' }),
-  collectionId: uuid('collection_id').notNull().references(() => collections.id, { onDelete: 'cascade' }),
+  workspaceId: uuid('workspace_id')
+    .notNull()
+    .references(() => workspaces.id, { onDelete: 'cascade' }),
+  collectionId: uuid('collection_id')
+    .notNull()
+    .references(() => collections.id, { onDelete: 'cascade' }),
   environmentId: uuid('environment_id'),
   name: text('name').notNull(),
   slug: text('slug').notNull().unique(),
@@ -205,7 +255,9 @@ export const mockLogs = pgTable(
   'mock_logs',
   {
     id: id(),
-    mockId: uuid('mock_id').notNull().references(() => mocks.id, { onDelete: 'cascade' }),
+    mockId: uuid('mock_id')
+      .notNull()
+      .references(() => mocks.id, { onDelete: 'cascade' }),
     method: text('method').notNull(),
     path: text('path').notNull(),
     status: integer('status').notNull(),
@@ -219,8 +271,12 @@ export const mockLogs = pgTable(
 
 export const monitors = pgTable('monitors', {
   id: id(),
-  workspaceId: uuid('workspace_id').notNull().references(() => workspaces.id, { onDelete: 'cascade' }),
-  collectionId: uuid('collection_id').notNull().references(() => collections.id, { onDelete: 'cascade' }),
+  workspaceId: uuid('workspace_id')
+    .notNull()
+    .references(() => workspaces.id, { onDelete: 'cascade' }),
+  collectionId: uuid('collection_id')
+    .notNull()
+    .references(() => collections.id, { onDelete: 'cascade' }),
   environmentId: uuid('environment_id'),
   name: text('name').notNull(),
   cron: text('cron').notNull(),
@@ -236,8 +292,12 @@ export const monitors = pgTable('monitors', {
 
 export const docs = pgTable('docs', {
   id: id(),
-  workspaceId: uuid('workspace_id').notNull().references(() => workspaces.id, { onDelete: 'cascade' }),
-  collectionId: uuid('collection_id').notNull().references(() => collections.id, { onDelete: 'cascade' }),
+  workspaceId: uuid('workspace_id')
+    .notNull()
+    .references(() => workspaces.id, { onDelete: 'cascade' }),
+  collectionId: uuid('collection_id')
+    .notNull()
+    .references(() => collections.id, { onDelete: 'cascade' }),
   environmentId: uuid('environment_id'),
   slug: text('slug').notNull().unique(),
   passwordHash: text('password_hash'),
@@ -249,7 +309,9 @@ export const revisions = pgTable(
   'revisions',
   {
     id: id(),
-    collectionId: uuid('collection_id').notNull().references(() => collections.id, { onDelete: 'cascade' }),
+    collectionId: uuid('collection_id')
+      .notNull()
+      .references(() => collections.id, { onDelete: 'cascade' }),
     itemId: uuid('item_id'),
     userId: uuid('user_id').references(() => users.id, { onDelete: 'set null' }),
     action: text('action').notNull(),
@@ -265,9 +327,13 @@ export const comments = pgTable(
   'comments',
   {
     id: id(),
-    collectionId: uuid('collection_id').notNull().references(() => collections.id, { onDelete: 'cascade' }),
+    collectionId: uuid('collection_id')
+      .notNull()
+      .references(() => collections.id, { onDelete: 'cascade' }),
     itemId: uuid('item_id'),
-    userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
     body: text('body').notNull(),
     resolved: boolean('resolved').notNull().default(false),
     createdAt: createdAt(),
@@ -275,3 +341,19 @@ export const comments = pgTable(
   (t) => [index('comments_idx').on(t.collectionId, t.itemId)],
 )
 
+/** Lo borrado, para que la app de escritorio sepa qué eliminar al sincronizar. */
+export const deletions = pgTable(
+  'deletions',
+  {
+    workspaceId: uuid('workspace_id')
+      .notNull()
+      .references(() => workspaces.id, { onDelete: 'cascade' }),
+    entity: text('entity').$type<'collection' | 'item' | 'environment'>().notNull(),
+    entityId: uuid('entity_id').notNull(),
+    deletedAt: timestamp('deleted_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.entity, t.entityId] }),
+    index('deletions_ws_idx').on(t.workspaceId, t.deletedAt),
+  ],
+)

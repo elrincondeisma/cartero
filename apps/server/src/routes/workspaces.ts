@@ -1,4 +1,4 @@
-import { and, asc, eq } from 'drizzle-orm'
+import { and, asc, eq, sql } from 'drizzle-orm'
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { config } from '../config.js'
@@ -9,8 +9,8 @@ import { openVariables, randomToken, sealVariables } from '../lib/crypto.js'
 import { badRequest, forbidden } from '../lib/errors.js'
 import { unscheduleMonitor } from '../lib/monitors.js'
 import { sendMail } from '../lib/notify.js'
-import { getSettings, publicUrl } from '../lib/settings.js'
 import { broadcast } from '../lib/realtime.js'
+import { getSettings, publicUrl } from '../lib/settings.js'
 
 const variableSchema = z.object({
   key: z.string(),
@@ -64,7 +64,10 @@ export async function workspaceRoutes(app: FastifyInstance) {
     const [row] = await db.select().from(schema.workspaces).where(eq(schema.workspaces.id, ws))
     if (row?.type === 'personal') throw badRequest('No se puede borrar el workspace personal')
     // Los monitores viven también en Redis: hay que desprogramarlos antes del borrado en cascada
-    const mons = await db.select({ id: schema.monitors.id }).from(schema.monitors).where(eq(schema.monitors.workspaceId, ws))
+    const mons = await db
+      .select({ id: schema.monitors.id })
+      .from(schema.monitors)
+      .where(eq(schema.monitors.workspaceId, ws))
     for (const m of mons) await unscheduleMonitor(m.id).catch(() => {})
     await db.delete(schema.workspaces).where(eq(schema.workspaces.id, ws))
     return { ok: true }
@@ -75,7 +78,10 @@ export async function workspaceRoutes(app: FastifyInstance) {
     const user = requireUser(req)
     const { ws } = req.params as { ws: string }
     await assertRole(ws, user.id)
-    const [row] = await db.select({ globals: schema.workspaces.globals }).from(schema.workspaces).where(eq(schema.workspaces.id, ws))
+    const [row] = await db
+      .select({ globals: schema.workspaces.globals })
+      .from(schema.workspaces)
+      .where(eq(schema.workspaces.id, ws))
     return openVariables(row?.globals ?? [])
   })
 
@@ -84,7 +90,14 @@ export async function workspaceRoutes(app: FastifyInstance) {
     const { ws } = req.params as { ws: string }
     await assertRole(ws, user.id, 'editor')
     const values = variablesSchema.parse(req.body)
-    await db.update(schema.workspaces).set({ globals: sealVariables(values) }).where(eq(schema.workspaces.id, ws))
+    await db
+      .update(schema.workspaces)
+      .set({
+        globals: sealVariables(values),
+        globalsVersion: sql`${schema.workspaces.globalsVersion} + 1`,
+        globalsUpdatedAt: new Date(),
+      })
+      .where(eq(schema.workspaces.id, ws))
     broadcast(ws, { type: 'environments.changed', environmentId: 'globals', by: user.id })
     return { ok: true }
   })
@@ -95,13 +108,23 @@ export async function workspaceRoutes(app: FastifyInstance) {
     const { ws } = req.params as { ws: string }
     await assertRole(ws, user.id)
     const members = await db
-      .select({ id: schema.users.id, name: schema.users.name, email: schema.users.email, role: schema.members.role })
+      .select({
+        id: schema.users.id,
+        name: schema.users.name,
+        email: schema.users.email,
+        role: schema.members.role,
+      })
       .from(schema.members)
       .innerJoin(schema.users, eq(schema.users.id, schema.members.userId))
       .where(eq(schema.members.workspaceId, ws))
       .orderBy(asc(schema.members.createdAt))
     const invitations = await db
-      .select({ id: schema.invitations.id, email: schema.invitations.email, role: schema.invitations.role, expiresAt: schema.invitations.expiresAt })
+      .select({
+        id: schema.invitations.id,
+        email: schema.invitations.email,
+        role: schema.invitations.role,
+        expiresAt: schema.invitations.expiresAt,
+      })
       .from(schema.invitations)
       .where(eq(schema.invitations.workspaceId, ws))
     return { members, invitations }
@@ -112,7 +135,8 @@ export async function workspaceRoutes(app: FastifyInstance) {
     const { ws } = req.params as { ws: string }
     const myRole = await assertRole(ws, user.id, 'admin')
     const body = z.object({ email: z.string().email(), role: roleSchema.exclude(['owner']) }).parse(req.body)
-    if (body.role === 'admin' && myRole !== 'owner') throw forbidden('Solo el propietario puede invitar administradores')
+    if (body.role === 'admin' && myRole !== 'owner')
+      throw forbidden('Solo el propietario puede invitar administradores')
     const token = randomToken(24)
     const [inv] = await db
       .insert(schema.invitations)
@@ -125,7 +149,10 @@ export async function workspaceRoutes(app: FastifyInstance) {
         expiresAt: new Date(Date.now() + 7 * 24 * 3600_000),
       })
       .returning()
-    const [w] = await db.select({ name: schema.workspaces.name }).from(schema.workspaces).where(eq(schema.workspaces.id, ws))
+    const [w] = await db
+      .select({ name: schema.workspaces.name })
+      .from(schema.workspaces)
+      .where(eq(schema.workspaces.id, ws))
     const link = `${await publicUrl()}/invite/${token}`
     const sent = await sendMail(
       body.email,
@@ -139,7 +166,9 @@ export async function workspaceRoutes(app: FastifyInstance) {
     const user = requireUser(req)
     const { ws, id } = req.params as { ws: string; id: string }
     await assertRole(ws, user.id, 'admin')
-    await db.delete(schema.invitations).where(and(eq(schema.invitations.id, id), eq(schema.invitations.workspaceId, ws)))
+    await db
+      .delete(schema.invitations)
+      .where(and(eq(schema.invitations.id, id), eq(schema.invitations.workspaceId, ws)))
     return { ok: true }
   })
 
@@ -178,7 +207,9 @@ export async function workspaceRoutes(app: FastifyInstance) {
         .where(and(eq(schema.members.workspaceId, ws), eq(schema.members.role, 'owner')))
       if (owners.length <= 1) throw badRequest('El workspace necesita al menos un propietario')
     }
-    await db.delete(schema.members).where(and(eq(schema.members.workspaceId, ws), eq(schema.members.userId, userId)))
+    await db
+      .delete(schema.members)
+      .where(and(eq(schema.members.workspaceId, ws), eq(schema.members.userId, userId)))
     return { ok: true }
   })
 }

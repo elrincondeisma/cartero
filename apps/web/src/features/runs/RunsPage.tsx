@@ -34,7 +34,7 @@ export function RunsPage() {
               </div>
               <div className="flex gap-3 text-[11px] text-muted">
                 <span>{timeAgo(r.startedAt)}</span>
-                <span>{r.source === 'monitor' ? t("Monitor") : r.source === 'cli' ? 'CLI' : (r.user ?? t("App"))}</span>
+                <span>{r.source === 'monitor' ? t("Monitor") : r.source === 'cli' ? 'CLI' : r.source === 'desktop' ? t('Escritorio') : (r.user ?? t("App"))}</span>
                 {r.stats && (
                   <>
                     <span>

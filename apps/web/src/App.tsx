@@ -12,6 +12,7 @@ import { t } from './i18n'
 import { useUi } from './store/ui'
 import { OAuthCallback } from './features/auth/OAuthCallback'
 import { PublicDocs } from './features/docs/PublicDocs'
+import { ConnectDesktop } from './features/desktop/ConnectDesktop'
 import { ManualPage } from './features/manual/ManualPage'
 import { WorkspaceLayout } from './features/workspace/Layout'
 
@@ -109,6 +110,14 @@ export function App() {
       <Route path="/oauth/callback" element={<OAuthCallback />} />
       <Route path="/ayuda" element={<ManualPage />} />
       <Route path="/ayuda/:slug" element={<ManualPage />} />
+      <Route
+        path="/connect-desktop"
+        element={
+          <RequireAuth>
+            <ConnectDesktop />
+          </RequireAuth>
+        }
+      />
       <Route
         path="/admin"
         element={

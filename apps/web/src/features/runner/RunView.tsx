@@ -102,7 +102,7 @@ export function RunView({ runId }: { runId: string }) {
           <RunStatusBadge status={run.status} />
           <span className="font-semibold">{run.name}</span>
           <span className="text-xs text-muted">
-            {new Date(run.startedAt).toLocaleString(locale)} · {run.source === 'monitor' ? 'monitor' : run.source === 'cli' ? 'CLI' : (run.user ?? '')}
+            {new Date(run.startedAt).toLocaleString(locale)} · {run.source === 'monitor' ? 'monitor' : run.source === 'cli' ? 'CLI' : run.source === 'desktop' ? t('Escritorio') : (run.user ?? '')}
           </span>
         </div>
         <Stat label={t("Peticiones")} value={stats.requests} />

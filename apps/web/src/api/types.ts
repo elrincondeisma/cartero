@@ -133,7 +133,7 @@ export interface RunRow {
   id: string
   name: string
   status: 'running' | 'passed' | 'failed' | 'error' | 'aborted'
-  source: 'app' | 'cli' | 'monitor'
+  source: 'app' | 'cli' | 'monitor' | 'desktop'
   stats: RunStats | null
   collectionId: string | null
   monitorId: string | null

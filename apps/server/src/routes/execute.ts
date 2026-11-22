@@ -9,7 +9,14 @@ import { db, schema } from '../db/index.js'
 import { assertCollection, assertRole, roleAtLeast } from '../lib/access.js'
 import { requireUser } from '../lib/auth.js'
 import { badRequest, notFound } from '../lib/errors.js'
-import { baseRunOptions, compactResult, getLiveRun, loadContext, persistResult, startRun } from '../lib/runner.js'
+import {
+  baseRunOptions,
+  compactResult,
+  getLiveRun,
+  loadContext,
+  persistResult,
+  startRun,
+} from '../lib/runner.js'
 import { findItem, loadCollection, replaceItem } from '../lib/tree.js'
 
 const executeBody = z.object({
@@ -69,7 +76,14 @@ export async function executeRoutes(app: FastifyInstance) {
     const collectionVariables = collection.variable ?? []
 
     const result = await runIsolated(
-      { ...(await baseRunOptions()), collection, entrypoint: item.id, environment: ctx.environment, globals: ctx.globals, cookieJar: ctx.cookieJar },
+      {
+        ...(await baseRunOptions()),
+        collection,
+        entrypoint: item.id,
+        environment: ctx.environment,
+        globals: ctx.globals,
+        cookieJar: ctx.cookieJar,
+      },
       () => {},
       { maxDuration: 3 * 60_000 },
     )
@@ -79,7 +93,12 @@ export async function executeRoutes(app: FastifyInstance) {
         ? []
         : await persistResult(
             runCtx,
-            { environment: ctx.environment, globals: ctx.globals, collectionVariables, collectionId: body.collectionId ?? undefined },
+            {
+              environment: ctx.environment,
+              globals: ctx.globals,
+              collectionVariables,
+              collectionId: body.collectionId ?? undefined,
+            },
             result,
             roleAtLeast(role, 'editor'),
           )
@@ -123,7 +142,9 @@ export async function executeRoutes(app: FastifyInstance) {
   app.delete('/api/workspaces/:ws/history', async (req) => {
     const user = requireUser(req)
     const { ws } = req.params as { ws: string }
-    await db.delete(schema.history).where(and(eq(schema.history.workspaceId, ws), eq(schema.history.userId, user.id)))
+    await db
+      .delete(schema.history)
+      .where(and(eq(schema.history.workspaceId, ws), eq(schema.history.userId, user.id)))
     return { ok: true }
   })
 
@@ -143,11 +164,17 @@ export async function executeRoutes(app: FastifyInstance) {
     const user = requireUser(req)
     const { ws } = req.params as { ws: string }
     await assertRole(ws, user.id)
-    const jar = z.object({ cookies: z.array(z.any()) }).passthrough().parse(req.body)
+    const jar = z
+      .object({ cookies: z.array(z.any()) })
+      .passthrough()
+      .parse(req.body)
     await db
       .insert(schema.cookieJars)
       .values({ workspaceId: ws, userId: user.id, jar })
-      .onConflictDoUpdate({ target: [schema.cookieJars.workspaceId, schema.cookieJars.userId], set: { jar, updatedAt: new Date() } })
+      .onConflictDoUpdate({
+        target: [schema.cookieJars.workspaceId, schema.cookieJars.userId],
+        set: { jar, updatedAt: new Date() },
+      })
     return { ok: true }
   })
 
@@ -174,7 +201,10 @@ export async function executeRoutes(app: FastifyInstance) {
       layers.push(toScope(ctx.globals))
       if (body.collectionId) {
         await assertCollection(body.collectionId, user.id)
-        const [c] = await db.select({ data: schema.collections.data }).from(schema.collections).where(eq(schema.collections.id, body.collectionId))
+        const [c] = await db
+          .select({ data: schema.collections.data })
+          .from(schema.collections)
+          .where(eq(schema.collections.id, body.collectionId))
         layers.push(toScope(c?.data?.variable))
       }
       layers.push(toScope(ctx.environment))
@@ -294,8 +324,14 @@ export async function executeRoutes(app: FastifyInstance) {
 
     reply.hijack()
     const res = reply.raw
-    res.writeHead(200, { 'content-type': 'text/event-stream', 'cache-control': 'no-cache', connection: 'keep-alive', 'x-accel-buffering': 'no' })
-    const send = (event: string, data: unknown) => res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`)
+    res.writeHead(200, {
+      'content-type': 'text/event-stream',
+      'cache-control': 'no-cache',
+      connection: 'keep-alive',
+      'x-accel-buffering': 'no',
+    })
+    const send = (event: string, data: unknown) =>
+      res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`)
 
     const state = getLiveRun(id)
     if (!state) {
@@ -330,7 +366,12 @@ export async function executeRoutes(app: FastifyInstance) {
     const { ws } = req.params as { ws: string }
     await assertRole(ws, user.id, 'editor')
     const body = z
-      .object({ name: z.string(), collectionId: z.string().uuid().nullable().optional(), result: z.record(z.string(), z.any()) })
+      .object({
+        name: z.string(),
+        collectionId: z.string().uuid().nullable().optional(),
+        result: z.record(z.string(), z.any()),
+        source: z.enum(['cli', 'desktop']).optional(),
+      })
       .parse(req.body)
     const result = body.result as any
     const failed = result.stats?.failedAssertions > 0 || result.stats?.failedRequests > 0
@@ -340,7 +381,7 @@ export async function executeRoutes(app: FastifyInstance) {
         workspaceId: ws,
         collectionId: body.collectionId ?? null,
         userId: user.id,
-        source: 'cli',
+        source: body.source ?? 'cli',
         name: body.name,
         status: result.error ? 'error' : failed ? 'failed' : 'passed',
         stats: result.stats,

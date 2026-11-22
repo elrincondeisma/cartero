@@ -13,7 +13,15 @@ import { openVariables, sealVariables } from '../lib/crypto.js'
 import { badRequest, conflict, notFound } from '../lib/errors.js'
 import { unscheduleMonitor } from '../lib/monitors.js'
 import { broadcast } from '../lib/realtime.js'
-import { collectionData, flattenItems, insertCollection, itemData, loadCollection, rowToItem } from '../lib/tree.js'
+import { recordDeletions } from '../lib/sync.js'
+import {
+  collectionData,
+  flattenItems,
+  insertCollection,
+  itemData,
+  loadCollection,
+  rowToItem,
+} from '../lib/tree.js'
 
 const itemBody = z.object({
   parentId: z.string().uuid().nullable().optional(),
@@ -32,7 +40,9 @@ async function recordRevision(
   before?: unknown,
   after?: unknown,
 ) {
-  await db.insert(schema.revisions).values({ collectionId, userId, action, summary, itemId: itemId ?? null, before, after })
+  await db
+    .insert(schema.revisions)
+    .values({ collectionId, userId, action, summary, itemId: itemId ?? null, before, after })
 }
 
 async function touchCollection(collectionId: string) {
@@ -47,7 +57,12 @@ function changed(ws: string, collectionId: string, action: string, by: string, i
 }
 
 /** Clave de orden para insertar en la posición `index` entre los hermanos. */
-async function sortKeyAt(collectionId: string, parentId: string | null, index: number | undefined, excludeId?: string) {
+async function sortKeyAt(
+  collectionId: string,
+  parentId: string | null,
+  index: number | undefined,
+  excludeId?: string,
+) {
   const siblings = (
     await db
       .select({ id: schema.items.id, sort: schema.items.sort })
@@ -95,14 +110,29 @@ export async function saveImport(ws: string, userId: string, input: string | Uin
     envs.push({ id: row.id, name: row.name })
   }
   if (result.globals?.length) {
-    const [w] = await db.select({ globals: schema.workspaces.globals }).from(schema.workspaces).where(eq(schema.workspaces.id, ws))
+    const [w] = await db
+      .select({ globals: schema.workspaces.globals })
+      .from(schema.workspaces)
+      .where(eq(schema.workspaces.id, ws))
     const current = openVariables(w.globals ?? [])
-    const merged = [...current.filter((g: any) => !result.globals!.some((n) => n.key === g.key)), ...result.globals]
-    await db.update(schema.workspaces).set({ globals: sealVariables(merged) }).where(eq(schema.workspaces.id, ws))
+    const merged = [
+      ...current.filter((g: any) => !result.globals!.some((n) => n.key === g.key)),
+      ...result.globals,
+    ]
+    await db
+      .update(schema.workspaces)
+      .set({ globals: sealVariables(merged) })
+      .where(eq(schema.workspaces.id, ws))
   }
   broadcast(ws, { type: 'collections.changed', by: userId })
   if (envs.length || result.globals?.length) broadcast(ws, { type: 'environments.changed', by: userId })
-  return { format: result.format, collections: created, environments: envs, globals: result.globals?.length ?? 0, warnings: result.warnings }
+  return {
+    format: result.format,
+    collections: created,
+    environments: envs,
+    globals: result.globals?.length ?? 0,
+    warnings: result.warnings,
+  }
 }
 
 export async function collectionRoutes(app: FastifyInstance) {
@@ -153,7 +183,11 @@ export async function collectionRoutes(app: FastifyInstance) {
     const { id } = req.params as { id: string }
     const ws = await assertCollection(id, user.id, 'editor')
     const body = z
-      .object({ name: z.string().min(1).max(200).optional(), data: z.record(z.string(), z.any()).optional(), version: z.number().optional() })
+      .object({
+        name: z.string().min(1).max(200).optional(),
+        data: z.record(z.string(), z.any()).optional(),
+        version: z.number().optional(),
+      })
       .parse(req.body)
     const [before] = await db.select().from(schema.collections).where(eq(schema.collections.id, id))
     if (body.version !== undefined && body.version !== before.version)
@@ -166,7 +200,15 @@ export async function collectionRoutes(app: FastifyInstance) {
       .set({ ...patch, version: sql`${schema.collections.version} + 1` })
       .where(eq(schema.collections.id, id))
       .returning()
-    await recordRevision(id, user.id, 'update', 'Configuración de la colección', null, { name: before.name, data: before.data }, { name: after.name, data: after.data })
+    await recordRevision(
+      id,
+      user.id,
+      'update',
+      'Configuración de la colección',
+      null,
+      { name: before.name, data: before.data },
+      { name: after.name, data: after.data },
+    )
     changed(ws, id, 'update', user.id)
     broadcast(ws, { type: 'collections.changed', by: user.id })
     return after
@@ -176,9 +218,17 @@ export async function collectionRoutes(app: FastifyInstance) {
     const user = requireUser(req)
     const { id } = req.params as { id: string }
     const ws = await assertCollection(id, user.id, 'editor')
-    const mons = await db.select({ id: schema.monitors.id }).from(schema.monitors).where(eq(schema.monitors.collectionId, id))
+    const mons = await db
+      .select({ id: schema.monitors.id })
+      .from(schema.monitors)
+      .where(eq(schema.monitors.collectionId, id))
     for (const m of mons) await unscheduleMonitor(m.id).catch(() => {})
+    const itemIds = (
+      await db.select({ id: schema.items.id }).from(schema.items).where(eq(schema.items.collectionId, id))
+    ).map((r) => r.id)
     await db.delete(schema.collections).where(eq(schema.collections.id, id))
+    await recordDeletions(ws, 'collection', [id])
+    await recordDeletions(ws, 'item', itemIds)
     broadcast(ws, { type: 'collections.changed', by: user.id })
     return { ok: true }
   })
@@ -189,7 +239,10 @@ export async function collectionRoutes(app: FastifyInstance) {
     await assertCollection(id, user.id)
     const { collection } = await loadCollection(id)
     const out = exportPostmanCollection(collection)
-    reply.header('content-disposition', `attachment; filename="${encodeURIComponent(collection.info.name)}.postman_collection.json"`)
+    reply.header(
+      'content-disposition',
+      `attachment; filename="${encodeURIComponent(collection.info.name)}.postman_collection.json"`,
+    )
     return out
   })
 
@@ -198,7 +251,9 @@ export async function collectionRoutes(app: FastifyInstance) {
     const user = requireUser(req)
     const { id } = req.params as { id: string }
     await assertCollection(id, user.id)
-    const body = z.object({ workspaceId: z.string().uuid(), name: z.string().min(1).max(200) }).parse(req.body)
+    const body = z
+      .object({ workspaceId: z.string().uuid(), name: z.string().min(1).max(200) })
+      .parse(req.body)
     await assertRole(body.workspaceId, user.id, 'editor')
     const { collection } = await loadCollection(id)
     collection.info.name = body.name
@@ -229,16 +284,35 @@ export async function collectionRoutes(app: FastifyInstance) {
     const targetWs = await assertCollection(fork.forkedFrom, user.id, 'editor')
     const { collection: before } = await loadCollection(fork.forkedFrom)
     const { collection } = await loadCollection(id)
+    const oldIds = (
+      await db
+        .select({ id: schema.items.id })
+        .from(schema.items)
+        .where(eq(schema.items.collectionId, fork.forkedFrom))
+    ).map((r) => r.id)
+    await recordDeletions(targetWs, 'item', oldIds)
     await db.transaction(async (tx) => {
       await tx.delete(schema.items).where(eq(schema.items.collectionId, fork.forkedFrom!))
       const rows = flattenItems(fork.forkedFrom!, collection.item, user.id)
       for (let i = 0; i < rows.length; i += 500) await tx.insert(schema.items).values(rows.slice(i, i + 500))
       await tx
         .update(schema.collections)
-        .set({ data: collectionData(collection), updatedAt: new Date(), version: sql`${schema.collections.version} + 1` })
+        .set({
+          data: collectionData(collection),
+          updatedAt: new Date(),
+          version: sql`${schema.collections.version} + 1`,
+        })
         .where(eq(schema.collections.id, fork.forkedFrom!))
     })
-    await recordRevision(fork.forkedFrom, user.id, 'merge', `Merge desde el fork «${fork.name}»`, null, before, collection)
+    await recordRevision(
+      fork.forkedFrom,
+      user.id,
+      'merge',
+      `Merge desde el fork «${fork.name}»`,
+      null,
+      before,
+      collection,
+    )
     changed(targetWs, fork.forkedFrom, 'merge', user.id)
     return { ok: true }
   })
@@ -255,7 +329,10 @@ export async function collectionRoutes(app: FastifyInstance) {
       if (!p || p.collectionId !== id || p.type !== 'folder') throw badRequest('Carpeta destino no válida')
     }
     const data =
-      body.data ?? (body.type === 'request' ? { request: { method: 'GET', url: { raw: '' }, header: [] }, response: [] } : {})
+      body.data ??
+      (body.type === 'request'
+        ? { request: { method: 'GET', url: { raw: '' }, header: [] }, response: [] }
+        : {})
     const [row] = await db
       .insert(schema.items)
       .values({
@@ -270,7 +347,15 @@ export async function collectionRoutes(app: FastifyInstance) {
       })
       .returning()
     await touchCollection(id)
-    await recordRevision(id, user.id, 'create', `${body.type === 'folder' ? 'Carpeta' : 'Petición'} «${body.name}» creada`, row.id, null, rowToItem(row))
+    await recordRevision(
+      id,
+      user.id,
+      'create',
+      `${body.type === 'folder' ? 'Carpeta' : 'Petición'} «${body.name}» creada`,
+      row.id,
+      null,
+      rowToItem(row),
+    )
     changed(ws, id, 'create', user.id, row.id)
     return row
   })
@@ -290,7 +375,11 @@ export async function collectionRoutes(app: FastifyInstance) {
     const collectionId = await itemCollection(id)
     const ws = await assertCollection(collectionId, user.id, 'editor')
     const body = z
-      .object({ name: z.string().min(1).max(500).optional(), data: z.record(z.string(), z.any()).optional(), version: z.number().int().optional() })
+      .object({
+        name: z.string().min(1).max(500).optional(),
+        data: z.record(z.string(), z.any()).optional(),
+        version: z.number().int().optional(),
+      })
       .parse(req.body)
     const [before] = await db.select().from(schema.items).where(eq(schema.items.id, id))
     if (body.version !== undefined && body.version !== before.version)
@@ -307,7 +396,15 @@ export async function collectionRoutes(app: FastifyInstance) {
       .where(eq(schema.items.id, id))
       .returning()
     await touchCollection(collectionId)
-    await recordRevision(collectionId, user.id, 'update', `«${after.name}» modificado`, id, rowToItem(before), rowToItem(after))
+    await recordRevision(
+      collectionId,
+      user.id,
+      'update',
+      `«${after.name}» modificado`,
+      id,
+      rowToItem(before),
+      rowToItem(after),
+    )
     changed(ws, collectionId, 'update', user.id, id)
     return after
   })
@@ -317,12 +414,15 @@ export async function collectionRoutes(app: FastifyInstance) {
     const { id } = req.params as { id: string }
     const collectionId = await itemCollection(id)
     const ws = await assertCollection(collectionId, user.id, 'editor')
-    const body = z.object({ parentId: z.string().uuid().nullable(), index: z.number().int().min(0) }).parse(req.body)
+    const body = z
+      .object({ parentId: z.string().uuid().nullable(), index: z.number().int().min(0) })
+      .parse(req.body)
     if (body.parentId) {
       if (body.parentId === id || (await descendantIds(collectionId, id)).includes(body.parentId))
         throw badRequest('No se puede mover una carpeta dentro de sí misma')
       const [p] = await db.select().from(schema.items).where(eq(schema.items.id, body.parentId))
-      if (!p || p.collectionId !== collectionId || p.type !== 'folder') throw badRequest('Carpeta destino no válida')
+      if (!p || p.collectionId !== collectionId || p.type !== 'folder')
+        throw badRequest('Carpeta destino no válida')
     }
     const sort = await sortKeyAt(collectionId, body.parentId, body.index, id)
     const [row] = await db
@@ -346,7 +446,9 @@ export async function collectionRoutes(app: FastifyInstance) {
     const idMap = new Map<string, string>()
     const toCopy = [root, ...all.filter((r) => descendantSet(all, id).has(r.id))]
     for (const r of toCopy) idMap.set(r.id, randomUUID())
-    const siblings = all.filter((r) => r.parentId === root.parentId).sort((a, b) => (a.sort < b.sort ? -1 : 1))
+    const siblings = all
+      .filter((r) => r.parentId === root.parentId)
+      .sort((a, b) => (a.sort < b.sort ? -1 : 1))
     const next = siblings[siblings.findIndex((s) => s.id === id) + 1]
     const rows = toCopy.map((r) => ({
       ...r,
@@ -375,8 +477,17 @@ export async function collectionRoutes(app: FastifyInstance) {
     const { collection } = await loadCollection(collectionId)
     const before = findInTree(collection.item, id)
     await db.delete(schema.items).where(inArray(schema.items.id, ids))
+    await recordDeletions(ws, 'item', ids)
     await touchCollection(collectionId)
-    await recordRevision(collectionId, user.id, 'delete', `«${before?.name ?? 'Elemento'}» eliminado`, id, before, null)
+    await recordRevision(
+      collectionId,
+      user.id,
+      'delete',
+      `«${before?.name ?? 'Elemento'}» eliminado`,
+      id,
+      before,
+      null,
+    )
     changed(ws, collectionId, 'delete', user.id, id)
     return { ok: true }
   })
@@ -399,7 +510,9 @@ export async function collectionRoutes(app: FastifyInstance) {
       })
       .from(schema.revisions)
       .leftJoin(schema.users, eq(schema.users.id, schema.revisions.userId))
-      .where(and(eq(schema.revisions.collectionId, id), itemId ? eq(schema.revisions.itemId, itemId) : undefined))
+      .where(
+        and(eq(schema.revisions.collectionId, id), itemId ? eq(schema.revisions.itemId, itemId) : undefined),
+      )
       .orderBy(desc(schema.revisions.createdAt))
       .limit(200)
   })
@@ -427,8 +540,12 @@ export async function collectionRoutes(app: FastifyInstance) {
       await db.transaction(async (tx) => {
         await tx.delete(schema.items).where(eq(schema.items.collectionId, rev.collectionId))
         const rows = flattenItems(rev.collectionId, col.item, user.id)
-        for (let i = 0; i < rows.length; i += 500) await tx.insert(schema.items).values(rows.slice(i, i + 500))
-        await tx.update(schema.collections).set({ data: collectionData(col) }).where(eq(schema.collections.id, rev.collectionId))
+        for (let i = 0; i < rows.length; i += 500)
+          await tx.insert(schema.items).values(rows.slice(i, i + 500))
+        await tx
+          .update(schema.collections)
+          .set({ data: collectionData(col) })
+          .where(eq(schema.collections.id, rev.collectionId))
       })
     } else if (!rev.itemId) {
       await db
@@ -440,7 +557,13 @@ export async function collectionRoutes(app: FastifyInstance) {
       if (exists) {
         await db
           .update(schema.items)
-          .set({ name: before.name, data: itemData(before as Item), version: sql`${schema.items.version} + 1`, updatedBy: user.id, updatedAt: new Date() })
+          .set({
+            name: before.name,
+            data: itemData(before as Item),
+            version: sql`${schema.items.version} + 1`,
+            updatedBy: user.id,
+            updatedAt: new Date(),
+          })
           .where(eq(schema.items.id, rev.itemId))
       } else {
         // Elemento borrado: se recrea (con su subárbol) al final de la raíz
@@ -473,7 +596,9 @@ export async function collectionRoutes(app: FastifyInstance) {
       })
       .from(schema.comments)
       .innerJoin(schema.users, eq(schema.users.id, schema.comments.userId))
-      .where(and(eq(schema.comments.collectionId, id), itemId ? eq(schema.comments.itemId, itemId) : undefined))
+      .where(
+        and(eq(schema.comments.collectionId, id), itemId ? eq(schema.comments.itemId, itemId) : undefined),
+      )
       .orderBy(asc(schema.comments.createdAt))
   })
 
@@ -481,7 +606,9 @@ export async function collectionRoutes(app: FastifyInstance) {
     const user = requireUser(req)
     const { id } = req.params as { id: string }
     const ws = await assertCollection(id, user.id)
-    const body = z.object({ itemId: z.string().uuid().nullable().optional(), body: z.string().min(1).max(5000) }).parse(req.body)
+    const body = z
+      .object({ itemId: z.string().uuid().nullable().optional(), body: z.string().min(1).max(5000) })
+      .parse(req.body)
     const [row] = await db
       .insert(schema.comments)
       .values({ collectionId: id, itemId: body.itemId ?? null, userId: user.id, body: body.body })
@@ -496,7 +623,9 @@ export async function collectionRoutes(app: FastifyInstance) {
     const [c] = await db.select().from(schema.comments).where(eq(schema.comments.id, id))
     if (!c) throw notFound('Comentario')
     const ws = await assertCollection(c.collectionId, user.id, c.userId === user.id ? 'viewer' : 'editor')
-    const body = z.object({ resolved: z.boolean().optional(), body: z.string().min(1).max(5000).optional() }).parse(req.body)
+    const body = z
+      .object({ resolved: z.boolean().optional(), body: z.string().min(1).max(5000).optional() })
+      .parse(req.body)
     if (body.body && c.userId !== user.id) throw badRequest('Solo puedes editar tus comentarios')
     await db.update(schema.comments).set(body).where(eq(schema.comments.id, id))
     broadcast(ws, { type: 'comments.changed', collectionId: c.collectionId, itemId: c.itemId, by: user.id })
@@ -545,7 +674,10 @@ export async function collectionRoutes(app: FastifyInstance) {
     const user = requireUser(req)
     const { ws } = req.params as { ws: string }
     await assertRole(ws, user.id)
-    const cols = await db.select({ id: schema.collections.id }).from(schema.collections).where(eq(schema.collections.workspaceId, ws))
+    const cols = await db
+      .select({ id: schema.collections.id })
+      .from(schema.collections)
+      .where(eq(schema.collections.workspaceId, ws))
     const collections = []
     for (const c of cols) collections.push(exportPostmanCollection((await loadCollection(c.id)).collection))
     const envs = await db.select().from(schema.environments).where(eq(schema.environments.workspaceId, ws))
@@ -555,7 +687,9 @@ export async function collectionRoutes(app: FastifyInstance) {
       cartero: 1,
       exportedAt: new Date().toISOString(),
       collections,
-      environments: envs.map((e) => exportPostmanEnvironment({ id: e.id, name: e.name, values: openVariables(e.values) })),
+      environments: envs.map((e) =>
+        exportPostmanEnvironment({ id: e.id, name: e.name, values: openVariables(e.values) }),
+      ),
       globals: openVariables(w.globals ?? []),
     }
   })
