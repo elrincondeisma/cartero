@@ -1,58 +1,60 @@
+> 🌐 **English** · [Español](es/12-cli.md)
+
 # CLI: cartero run
 
-La CLI ejecuta colecciones desde la terminal o desde tu integración continua (GitHub Actions, GitLab CI, Jenkins…). Equivale a *Newman*.
+The CLI runs collections from the terminal or your continuous integration (GitHub Actions, GitLab CI, Jenkins…). It's the equivalent of *Newman*.
 
-## Ejecutar un fichero
+## Run a file
 
 ```bash
-cartero run coleccion.postman_collection.json \
-  -e produccion.postman_environment.json \
-  -d datos.csv \
+cartero run collection.postman_collection.json \
+  -e production.postman_environment.json \
+  -d data.csv \
   -r cli,junit,html
 ```
 
-Acepta colecciones de Postman, Insomnia, OpenAPI y cURL, y también ficheros ZIP o una URL.
+It accepts Postman, Insomnia, OpenAPI and cURL collections, as well as ZIP files or a URL.
 
-## Ejecutar una colección de tu servidor
+## Run a collection from your server
 
 ```bash
-export CARTERO_SERVER=https://cartero.ejemplo.com
-export CARTERO_TOKEN=crt_…          # Ajustes → Tokens de API
+export CARTERO_SERVER=https://cartero.example.com
+export CARTERO_TOKEN=crt_…          # Settings → API tokens
 export CARTERO_WORKSPACE=<id>
 
-cartero run <id-de-colección> -e <id-de-entorno> --report
+cartero run <collection-id> -e <environment-id> --report
 ```
 
-Con `--report`, el resultado aparece en la sección **Ejecuciones** de Cartero.
+With `--report`, the result shows up in Cartero's **Runs** section.
 
-## Opciones
+## Options
 
-| Opción | Descripción |
+| Option | Description |
 |---|---|
-| `-e, --environment` | Entorno (fichero o id) |
-| `-g, --globals` | Fichero de globales |
-| `-d, --iteration-data` | CSV o JSON con datos para iterar |
-| `-n, --iteration-count` | Número de iteraciones |
-| `--folder` | Ejecutar solo una carpeta o petición (nombre o id) |
-| `--env-var clave=valor` | Sobrescribe una variable (repetible) |
-| `--delay-request`, `--timeout-request` | Pausa y tiempo máximo por petición (ms) |
-| `--bail` | Parar al primer fallo |
-| `--strict-ssl` | Verificar certificados |
+| `-e, --environment` | Environment (file or id) |
+| `-g, --globals` | Globals file |
+| `-d, --iteration-data` | CSV or JSON with iteration data |
+| `-n, --iteration-count` | Number of iterations |
+| `--folder` | Run only one folder or request (name or id) |
+| `--env-var key=value` | Override a variable (repeatable) |
+| `--delay-request`, `--timeout-request` | Pause and timeout per request (ms) |
+| `--bail` | Stop on first failure |
+| `--strict-ssl` | Verify certificates |
 | `-r, --reporters` | `cli`, `json`, `junit`, `html` |
-| `--reporter-junit-export`, `--reporter-html-export`, `--reporter-json-export` | Rutas de los informes |
-| `--silent` | Sin salida por consola |
+| `--reporter-junit-export`, `--reporter-html-export`, `--reporter-json-export` | Report paths |
+| `--silent` | No console output |
 
-Códigos de salida: **0** si todo pasa, **1** si falla algún test o petición, **2** si hay un error de uso.
+Exit codes: **0** if everything passes, **1** if any test or request fails, **2** on usage errors.
 
 ## GitHub Actions
 
 ```yaml
-- name: Tests de la API
-  run: npx @cartero/cli run ${{ vars.COLECCION_ID }} -e ${{ vars.ENTORNO_ID }} -r cli,junit --report
+- name: API tests
+  run: npx @cartero/cli run ${{ vars.COLLECTION_ID }} -e ${{ vars.ENVIRONMENT_ID }} -r cli,junit --report
   env:
-    CARTERO_SERVER: https://cartero.ejemplo.com
+    CARTERO_SERVER: https://cartero.example.com
     CARTERO_TOKEN: ${{ secrets.CARTERO_TOKEN }}
     CARTERO_WORKSPACE: ${{ vars.CARTERO_WORKSPACE }}
 ```
 
-> Mientras el paquete no esté publicado en npm, usa la CLI desde el repositorio: `node packages/cli/dist/index.js run …`.
+> Until the package is published on npm, use the CLI from the repository: `node packages/cli/dist/index.js run …`.

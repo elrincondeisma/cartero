@@ -1,44 +1,46 @@
+> 🌐 **English** · [Español](es/08-mock-servers.md)
+
 # Mock servers
 
-Un mock server simula tu API respondiendo con los **ejemplos** guardados en las peticiones. Es útil para que el frontend avance antes de que exista el backend, para demos o para pruebas que no deben tocar producción.
+A mock server simulates your API by answering with the **examples** saved in your requests. Handy so the frontend can move forward before the backend exists, for demos, or for tests that must not touch production.
 
-## Crear un mock
+## Create a mock
 
-1. Guarda ejemplos en tus peticiones: envía la petición y pulsa el icono de guardar de la respuesta, o créalos en la pestaña **Ejemplos**.
-2. Ve a **Mock servers → Nuevo**, elige la colección y, si quieres, un entorno (para resolver `{{variables}}` en los ejemplos) y un retardo.
-3. Copia la URL: `https://TU-CARTERO/mock/abc123`.
+1. Save examples in your requests: send the request and click the save icon in the response, or create them in the **Examples** tab.
+2. Go to **Mock servers → New**, pick the collection and optionally an environment (to resolve `{{variables}}` in the examples) and a delay.
+3. Copy the URL: `https://YOUR-CARTERO/mock/abc123`.
 
-Si una petición de ejemplo es `GET {{baseUrl}}/users/:id`, el mock responde a `GET https://TU-CARTERO/mock/abc123/users/42`.
+If an example request is `GET {{baseUrl}}/users/:id`, the mock answers `GET https://YOUR-CARTERO/mock/abc123/users/42`.
 
-## Cómo elige la respuesta
+## How it picks the response
 
-1. El **método** debe coincidir.
-2. La **ruta** debe coincidir segmento a segmento. `:param` y `{{variable}}` valen cualquier valor, pero una ruta exacta gana a una con parámetros.
-3. Los **query params** que coinciden suman puntos.
-4. A igualdad, se prefieren respuestas 2xx.
+1. The **method** must match.
+2. The **path** must match segment by segment. `:param` and `{{variable}}` match any value, but an exact path beats one with parameters.
+3. Matching **query params** add points.
+4. On a tie, 2xx responses are preferred.
 
-Puedes forzar un ejemplo con cabeceras en la petición:
+You can force an example with request headers:
 
-| Cabecera | Efecto |
+| Header | Effect |
 |---|---|
-| `x-mock-response-name: Post no encontrado` | Usa el ejemplo con ese nombre |
-| `x-mock-response-code: 404` | Usa un ejemplo con ese código |
-| `x-mock-response-id: <id>` | Usa ese ejemplo exacto |
-| `x-mock-match-request-body: true` | Exige que el body coincida |
-| `x-mock-match-request-headers: X-Tenant` | Exige que esas cabeceras coincidan |
+| `x-mock-response-name: Post not found` | Uses the example with that name |
+| `x-mock-response-code: 404` | Uses an example with that status code |
+| `x-mock-response-id: <id>` | Uses that exact example |
+| `x-mock-match-request-body: true` | Requires the body to match |
+| `x-mock-match-request-headers: X-Tenant` | Requires those headers to match |
 
-Si nada coincide, responde **404** con un mensaje explicativo.
+If nothing matches, it returns **404** with an explanatory message.
 
-## Respuestas dinámicas
+## Dynamic responses
 
-En el body de un ejemplo puedes usar variables dinámicas, que cambian en cada llamada:
+In an example body you can use dynamic variables, which change on every call:
 
 ```json
-{ "id": "{{$guid}}", "email": "{{$randomEmail}}", "creado": "{{$isoTimestamp}}" }
+{ "id": "{{$guid}}", "email": "{{$randomEmail}}", "created": "{{$isoTimestamp}}" }
 ```
 
-## Mocks privados y log
+## Private mocks and call log
 
-- **Privado**: exige un token de API en la cabecera `x-api-key`.
-- **Llamadas recibidas**: el panel muestra cada llamada, qué ejemplo respondió y cuándo.
-- El mock admite **CORS**, así que puedes llamarlo directamente desde una web.
+- **Private**: requires an API token in the `x-api-key` header.
+- **Incoming calls**: the panel shows every call, which example answered and when.
+- The mock supports **CORS**, so you can call it directly from a web page.

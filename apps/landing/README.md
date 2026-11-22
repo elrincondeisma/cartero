@@ -1,27 +1,31 @@
-# Landing de Cartero
+> 🌐 **English** · [Español](README.es.md)
 
-Web estática en Astro, en español (`/`) e inglés (`/en/`).
+# Cartero landing page
+
+Static Astro site, in Spanish (`/`) and English (`/en/`).
 
 ```bash
 pnpm --filter @cartero/landing dev       # http://localhost:4321
-pnpm --filter @cartero/landing build     # genera dist/ (HTML estático)
+pnpm --filter @cartero/landing build     # builds dist/ (static HTML)
 ```
 
-Al publicarla, define:
+When you publish it, set:
 
-| Variable | Para qué |
+| Variable | Purpose |
 |---|---|
-| `SITE_URL` | Dominio final (canonical, hreflang, sitemap y Open Graph). Por defecto `https://cartero.dev` |
-| `PUBLIC_REPO_URL` | URL del repositorio en GitHub |
+| `SITE_URL` | Final domain (canonical, hreflang, sitemap and Open Graph). Defaults to `https://cartero.dev` |
+| `PUBLIC_REPO_URL` | GitHub repository URL |
 
-`dist/` se sirve en cualquier hosting estático: GitHub Pages, Cloudflare Pages, Netlify o un Nginx.
+`dist/` can be served by any static host: GitHub Pages, Cloudflare Pages, Netlify or Nginx.
 
-- **Textos:** en `src/i18n/ui.ts`. Para añadir un idioma, añade su bloque ahí, su ruta en `src/pages/<idioma>/` y el idioma en `astro.config.mjs`.
-- **Capturas:** son reales y se regeneran con la app en marcha:
+- **Copy:** in `src/i18n/ui.ts`. To add a language, add its block there, its route in `src/pages/<lang>/` and the language in `astro.config.mjs`.
+- **Hero video:** `public/video/cartero-{es,en}.mp4`, generated from `video/` with `pnpm render:all`.
+- **Screenshots:** they are real and are regenerated with the app running:
 
 ```bash
-PW_CHROMIUM=/ruta/a/chrome npx playwright test -c playwright.screens.config.ts   # src/assets/screens/*.png
-node scripts/og-image.mjs                                                      # public/og.png
+PW_CHROMIUM=/path/to/chrome npx playwright test -c playwright.screens.config.ts                   # src/assets/screens/*.png
+CAPTURE_LANG=en PW_CHROMIUM=/path/to/chrome npx playwright test -c playwright.screens.config.ts   # src/assets/screens/en/*.png
+node scripts/og-image.mjs                                                                          # public/og.png
 ```
 
-> Astro está fijado en 7.4.1 porque las versiones posteriores exigen Node ≥ 22.23.4.
+> Astro is pinned to 7.4.1 because later versions require Node ≥ 22.23.4.

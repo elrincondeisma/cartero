@@ -1,46 +1,48 @@
-# Runner de colecciones
+> 🌐 **English** · [Español](es/07-runner.md)
 
-Ejecuta todas las peticiones de una colección o carpeta, en orden, con sus scripts y tests. **Sin límites** de ejecuciones.
+# Collection runner
 
-## Lanzar una ejecución
+Runs every request in a collection or folder, in order, with their scripts and tests. **No limits** on runs.
 
-1. Menú ··· de una colección o carpeta → **Ejecutar** (o el botón *Ejecutar* de su configuración).
-2. Marca las peticiones que quieres incluir (por defecto, todas).
-3. Configura:
-   - **Entorno**.
-   - **Iteraciones**: cuántas veces repetir la colección completa.
-   - **Retardo**: milisegundos de pausa entre peticiones.
-   - **Datos (CSV o JSON)**: cada fila es una iteración. Ver abajo.
-   - **Parar al primer fallo**.
-   - **Guardar las variables** que cambien los scripts.
-4. Pulsa **Ejecutar**.
+## Start a run
 
-Los resultados aparecen **en vivo**: estado, tiempo, tamaño y tests de cada petición. Despliega una fila para ver los tests, la respuesta y la petición enviada. Filtra por *Correctas* o *Con fallos*, revisa la **Consola** o **Exporta el JSON**.
+1. ··· menu of a collection or folder → **Run** (or the *Run* button in its settings).
+2. Tick the requests to include (all by default).
+3. Configure:
+   - **Environment**.
+   - **Iterations**: how many times to repeat the whole collection.
+   - **Delay**: milliseconds to pause between requests.
+   - **Data (CSV or JSON)**: each row is one iteration. See below.
+   - **Stop on first failure**.
+   - **Save variables** changed by scripts.
+4. Click **Run**.
 
-## Pruebas con datos (data-driven)
+Results appear **live**: status, time, size and tests for every request. Expand a row to see the tests, the response and the request sent. Filter by *Passed* or *Failed*, check the **Console** or **Export JSON**.
 
-Un CSV como este:
+## Data-driven testing
+
+A CSV like this:
 
 ```csv
-usuario,password,esperado
-ana,secreto1,200
-luis,mal,401
+user,password,expected
+ana,secret1,200
+luis,wrong,401
 ```
 
-lanza una iteración por fila. En las peticiones usa `{{usuario}}` y, en los tests:
+runs one iteration per row. Use `{{user}}` in requests and, in tests:
 
 ```js
-pm.test('Código esperado', () => {
-  pm.response.to.have.status(Number(pm.iterationData.get('esperado')))
+pm.test('Expected status', () => {
+  pm.response.to.have.status(Number(pm.iterationData.get('expected')))
 })
 ```
 
-Con JSON, usa un array de objetos: `[{"usuario":"ana"}, {"usuario":"luis"}]`.
+For JSON, use an array of objects: `[{"user":"ana"}, {"user":"luis"}]`.
 
-## Control de flujo
+## Flow control
 
-En un script, `pm.execution.setNextRequest('Nombre de la petición')` salta a esa petición, y `pm.execution.setNextRequest(null)` termina la ejecución. Sirve para reintentos o flujos condicionales.
+In a script, `pm.execution.setNextRequest('Request name')` jumps to that request, and `pm.execution.setNextRequest(null)` ends the run. Useful for retries or conditional flows.
 
-## Historial
+## History
 
-Todas las ejecuciones (del runner, de los [monitores](09-monitores.md) y de la [CLI](12-cli.md)) quedan en la sección **Ejecuciones**.
+Every run (from the runner, [monitors](09-monitors.md) and the [CLI](12-cli.md)) is kept in the **Runs** section.

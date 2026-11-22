@@ -1,0 +1,20 @@
+> 🌐 [English](../README.md) · **Español**
+
+# Manual de Cartero
+
+- [Primeros pasos](01-primeros-pasos.md)
+- [Peticiones](02-peticiones.md)
+- [Variables y entornos](03-variables-y-entornos.md)
+- [Autenticación](04-autenticacion.md)
+- [Scripts y tests](05-scripts-y-tests.md)
+- [Colecciones e importación](06-colecciones-e-importacion.md)
+- [Runner de colecciones](07-runner.md)
+- [Mock servers](08-mock-servers.md)
+- [Monitores](09-monitores.md)
+- [Documentación pública](10-documentacion-publica.md)
+- [Equipos y colaboración](11-equipos-y-colaboracion.md)
+- [CLI: cartero run](12-cli.md)
+- [Conectar asistentes de IA (MCP)](13-ia-mcp.md)
+- [Atajos de teclado](14-atajos.md)
+- [Instalación y administración](15-autoalojamiento.md)
+- [Preguntas frecuentes](16-preguntas-frecuentes.md)

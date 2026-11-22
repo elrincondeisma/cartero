@@ -9,8 +9,9 @@ import { useUi } from '@/store/ui'
 import { lang, t } from "@/i18n";
 
 // Misma fuente que docs/manual en el repositorio
-const esFiles = import.meta.glob('../../../../../docs/manual/[0-9]*.md', { query: '?raw', import: 'default', eager: true }) as Record<string, string>
-const enFiles = import.meta.glob('../../../../../docs/manual/en/[0-9]*.md', { query: '?raw', import: 'default', eager: true }) as Record<string, string>
+// (inglés en docs/manual, español en docs/manual/es; los nombres de fichero cambian, el número de capítulo no)
+const enFiles = import.meta.glob('../../../../../docs/manual/[0-9]*.md', { query: '?raw', import: 'default', eager: true }) as Record<string, string>
+const esFiles = import.meta.glob('../../../../../docs/manual/es/[0-9]*.md', { query: '?raw', import: 'default', eager: true }) as Record<string, string>
 const files = lang === 'en' ? enFiles : esFiles
 
 interface Chapter {
@@ -32,7 +33,9 @@ function slugify(s: string) {
 
 const CHAPTERS: Chapter[] = Object.entries(files)
   .sort(([a], [b]) => a.localeCompare(b))
-  .map(([path, md]) => {
+  .map(([path, raw]) => {
+    // La línea «🌐 English · Español» es para GitHub; aquí el idioma se cambia desde la app
+    const md = raw.replace(/^> 🌐.*\n+/m, '')
     const slug = path.split('/').pop()!.replace(/\.md$/, '')
     const title = md.match(/^# (.+)$/m)?.[1] ?? slug
     const headings: Chapter['headings'] = []
@@ -67,7 +70,8 @@ export function ManualPage() {
   const content = useRef<HTMLDivElement>(null)
   const theme = useUi((s) => s.theme)
   const toggleTheme = useUi((s) => s.toggleTheme)
-  const idx = Math.max(0, CHAPTERS.findIndex((c) => c.slug === slug))
+  // Si el slug es del otro idioma (p. ej. tras cambiar de idioma), se busca por número de capítulo
+  const idx = Math.max(0, CHAPTERS.findIndex((c) => c.slug === slug), CHAPTERS.findIndex((c) => !!slug && c.slug.slice(0, 3) === slug.slice(0, 3)))
   const chapter = CHAPTERS[idx]
 
   const results = useMemo(() => {

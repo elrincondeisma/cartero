@@ -1,117 +1,123 @@
+> 🌐 **English** · [Español](README.es.md)
+
 # Cartero
 
-**Cliente de APIs web y open source, autoalojado.** Una alternativa a Postman con lo que allí es de pago incluido gratis y sin límites: runner de colecciones, mock servers, monitores, documentación publicada y colaboración en equipo. Importa tus colecciones de Postman sin perder nada.
+[![Cartero product video (1 minute)](apps/landing/public/video/poster-en.jpg)](https://github.com/elrincondeisma/cartero/raw/main/apps/landing/public/video/cartero-en.mp4)
 
-> MIT · TypeScript · Un `docker compose up` y listo
+**An open-source, self-hosted web API client.** A Postman alternative that includes what Postman charges for, free and without limits: collection runner, mock servers, monitors, published documentation and team collaboration. Import your Postman collections without losing anything.
 
-## Qué incluye
+> MIT · TypeScript · One `docker compose up` and you're done
+
+## What's included
 
 | | |
 |---|---|
-| **Peticiones** | REST y GraphQL; params, cabeceras, body (raw/JSON/XML, form-data con ficheros, urlencoded, binario); historial; cookies; snippets de código en más de 20 lenguajes |
-| **Autenticación** | Basic, Bearer, API Key, JWT, Digest, OAuth 1.0, **OAuth 2.0** (Authorization Code + PKCE, Client Credentials, Password, Implicit, refresco), Hawk, AWS SigV4, NTLM, Akamai EdgeGrid; herencia carpeta → colección |
-| **Scripts** | Pre-request y post-response con la API `pm.*` de Postman (ejecutados con `postman-runtime`): `pm.test`, `pm.expect`, `pm.sendRequest`, `pm.environment`, `setNextRequest`… con autocompletado |
-| **Variables** | Globales, de colección, de carpeta, entornos y datos de iteración. Las variables secretas se cifran en reposo (AES-256-GCM) |
-| **Importar / exportar** | Postman (colecciones v1, v2.0 y v2.1, entornos, globales, volcado de datos y ZIP de exportación), Insomnia (v4 JSON y v5 YAML), OpenAPI 3.0/3.1, Swagger 2.0 y cURL. Exporta a Postman v2.1 (ida y vuelta sin pérdidas) |
-| **Runner** | Ejecuta colecciones o carpetas sin límites, con iteraciones, datos CSV/JSON, retardo, «parar al primer fallo» y resultados en vivo |
-| **CLI** | `cartero run`, equivalente a Newman, para CI: reporters de consola, JSON, JUnit y HTML; ejecuta ficheros o colecciones de tu servidor y sube el resultado |
-| **Mock servers** | Responden con los ejemplos guardados: rutas con parámetros, cabeceras `x-mock-response-*`, variables dinámicas (`{{$randomEmail}}`…), retardo simulado, mocks privados y log de llamadas |
-| **Monitores** | Ejecuciones programadas con cron y zona horaria; avisos por Slack, Discord, Telegram, email o webhook; historial con disponibilidad y tiempos |
-| **Documentación** | Página pública por colección con descripciones en Markdown, ejemplos y cURL. Opcionalmente con contraseña. Las credenciales se ocultan solas |
-| **IA (MCP)** | Servidor MCP integrado (`/mcp`) con 18 herramientas: Claude, Cursor y otros asistentes pueden explorar, enviar, ejecutar, crear peticiones e importar con tus permisos |
-| **Idiomas** | Interfaz, manual y datos de ejemplo en **español e inglés**, con selector de idioma guardado en tu cuenta |
-| **Ayuda** | Asistente de bienvenida, recorrido guiado, paleta de comandos (Ctrl+K), [manual completo](docs/manual/README.md) en `/ayuda` y datos de ejemplo con APIs reales que se quitan con un clic |
-| **Equipos** | Workspaces, invitaciones, roles (propietario, admin, editor, lector), presencia en tiempo real, comentarios, historial de cambios con restauración, fork y merge, tokens de API |
+| **Requests** | REST and GraphQL; params, headers, body (raw/JSON/XML, form-data with files, urlencoded, binary); history; cookies; code snippets in 20+ languages |
+| **Authentication** | Basic, Bearer, API Key, JWT, Digest, OAuth 1.0, **OAuth 2.0** (Authorization Code + PKCE, Client Credentials, Password, Implicit, refresh), Hawk, AWS SigV4, NTLM, Akamai EdgeGrid; inherited folder → collection |
+| **Scripts** | Pre-request and post-response scripts with Postman's `pm.*` API (run by `postman-runtime`): `pm.test`, `pm.expect`, `pm.sendRequest`, `pm.environment`, `setNextRequest`… with autocomplete |
+| **Variables** | Global, collection, folder, environment and iteration data. Secret variables are encrypted at rest (AES-256-GCM) |
+| **Import / export** | Postman (v1, v2.0 and v2.1 collections, environments, globals, data dumps and export ZIPs), Insomnia (v4 JSON and v5 YAML), OpenAPI 3.0/3.1, Swagger 2.0 and cURL. Exports to Postman v2.1 (lossless round trip) |
+| **Runner** | Run collections or folders without limits, with iterations, CSV/JSON data, delay, "stop on first failure" and live results |
+| **CLI** | `cartero run`, a Newman equivalent for CI: console, JSON, JUnit and HTML reporters; runs files or collections from your server and uploads the result |
+| **Mock servers** | Respond with your saved examples: routes with parameters, `x-mock-response-*` headers, dynamic variables (`{{$randomEmail}}`…), simulated latency, private mocks and a call log |
+| **Monitors** | Scheduled runs with cron and time zone; alerts via Slack, Discord, Telegram, email or webhook; history with uptime and timings |
+| **Documentation** | A public page per collection with Markdown descriptions, examples and cURL. Optional password. Credentials are hidden automatically |
+| **AI (MCP)** | Built-in MCP server (`/mcp`) with 18 tools: Claude, Cursor and other assistants can browse, send, run, create requests and import, with your permissions |
+| **Languages** | UI, user guide and sample data in **English and Spanish**, with a language switch saved to your account |
+| **Help** | Welcome wizard, guided tour, command palette (Ctrl+K), [full user guide](docs/manual/README.md) at `/ayuda` and sample data with real APIs that you can remove in one click |
+| **Teams** | Workspaces, invitations, roles (owner, admin, editor, viewer), real-time presence, comments, change history with restore, fork and merge, API tokens |
 
-## Puesta en marcha
+## Getting started
 
 ```bash
 git clone https://github.com/elrincondeisma/cartero.git && cd cartero
-cp .env.example .env        # cambia CARTERO_SECRET_KEY y POSTGRES_PASSWORD
+cp .env.example .env        # change CARTERO_SECRET_KEY and POSTGRES_PASSWORD
 docker compose up -d
 ```
 
-Abre `http://localhost:3000` y crea tu cuenta.
+Open `http://localhost:3000` and create your account.
 
-Para desactivar el registro abierto, pon `ALLOW_REGISTRATION=false`: el primer usuario siempre puede registrarse, y el resto solo con invitación.
+To turn off open sign-up, set `ALLOW_REGISTRATION=false`: the first user can always register, everyone else only by invitation.
 
-### Configuración
+### Configuration
 
-| Variable | Por defecto | Descripción |
+| Variable | Default | Description |
 |---|---|---|
-| `CARTERO_SECRET_KEY` | — (obligatoria) | Clave para cifrar los secretos. Genera una con `openssl rand -base64 32` y **no la pierdas** |
-| `DATABASE_URL` | — | PostgreSQL 14 o superior |
-| `REDIS_URL` | — | Redis (para los monitores) |
-| `PUBLIC_URL` | `http://localhost:3000` | URL pública: enlaces de invitación, OAuth y avisos |
-| `ALLOW_REGISTRATION` | `true` | Registro abierto |
-| `BLOCK_PRIVATE_NETWORKS` | `false` | Bloquea peticiones a IPs privadas (protección SSRF). Actívalo si tu instancia es pública |
-| `SMTP_URL` / `SMTP_FROM` | — | Para enviar invitaciones y avisos por email |
-| `INLINE_WORKER` | `true` | `false` para ejecutar los monitores en un proceso aparte (`node dist/worker.js`) |
+| `CARTERO_SECRET_KEY` | — (required) | Key used to encrypt secrets. Generate one with `openssl rand -base64 32` and **don't lose it** |
+| `DATABASE_URL` | — | PostgreSQL 14 or later |
+| `REDIS_URL` | — | Redis (for monitors) |
+| `PUBLIC_URL` | `http://localhost:3000` | Public URL: invitation links, OAuth and alerts |
+| `ALLOW_REGISTRATION` | `true` | Open sign-up |
+| `BLOCK_PRIVATE_NETWORKS` | `false` | Blocks requests to private IPs (SSRF protection). Turn it on if your instance is public |
+| `SMTP_URL` / `SMTP_FROM` | — | To send invitations and email alerts |
+| `INLINE_WORKER` | `true` | `false` to run monitors in a separate process (`node dist/worker.js`) |
 
-> **Detrás de un proxy (Traefik, Caddy, Nginx):** reenvía también las conexiones WebSocket de `/api/ws`, que se usan para la presencia y los cambios en vivo.
+> **Behind a proxy (Traefik, Caddy, Nginx):** also forward the WebSocket connections on `/api/ws`, used for presence and live changes.
 
-## Conectar asistentes de IA (MCP)
+## Connect AI assistants (MCP)
 
-En **Ajustes → Conectar IA (MCP)** creas un token y copias la configuración para tu cliente. Por ejemplo, en Claude Code:
+In **Settings → Connect AI (MCP)** you create a token and copy the configuration for your client. For example, in Claude Code:
 
 ```bash
-claude mcp add --transport http cartero https://cartero.ejemplo.com/mcp --header "Authorization: Bearer crt_xxx"
+claude mcp add --transport http cartero https://cartero.example.com/mcp --header "Authorization: Bearer crt_xxx"
 ```
 
-Más detalles en el [manual](docs/manual/13-ia-mcp.md).
+More in the [user guide](docs/manual/13-ai-mcp.md).
 
 ## CLI
 
 ```bash
-# Ejecutar un fichero exportado de Postman con un entorno y datos
-npx @cartero/cli run coleccion.postman_collection.json -e prod.postman_environment.json -d datos.csv -r cli,junit
+# Run an exported Postman file with an environment and data
+npx @cartero/cli run collection.postman_collection.json -e prod.postman_environment.json -d data.csv -r cli,junit
 
-# Ejecutar una colección de tu servidor y subir el resultado
-CARTERO_SERVER=https://cartero.ejemplo.com CARTERO_TOKEN=crt_xxx \
-  npx @cartero/cli run <id-coleccion> -e <id-entorno> --workspace <id-workspace> --report
+# Run a collection from your server and upload the result
+CARTERO_SERVER=https://cartero.example.com CARTERO_TOKEN=crt_xxx \
+  npx @cartero/cli run <collection-id> -e <environment-id> --workspace <workspace-id> --report
 ```
 
-Códigos de salida: `0` si todo pasa, `1` si falla algún test o petición, `2` si hay un error de uso.
+Exit codes: `0` if everything passes, `1` if a test or request fails, `2` on a usage error.
 
-## Arquitectura
+## Architecture
 
 ```
 apps/
   server/     Fastify + Drizzle (PostgreSQL) + BullMQ (Redis) + WebSocket
   web/        React 19 + Vite + Tailwind + TanStack Query + Monaco
+  landing/    Astro website (English and Spanish)
 packages/
-  core/       Modelo de datos (superconjunto de Postman Collection v2.1)
-  executor/   Ejecución con postman-runtime en un proceso aislado (límites de tiempo y memoria)
+  core/       Data model (a superset of Postman Collection v2.1)
+  executor/   Runs requests with postman-runtime in an isolated process (time and memory limits)
   importers/  Postman, Insomnia, OpenAPI, cURL
-  exporters/  Postman v2.1 y snippets de código
+  exporters/  Postman v2.1 and code snippets
   cli/        cartero run
-  mcp/        Servidor MCP (stdio y Streamable HTTP)
-docs/manual/  Manual de uso (también en /ayuda)
+  mcp/        MCP server (stdio and Streamable HTTP)
+docs/manual/  User guide in English; Spanish in docs/manual/es (also served at /ayuda)
+video/        Promo video (Remotion)
 ```
 
-Las peticiones se envían **desde el servidor**. Así no hay problemas de CORS y puedes probar APIs de tu red local. Los scripts de usuario se ejecutan en un proceso hijo con límites de tiempo y memoria.
+Requests are sent **from the server**. That means no CORS problems, and you can test APIs on your local network. User scripts run in a child process with time and memory limits.
 
-## Desarrollo
+## Development
 
-Requisitos: Node 22+, pnpm 12+ y Docker.
+Requirements: Node 22+, pnpm 12+ and Docker.
 
 ```bash
 pnpm install
-pnpm db:up                     # Postgres (5433) y Redis (6380) de desarrollo
+pnpm db:up                     # development Postgres (5433) and Redis (6380)
 pnpm --filter "./packages/*" build
-pnpm --filter @cartero/server dev   # API en :3000
-pnpm --filter @cartero/web dev      # Web en :5173
+pnpm --filter @cartero/server dev   # API on :3000
+pnpm --filter @cartero/web dev      # Web on :5173
 ```
 
 Tests:
 
 ```bash
-pnpm test                      # unitarios e integración (necesita pnpm db:up)
-npx playwright test            # E2E (con la API y la web levantadas)
+pnpm test                      # unit and integration (needs pnpm db:up)
+npx playwright test            # E2E (with the API and web running)
 ```
 
-Lee [CONTRIBUTING.md](CONTRIBUTING.md) antes de mandar un PR.
+Read [CONTRIBUTING.md](CONTRIBUTING.md) before sending a PR.
 
-## Licencia
+## License
 
-[MIT](LICENSE). Cartero usa `postman-runtime`, `postman-collection`, `postman-collection-transformer`, `openapi-to-postmanv2` y `postman-code-generators`, todas con licencia Apache-2.0. Cartero no está afiliado a Postman, Inc.
+[MIT](LICENSE). Cartero uses `postman-runtime`, `postman-collection`, `postman-collection-transformer`, `openapi-to-postmanv2` and `postman-code-generators`, all licensed under Apache-2.0. Cartero is not affiliated with Postman, Inc.

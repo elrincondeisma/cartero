@@ -1,8 +1,10 @@
-# Contribuir a Cartero
+> 🌐 **English** · [Español](CONTRIBUTING.es.md)
 
-¡Gracias por tu interés! Algunas pautas para que tu PR entre rápido.
+# Contributing to Cartero
 
-## Preparar el entorno
+Thanks for your interest! A few guidelines to get your PR merged quickly.
+
+## Set up your environment
 
 ```bash
 pnpm install
@@ -12,27 +14,28 @@ pnpm --filter @cartero/server dev
 pnpm --filter @cartero/web dev
 ```
 
-## Antes de abrir un PR
+## Before opening a PR
 
-- `pnpm typecheck` y `pnpm test` en verde.
-- Si tocas la interfaz, pasa el E2E: `npx playwright test`.
-- Si tocas importadores o exportadores, añade un fixture en `packages/importers/fixtures` y su test. La regla es la **ida y vuelta sin pérdidas**: importar y volver a exportar una colección de Postman debe dar el mismo JSON.
-- Si tocas la API, añade el caso a `apps/server/src/server.test.ts`.
-- Si cambias el esquema de la base de datos, genera la migración con `pnpm --filter @cartero/server db:generate` y súbela con el PR.
+- `pnpm typecheck` and `pnpm test` pass.
+- If you touch the UI, run the E2E suite: `npx playwright test`.
+- If you touch importers or exporters, add a fixture in `packages/importers/fixtures` and its test. The rule is a **lossless round trip**: importing a Postman collection and exporting it again must produce the same JSON.
+- If you touch the API, add the case to `apps/server/src/server.test.ts`.
+- If you change the database schema, generate the migration with `pnpm --filter @cartero/server db:generate` and include it in the PR.
 
-## Idiomas (español e inglés)
+## Languages (English and Spanish)
 
-- Todo texto visible va en `t('Texto en español')` (o `tj()` si lleva elementos dentro, como `<code>`). La traducción va en `apps/web/src/i18n/en.ts`, con el texto español como clave.
-- `pnpm i18n:extract` envuelve en `t()` los textos nuevos que se te escapen, y `pnpm i18n:check` falla si falta alguna traducción (también corre en la CI).
-- El manual vive en `docs/manual/` (español) y `docs/manual/en/` (inglés), con los mismos nombres de fichero.
+- Every visible string goes through `t('Texto en español')` (or `tj()` if it contains elements such as `<code>`). The Spanish text is the key; the English translation goes in `apps/web/src/i18n/en.ts`.
+- `pnpm i18n:extract` wraps any new strings you missed in `t()`, and `pnpm i18n:check` fails if a translation is missing (it also runs in CI).
+- The user guide lives in `docs/manual/` (English, the repository's main language) and `docs/manual/es/` (Spanish). Each chapter has the same number in both languages and links to its translation at the top.
+- READMEs and CONTRIBUTING are in English, with a Spanish version in `*.es.md`. If you change one, update the other.
 
-## Convenciones
+## Conventions
 
-- TypeScript estricto. Formato con Biome: `pnpm format`.
-- Textos de la interfaz en español, claros y sin jerga.
-- El modelo interno es Postman Collection v2.1. No inventes campos nuevos si existe uno equivalente en el formato de Postman.
-- Toda ruta de la API comprueba el rol en el workspace (`assertRole` / `assertCollection`).
+- Strict TypeScript. Format with Biome: `pnpm format`.
+- UI copy should be clear and jargon-free, always in both languages.
+- The internal model is Postman Collection v2.1. Don't invent new fields if Postman's format already has an equivalent.
+- Every API route checks the role in the workspace (`assertRole` / `assertCollection`).
 
-## Reportar fallos de seguridad
+## Reporting security issues
 
-No abras una issue pública: escribe a los mantenedores en privado.
+Don't open a public issue: contact the maintainers privately.

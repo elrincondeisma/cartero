@@ -1,3 +1,5 @@
+> 🌐 **English** · [Español](README.es.md)
+
 # Cartero · promo video
 
 60-second motion-design product video, in English and Spanish, made with [Remotion](https://remotion.dev), using real screenshots of the app (`public/shots`, the same ones as the landing) and music generated with ElevenLabs.
