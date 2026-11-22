@@ -43,6 +43,9 @@ describe('mock matcher', () => {
   it('usa la query para desempatar', () => {
     expect(matchExample(col, req('GET', '/search', { q: 'b' }))?.example.name).toBe('B')
   })
+  it('{{baseUrl}} inicial hace de host aunque incluya ruta', () => {
+    expect(matchExample(col, req('GET', '/users/7'), [{ baseUrl: 'http://x.com/api/v2' }])?.example.name).toBe('OK')
+  })
   it('método distinto no encaja y devuelve 404', () => {
     expect(mockResponse(col, req('DELETE', '/users/1')).status).toBe(404)
   })

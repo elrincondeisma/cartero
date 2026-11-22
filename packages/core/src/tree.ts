@@ -1,8 +1,7 @@
-import { randomUUID } from 'node:crypto'
 import { type Collection, type FolderItem, type Item, isFolder } from './types.js'
 
 export function newId(): string {
-  return randomUUID()
+  return globalThis.crypto.randomUUID()
 }
 
 /** Recorre todos los ítems (carpetas y peticiones) en profundidad. */

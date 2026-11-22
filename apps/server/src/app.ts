@@ -19,6 +19,7 @@ import { environmentRoutes } from './routes/environments.js'
 import { executeRoutes } from './routes/execute.js'
 import { mockRoutes } from './routes/mocks.js'
 import { monitorRoutes } from './routes/monitors.js'
+import { toolRoutes } from './routes/tools.js'
 import { workspaceRoutes } from './routes/workspaces.js'
 
 export async function buildApp(opts: { logger?: boolean } = {}) {
@@ -57,6 +58,7 @@ export async function buildApp(opts: { logger?: boolean } = {}) {
   await app.register(mockRoutes)
   await app.register(monitorRoutes)
   await app.register(docsRoutes)
+  await app.register(toolRoutes)
 
   // Tiempo real: presencia y avisos de cambios
   app.get('/api/ws', { websocket: true }, async (socket, req) => {

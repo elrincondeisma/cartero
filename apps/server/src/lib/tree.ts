@@ -56,7 +56,7 @@ export function rowToCollection(row: CollectionRow, items: Item[]): Collection {
     },
     item: items,
   }
-  for (const k of COLLECTION_KEYS) if (k !== 'description' && data[k] !== undefined) (col as any)[k] = data[k]
+  for (const k of COLLECTION_KEYS) if (k !== 'description' && data[k] != null) (col as any)[k] = data[k]
   return col
 }
 

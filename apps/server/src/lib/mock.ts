@@ -111,6 +111,8 @@ export function resolveDynamic(text: string): string {
 /** Extrae los segmentos de ruta de una URL de ejemplo, ignorando protocolo, host o variable base. */
 export function examplePath(url: string): string[] {
   let u = url.split('#')[0].split('?')[0].trim()
+  // Una variable al principio ({{baseUrl}}) hace de host, aunque su valor incluya una ruta
+  if (/^\{\{[^}]+\}\}/.test(u)) return u.replace(/^\{\{[^}]+\}\}/, '').split('/').filter(Boolean)
   u = u.replace(/^[a-z][a-z0-9+.-]*:\/\//i, '')
   // Quitar el host (o la variable {{baseUrl}}) hasta la primera "/"
   const slash = u.indexOf('/')
@@ -158,8 +160,9 @@ export function matchExample(collection: Collection, req: MockRequest, vars: Var
       const method = (original?.method ?? item.request.method ?? 'GET').toUpperCase()
       if (method !== req.method.toUpperCase()) continue
 
-      const url = resolveVariables(rawUrl(original?.url ?? item.request.url), vars)
-      const exSegs = examplePath(url)
+      const raw = rawUrl(original?.url ?? item.request.url)
+      const url = resolveVariables(raw, vars)
+      const exSegs = examplePath(raw).map((seg) => (seg.startsWith(':') ? seg : resolveVariables(seg, vars)))
       if (exSegs.length !== reqSegs.length) continue
 
       let score = 100
