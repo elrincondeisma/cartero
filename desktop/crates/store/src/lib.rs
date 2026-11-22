@@ -7,6 +7,7 @@
 
 mod schema;
 pub mod secrets;
+pub mod sync;
 pub mod sort;
 
 use std::path::Path;

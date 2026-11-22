@@ -146,7 +146,7 @@ export async function collectionRoutes(app: FastifyInstance) {
         name: schema.collections.name,
         forkedFrom: schema.collections.forkedFrom,
         updatedAt: schema.collections.updatedAt,
-        requests: sql<number>`(select count(*)::int from items i where i.collection_id = ${schema.collections.id} and i.type = 'request')`,
+        requests: sql<number>`(select count(*)::int from items i where i.collection_id = "collections"."id" and i.type = 'request')`,
       })
       .from(schema.collections)
       .where(eq(schema.collections.workspaceId, ws))

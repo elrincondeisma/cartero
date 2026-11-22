@@ -16,8 +16,31 @@ use tokio::sync::Mutex;
 
 use crate::settings::Settings;
 
+/// Servidor de Cartero conectado (el token se guarda cifrado aparte).
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+pub struct ServerInfo {
+    pub id: String,
+    pub url: String,
+    pub user_id: String,
+    pub email: String,
+    pub name: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Default)]
+pub enum SyncStatus {
+    #[default]
+    Local,
+    Syncing,
+    Synced(String),
+    Offline(String),
+    Error(String),
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum StateEvent {
+    Sync,
+    /// Han llegado cambios del servidor
+    RemoteChanged,
     Workspace,
     Collections,
     Environments,
@@ -42,6 +65,10 @@ pub struct AppState {
     pub settings: Settings,
     pub jar: Arc<Mutex<CookieJar>>,
     pub data_dir: PathBuf,
+    pub servers: Vec<ServerInfo>,
+    pub sync_status: SyncStatus,
+    pub conflicts: usize,
+    pub presence: Vec<cartero_sync::realtime::Presence>,
 }
 
 impl EventEmitter<StateEvent> for AppState {}
@@ -88,6 +115,45 @@ fn secret_key(dir: &std::path::Path) -> [u8; 32] {
 }
 
 impl AppState {
+    pub fn server_token(&self, id: &str) -> Option<String> {
+        let sealed: String = self.store.setting(&format!("server-token:{id}"))?;
+        Some(self.store.secrets().map(|s| s.open(&sealed)).unwrap_or(sealed)).filter(|t| !t.is_empty())
+    }
+
+    pub fn save_server(&mut self, info: ServerInfo, token: &str, cx: &mut Context<Self>) {
+        let sealed = self.store.secrets().map(|s| s.seal(token)).unwrap_or_else(|| token.to_string());
+        let _ = self.store.set_setting(&format!("server-token:{}", info.id), &sealed);
+        self.servers.retain(|s| s.id != info.id);
+        self.servers.push(info);
+        let _ = self.store.set_setting("servers", &self.servers);
+        cx.emit(StateEvent::Sync);
+        cx.notify();
+    }
+
+    pub fn remove_server(&mut self, id: &str, cx: &mut Context<Self>) {
+        self.servers.retain(|s| s.id != id);
+        let _ = self.store.set_setting("servers", &self.servers);
+        let _ = self.store.set_setting(&format!("server-token:{id}"), &"");
+        for w in self.workspaces.clone().into_iter().filter(|w| w.server_id.as_deref() == Some(id)) {
+            let _ = self.store.link_workspace(&w.id, None, None);
+        }
+        self.refresh_workspaces(cx);
+        cx.emit(StateEvent::Sync);
+    }
+
+    /// Cliente del servidor al que está vinculado el workspace activo.
+    pub fn sync_client(&self) -> Option<(cartero_sync::Client, String, ServerInfo)> {
+        let sid = self.workspace.server_id.as_ref()?;
+        let remote = self.workspace.remote_id.clone()?;
+        let server = self.servers.iter().find(|s| &s.id == sid)?.clone();
+        let token = self.server_token(sid)?;
+        Some((cartero_sync::Client::new(&server.url, &token, self.settings.http_options()), remote, server))
+    }
+
+    pub fn client_for(&self, server: &ServerInfo) -> Option<cartero_sync::Client> {
+        Some(cartero_sync::Client::new(&server.url, &self.server_token(&server.id)?, self.settings.http_options()))
+    }
+
     pub fn open() -> anyhow::Result<Self> {
         let dir = data_dir();
         std::fs::create_dir_all(&dir)?;
@@ -114,7 +180,12 @@ impl AppState {
             settings,
             jar: Arc::new(Mutex::new(CookieJar::new())),
             data_dir: dir,
+            servers: vec![],
+            sync_status: SyncStatus::Local,
+            conflicts: 0,
+            presence: vec![],
         };
+        state.servers = state.store.setting("servers").unwrap_or_default();
         state.load_workspace();
         if first_run {
             crate::sample::create(&state.store, &state.workspace.id);

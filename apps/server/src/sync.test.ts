@@ -106,6 +106,8 @@ describe('sincronización con la app de escritorio', () => {
     expect(r.body.results.every((x: any) => x.status === 'ok')).toBe(true)
     const web = await api('GET', `/api/collections/${collectionId}`)
     expect(web.body.items.map((i: any) => i.id).sort()).toEqual([folderId, itemId].sort())
+    const list = await api('GET', `/api/workspaces/${ws}/collections`)
+    expect(list.body.find((c: any) => c.id === collectionId).requests).toBe(1)
   })
 
   it('cambios completos y desde un cursor, con los secretos legibles', async () => {

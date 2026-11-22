@@ -92,6 +92,15 @@ const MIGRATIONS: &[&str] = &[
         PRIMARY KEY (entity, id)
     );
     "#,
+    // 2: sincronización (contenido del servidor visto por última vez)
+    r#"
+    ALTER TABLE collections ADD COLUMN base TEXT;
+    ALTER TABLE items ADD COLUMN base TEXT;
+    ALTER TABLE environments ADD COLUMN base TEXT;
+    ALTER TABLE globals ADD COLUMN base TEXT;
+    ALTER TABLE globals ADD COLUMN remote_version INTEGER;
+    ALTER TABLE conflicts ADD COLUMN force INTEGER NOT NULL DEFAULT 0;
+    "#,
 ];
 
 pub fn migrate(conn: &Connection) -> rusqlite::Result<()> {

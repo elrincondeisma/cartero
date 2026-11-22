@@ -276,7 +276,7 @@ impl Render for SettingsTab {
             (Section::Servers, tr("Servidores"), IconName::Server),
             (Section::About, tr("Acerca de"), IconName::Info),
         ];
-        let nav = div().v_flex().w(px(210.)).flex_none().gap_0p5().p_3().border_r_1().border_color(cx.theme().border).children(sections.iter().map(|(s, label, icon)| {
+        let nav = div().v_flex().w(px(210.)).h_full().flex_none().gap_0p5().p_3().border_r_1().border_color(cx.theme().border).children(sections.iter().map(|(s, label, icon)| {
             let s = *s;
             let selected = self.section == s;
             div()
@@ -306,6 +306,6 @@ impl Render for SettingsTab {
             Section::Servers => div().children(self.servers.clone()),
             Section::About => self.render_about(cx),
         };
-        div().track_focus(&self.focus).size_full().h_flex().child(nav).child(div().id("settings-content").flex_1().h_full().overflow_y_scroll().p_6().child(div().max_w(px(900.)).child(content)))
+        div().track_focus(&self.focus).size_full().flex().flex_row().child(nav).child(div().id("settings-content").flex_1().min_w_0().h_full().overflow_y_scroll().p_6().child(div().max_w(px(900.)).child(content)))
     }
 }

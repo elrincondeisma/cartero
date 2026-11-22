@@ -17,6 +17,7 @@ cartero-http = { path = "../crates/http" }
 cartero-script = { path = "../crates/script" }
 cartero-runner = { path = "../crates/runner" }
 cartero-store = { path = "../crates/store" }
+cartero-sync = { path = "../crates/sync" }
 gpui-kit = { version = "=0.10.0", default-features = false, features = [
     "component",
     "assets",
@@ -43,6 +44,7 @@ url = "2"
 open = "5"
 sha2 = "0.10"
 rand = "0.9"
+gethostname = "1"
 
 [lints]
 workspace = true

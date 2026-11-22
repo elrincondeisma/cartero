@@ -2,12 +2,14 @@
 //! si quieres, sincronizadas con un servidor de Cartero.
 
 mod assets;
+mod connect;
 mod i18n;
 mod oauth2;
 mod runtime;
 mod sample;
 mod settings;
 mod state;
+mod sync_engine;
 mod theme;
 mod ui;
 mod update;

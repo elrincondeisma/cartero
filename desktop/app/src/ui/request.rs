@@ -233,6 +233,14 @@ impl RequestTab {
             StateEvent::Collections => this.refresh_inherited(cx),
             StateEvent::ItemChanged(id) if this.item_id.as_deref() == Some(id.as_str()) && !this.dirty => this.reload(window, cx),
             StateEvent::Environments => cx.notify(),
+            StateEvent::RemoteChanged if !this.dirty => {
+                if let Some(id) = this.item_id.clone()
+                    && let Ok(item) = this.app.read(cx).store.item(&id)
+                    && item != this.base
+                {
+                    this.load_item(item, window, cx);
+                }
+            }
             _ => {}
         }));
     }
@@ -882,7 +890,7 @@ impl RequestTab {
             } else {
                 tr("Se ejecuta con la respuesta: escribe aquí los tests con pm.test y pm.expect.")
             })))
-            .child(div().flex_1().min_h_0().h_flex().child(div().flex_1().h_full().child(editor_el)).child(snippet_list))
+            .child(div().flex_1().min_h_0().flex().flex_row().child(div().flex_1().h_full().child(editor_el)).child(snippet_list.h_full()))
             .into_any_element()
     }
 }

@@ -220,6 +220,7 @@ impl Render for RunnerTab {
         let config = div()
             .v_flex()
             .w(px(320.))
+            .h_full()
             .flex_none()
             .gap_3()
             .p_4()
@@ -358,6 +359,6 @@ impl Render for RunnerTab {
                     }),
             )
             .child(div().h_1().w_full().rounded_full().bg(cx.theme().muted).child(div().h_full().rounded_full().bg(crate::theme::brand()).w(relative(progress))));
-        div().track_focus(&self.focus).size_full().h_flex().child(config).child(div().flex_1().h_full().v_flex().child(header).child(div().flex_1().min_h_0().child(results)))
+        div().track_focus(&self.focus).size_full().flex().flex_row().child(config).child(div().flex_1().h_full().v_flex().child(header).child(div().flex_1().min_h_0().child(results)))
     }
 }

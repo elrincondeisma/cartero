@@ -94,6 +94,7 @@ pub struct MainWindow {
     active: usize,
     show_sidebar: bool,
     focus: FocusHandle,
+    _sync: Entity<crate::sync_engine::SyncEngine>,
     _subs: Vec<Subscription>,
 }
 
@@ -109,7 +110,8 @@ impl MainWindow {
                 crate::theme::apply(choice, Some(window), cx);
             }
         }));
-        let mut this = Self { app, sidebar, tabs: vec![], active: 0, show_sidebar: true, focus: cx.focus_handle(), _subs: subs };
+        let sync = cx.new(|cx| crate::sync_engine::SyncEngine::new(app.clone(), cx));
+        let mut this = Self { app, sidebar, tabs: vec![], active: 0, show_sidebar: true, focus: cx.focus_handle(), _sync: sync, _subs: subs };
         this.restore_session(window, cx);
         if this.app.read(cx).settings.check_updates {
             let app = this.app.clone();
