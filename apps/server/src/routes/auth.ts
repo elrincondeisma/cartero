@@ -36,7 +36,11 @@ export async function acceptInvitation(token: string, userId: string, email: str
 }
 
 export async function authRoutes(app: FastifyInstance) {
-  app.get('/api/auth/config', async () => ({ allowRegistration: (await getSettings()).allowRegistration, providers: await enabledProviders() }))
+  app.get('/api/auth/config', async () => {
+    const s = await getSettings()
+    const [{ count }] = await db.select({ count: sql<number>`count(*)::int` }).from(schema.users)
+    return { allowRegistration: s.allowRegistration, providers: await enabledProviders(), instanceName: s.instanceName, needsSetup: count === 0 }
+  })
 
   app.post('/api/auth/register', { config: { rateLimit: { max: 10, timeWindow: '1 minute' } } }, async (req, reply) => {
     const body = registerBody.parse(req.body)
@@ -45,7 +49,7 @@ export async function authRoutes(app: FastifyInstance) {
     const exists = await db.select({ id: schema.users.id }).from(schema.users).where(eq(schema.users.email, email))
     if (exists.length) throw new HttpError(409, 'Ya existe una cuenta con ese email', 'email_taken')
 
-    const user = await createUser({ email, name: body.name, passwordHash: await hashPassword(body.password), lang: body.lang, admin: firstUser })
+    const user = await createUser({ email, name: body.name, passwordHash: await hashPassword(body.password), lang: body.lang, firstUser })
     if (body.invitation) await acceptInvitation(body.invitation, user.id, email)
     await createSession(reply, user.id)
     return { id: user.id, email: user.email, name: user.name }

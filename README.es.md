@@ -26,7 +26,7 @@
 | **Idiomas** | Interfaz, manual y datos de ejemplo en **español e inglés**, con selector de idioma guardado en tu cuenta |
 | **Ayuda** | Asistente de bienvenida, recorrido guiado, paleta de comandos (Ctrl+K), [manual completo](docs/manual/es/README.md) en `/ayuda` y datos de ejemplo con APIs reales que se quitan con un clic |
 | **Equipos** | Workspaces, invitaciones, roles (propietario, admin, editor, lector), presencia en tiempo real, comentarios, historial de cambios con restauración, fork y merge, tokens de API |
-| **Acceso y administración** | Email y contraseña, **Google** y **GitHub**. Panel de administración para gestionar cuentas (roles admin/usuario, desactivar, borrar), registro abierto, dominios de email permitidos y credenciales OAuth |
+| **Acceso y administración** | Email y contraseña, **Google** y **GitHub**. **Asistente de instalación** paso a paso al primer arranque, y un panel de administración con todos los ajustes: cuentas y roles, registro, OAuth, email (SMTP) y protección SSRF |
 
 ## Puesta en marcha
 
@@ -36,25 +36,23 @@ cp .env.example .env        # cambia CARTERO_SECRET_KEY y POSTGRES_PASSWORD
 docker compose up -d
 ```
 
-Abre `http://localhost:3000` y crea tu cuenta.
+Abre `http://localhost:3000`. El **asistente de instalación** te guía paso a paso: crear la cuenta de administrador, poner la URL pública, decidir quién puede registrarse y, si quieres, activar el login con Google y GitHub y el email. Lo tienes en [Primer arranque](docs/manual/es/15-autoalojamiento.md#primer-arranque-el-asistente).
 
-La primera cuenta que crees es la admin de la instancia. Desde **Administración** (menú de la cuenta) puedes cerrar el registro, limitarlo a tus dominios de email, activar el login con Google y GitHub y gestionar las cuentas. Lo tienes en el [manual](docs/manual/es/17-administracion-y-login-social.md).
+Todo lo que elijas se puede cambiar después en **Administración** (menú de la cuenta), junto con la gestión de usuarios. Mira la [guía de administración](docs/manual/es/17-administracion-y-login-social.md).
 
 ### Configuración
+
+En el `.env` solo va lo que el servidor necesita **antes de arrancar**:
 
 | Variable | Por defecto | Descripción |
 |---|---|---|
 | `CARTERO_SECRET_KEY` | — (obligatoria) | Clave para cifrar los secretos. Genera una con `openssl rand -base64 32` y **no la pierdas** |
 | `DATABASE_URL` | — | PostgreSQL 14 o superior |
 | `REDIS_URL` | — | Redis (para los monitores) |
-| `PUBLIC_URL` | `http://localhost:3000` | URL pública: enlaces de invitación, OAuth y avisos |
-| `ALLOW_REGISTRATION` | `true` | Valor inicial del registro abierto (después se cambia en el panel de administración) |
-| `ADMIN_EMAILS` | — | Cuentas que son admin de la instancia, separadas por comas |
-| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | — | Login con Google (opcional; también desde el panel) |
-| `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | — | Login con GitHub (opcional; también desde el panel) |
-| `BLOCK_PRIVATE_NETWORKS` | `false` | Bloquea peticiones a IPs privadas (protección SSRF). Actívalo si tu instancia es pública |
-| `SMTP_URL` / `SMTP_FROM` | — | Para enviar invitaciones y avisos por email |
+| `ADMIN_EMAILS` | — | Cuentas que pasan a admin de la instancia en cada arranque, separadas por comas (sirve para recuperar el acceso) |
 | `INLINE_WORKER` | `true` | `false` para ejecutar los monitores en un proceso aparte (`node dist/worker.js`) |
+
+Todo lo demás se ajusta en **Administración**. Estas variables solo dan el valor inicial de una instancia nueva: `PUBLIC_URL`, `ALLOW_REGISTRATION`, `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`, `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET`, `SMTP_URL` / `SMTP_FROM` y `BLOCK_PRIVATE_NETWORKS`.
 
 > **Detrás de un proxy (Traefik, Caddy, Nginx):** reenvía también las conexiones WebSocket de `/api/ws`, que se usan para la presencia y los cambios en vivo.
 
@@ -117,7 +115,7 @@ Tests:
 
 ```bash
 pnpm test                      # unitarios e integración (necesita pnpm db:up)
-npx playwright test            # E2E (con la API y la web levantadas)
+npx playwright test            # E2E: levanta sus propias instancias aisladas (puertos 3201-3202), nunca tu base de datos de desarrollo
 ```
 
 Lee [CONTRIBUTING.es.md](CONTRIBUTING.es.md) antes de mandar un PR.

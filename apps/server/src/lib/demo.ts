@@ -11,6 +11,7 @@ import { and, eq, inArray, like } from 'drizzle-orm'
 import { config } from '../config.js'
 import { db, schema } from '../db/index.js'
 import { randomToken, sha256 } from '../lib/crypto.js'
+import { publicUrl } from './settings.js'
 import { demoTranslator } from './demo-en.js'
 
 export const WORKSPACE_NAME = 'Demo Cartero'
@@ -573,13 +574,14 @@ export async function seedDemo(email: string, log: (s: string) => void = console
       await fetch(`${API}/mock/${mock.slug}${p}`, { headers })
     }
     await fetch(`${API}/mock/${mock.slug}/posts`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{"title":"hola"}' })
-    step(L(`Mock server en ${config.publicUrl}/mock/${mock.slug}`, `Mock server at ${config.publicUrl}/mock/${mock.slug}`))
+    const base = await publicUrl()
+    step(L(`Mock server en ${base}/mock/${mock.slug}`, `Mock server at ${base}/mock/${mock.slug}`))
 
     // Documentación publicada
     const suffix = randomToken(3).toLowerCase().replace(/[^a-z0-9]/g, 'x')
     const docBlog = await call('PUT', `/api/collections/${ids.blog}/docs`, { slug: `blog-demo-${suffix}`, published: true })
     const docClima = await call('PUT', `/api/collections/${ids.clima}/docs`, { slug: `clima-demo-${suffix}`, published: true, environmentId: envs.Madrid })
-    step(L(`Documentación: ${config.publicUrl}/docs/${docBlog.slug} y /docs/${docClima.slug}`, `Docs: ${config.publicUrl}/docs/${docBlog.slug} and /docs/${docClima.slug}`))
+    step(L(`Documentación: ${base}/docs/${docBlog.slug} y /docs/${docClima.slug}`, `Docs: ${base}/docs/${docBlog.slug} and /docs/${docClima.slug}`))
 
     // Monitores (se ejecutan de verdad; uno se lanza ya para tener historial)
     const m1 = await call('POST', `/api/workspaces/${ws}/monitors`, {

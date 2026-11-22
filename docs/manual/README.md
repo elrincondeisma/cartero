@@ -17,5 +17,5 @@
 - [Connecting AI assistants (MCP)](13-ai-mcp.md)
 - [Keyboard shortcuts](14-shortcuts.md)
 - [Installation and administration](15-self-hosting.md)
-- [Administration and social login](17-admin-and-social-login.md)
+- [Administration](17-admin-and-social-login.md)
 - [FAQ](16-faq.md)

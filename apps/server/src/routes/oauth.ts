@@ -105,7 +105,7 @@ export async function oauthRoutes(app: FastifyInstance) {
     const p = PROVIDER[provider]
     const url = new URL(p.authorize)
     url.searchParams.set('client_id', creds.clientId)
-    url.searchParams.set('redirect_uri', callbackUrl(provider))
+    url.searchParams.set('redirect_uri', await callbackUrl(provider))
     url.searchParams.set('response_type', 'code')
     url.searchParams.set('scope', p.scope)
     url.searchParams.set('state', st.state)
@@ -138,7 +138,7 @@ export async function oauthRoutes(app: FastifyInstance) {
         client_id: creds.clientId,
         client_secret: creds.clientSecret,
         code: q.code,
-        redirect_uri: callbackUrl(provider),
+        redirect_uri: await callbackUrl(provider),
         grant_type: 'authorization_code',
         code_verifier: st.verifier,
       })
@@ -206,7 +206,7 @@ export async function resolveOAuthUser(provider: OAuthProvider, profile: Profile
       const msg = (e as Error).message
       throw new HttpError(403, msg, msg.includes('dominio') ? 'domain_not_allowed' : 'registration_closed')
     }
-    const u = await createUser({ email: profile.email, name: profile.name, passwordHash: null, lang: st.lang, admin: firstUser })
+    const u = await createUser({ email: profile.email, name: profile.name, passwordHash: null, lang: st.lang, firstUser })
     userId = u.id
   }
   await db.insert(schema.identities).values({ provider, providerUserId: profile.id, userId, email: profile.email }).onConflictDoNothing()

@@ -4,10 +4,13 @@ import { z } from 'zod'
 import { db, schema } from '../db/index.js'
 import type { OAuthProvider } from '../db/schema.js'
 import { requireAdmin } from '../lib/auth.js'
-import { encrypt } from '../lib/crypto.js'
+import { decrypt, encrypt } from '../lib/crypto.js'
 import { unscheduleMonitor } from '../lib/monitors.js'
 import { badRequest, notFound } from '../lib/errors.js'
-import { PROVIDERS, callbackUrl, getSettings, saveSettings } from '../lib/settings.js'
+import { config } from '../config.js'
+import { sendTestMail } from '../lib/notify.js'
+import { PROVIDERS, callbackUrl, getSettings, saveSettings, smtpConfig } from '../lib/settings.js'
+import { pingRedis } from '../lib/monitors.js'
 
 const providerPatch = z.object({
   enabled: z.boolean().optional(),
@@ -17,26 +20,48 @@ const providerPatch = z.object({
 })
 
 const settingsPatch = z.object({
+  instanceName: z.string().trim().min(1).max(60).optional(),
+  publicUrl: z
+    .string()
+    .trim()
+    .url('URL no válida')
+    .regex(/^https?:\/\//, 'La URL tiene que empezar por http:// o https://')
+    .transform((u) => u.replace(/\/+$/, ''))
+    .optional(),
   allowRegistration: z.boolean().optional(),
   allowedDomains: z
     .array(z.string().trim().toLowerCase().regex(/^[a-z0-9.-]+\.[a-z]{2,}$/, 'Dominio no válido'))
     .max(50)
     .optional(),
   providers: z.object({ google: providerPatch.optional(), github: providerPatch.optional() }).optional(),
+  /** url: undefined no cambia · '' la borra · texto la sustituye */
+  smtp: z.object({ url: z.string().trim().max(1000).optional(), from: z.string().trim().max(200).optional() }).optional(),
+  blockPrivateNetworks: z.boolean().optional(),
+  setupCompleted: z.boolean().optional(),
 })
 
 /** Ajustes para el panel: los secretos nunca salen del servidor. */
-async function publicSettings() {
+export async function publicSettings() {
   const s = await getSettings()
+  const providers: Record<string, unknown> = {}
+  for (const p of PROVIDERS)
+    providers[p] = { enabled: s.providers[p].enabled, clientId: s.providers[p].clientId, hasSecret: !!s.providers[p].clientSecret, callbackUrl: await callbackUrl(p) }
+  let smtpHost = ''
+  if (s.smtp.url)
+    try {
+      smtpHost = new URL(decrypt(s.smtp.url)).host
+    } catch {
+      smtpHost = ''
+    }
   return {
+    instanceName: s.instanceName,
+    publicUrl: s.publicUrl,
     allowRegistration: s.allowRegistration,
     allowedDomains: s.allowedDomains,
-    providers: Object.fromEntries(
-      PROVIDERS.map((p) => [
-        p,
-        { enabled: s.providers[p].enabled, clientId: s.providers[p].clientId, hasSecret: !!s.providers[p].clientSecret, callbackUrl: callbackUrl(p) },
-      ]),
-    ),
+    providers,
+    smtp: { configured: !!s.smtp.url, host: smtpHost, from: s.smtp.from },
+    blockPrivateNetworks: s.blockPrivateNetworks,
+    setupCompleted: s.setupCompleted !== false,
   }
 }
 
@@ -84,12 +109,69 @@ export async function adminRoutes(app: FastifyInstance) {
       if (next.enabled && (!next.clientId || !next.clientSecret)) throw badRequest('Para activar un proveedor necesitas el Client ID y el Client secret')
       providers[p as OAuthProvider] = next
     }
+    let smtp: typeof current.smtp | undefined
+    if (body.smtp) {
+      smtp = { ...current.smtp }
+      if (body.smtp.url !== undefined) {
+        if (body.smtp.url && !/^smtps?:\/\//.test(body.smtp.url)) throw badRequest('La URL SMTP tiene que empezar por smtp:// o smtps://')
+        smtp.url = body.smtp.url ? encrypt(body.smtp.url) : ''
+      }
+      if (body.smtp.from !== undefined) smtp.from = body.smtp.from
+    }
     await saveSettings({
+      instanceName: body.instanceName,
+      publicUrl: body.publicUrl,
+      smtp,
+      blockPrivateNetworks: body.blockPrivateNetworks,
+      setupCompleted: body.setupCompleted,
       allowRegistration: body.allowRegistration,
       allowedDomains: body.allowedDomains ? [...new Set(body.allowedDomains)] : undefined,
       providers: body.providers ? providers : undefined,
     })
     return publicSettings()
+  })
+
+  // Envía un email de prueba con la configuración guardada o con la que se está escribiendo
+  app.post('/api/admin/test-email', { config: { rateLimit: { max: 10, timeWindow: '1 minute' } } }, async (req) => {
+    const me = requireAdmin(req)
+    const body = z.object({ url: z.string().trim().optional(), from: z.string().trim().optional(), to: z.string().email().optional() }).parse(req.body ?? {})
+    const saved = await smtpConfig()
+    const url = body.url || saved?.url
+    if (!url) throw badRequest('Escribe la URL SMTP antes de probarla')
+    const { instanceName } = await getSettings()
+    const from = body.from || saved?.from || config.smtpFrom
+    try {
+      await sendTestMail({ url, from }, body.to ?? me.email, `${instanceName}: email de prueba / test email`, 'Si lees esto, el email de Cartero funciona. / If you can read this, Cartero email works.')
+    } catch (e) {
+      throw badRequest(`El servidor de correo respondió: ${(e as Error).message}`)
+    }
+    return { ok: true, to: body.to ?? me.email }
+  })
+
+  // Estado del servidor: lo que no se puede cambiar desde el panel (variables de entorno)
+  app.get('/api/admin/system', async (req) => {
+    requireAdmin(req)
+    let database = false
+    try {
+      await db.execute(sql`select 1`)
+      database = true
+    } catch {}
+    let redis = false
+    try {
+      redis = await pingRedis()
+    } catch {}
+    return {
+      version: '0.1.0',
+      node: process.version,
+      database,
+      redis,
+      inlineWorker: config.inlineWorker,
+      secretKeyFromEnv: !!process.env.CARTERO_SECRET_KEY,
+      production: process.env.NODE_ENV === 'production',
+      secureCookies: config.secureCookies,
+      filesDir: config.filesDir,
+      envPublicUrl: config.publicUrl,
+    }
   })
 
   app.get('/api/admin/users', async (req) => {

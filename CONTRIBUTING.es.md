@@ -17,9 +17,10 @@ pnpm --filter @cartero/web dev
 ## Antes de abrir un PR
 
 - `pnpm typecheck` y `pnpm test` en verde.
-- Si tocas la interfaz, pasa el E2E: `npx playwright test`.
+- Si tocas la interfaz, pasa el E2E: `npx playwright test`. Compila la web y levanta dos instancias aisladas con sus propias bases de datos (una ya instalada y otra vacía para probar el asistente de instalación), así que nunca toca tus datos de desarrollo. Necesita el Postgres y el Redis de `pnpm db:up` en marcha.
 - Si tocas importadores o exportadores, añade un fixture en `packages/importers/fixtures` y su test. La regla es la **ida y vuelta sin pérdidas**: importar y volver a exportar una colección de Postman debe dar el mismo JSON.
-- Si tocas la API, añade el caso a `apps/server/src/server.test.ts`.
+- Si tocas la API, añade el caso a `apps/server/src/server.test.ts` (o a `admin.test.ts` / `setup.test.ts` si es de administración o instalación).
+- Los ajustes nuevos de la instancia van en `apps/server/src/lib/settings.ts` y tienen que poder editarse en **Administración** (formularios compartidos en `apps/web/src/features/admin/forms.tsx`, que también usa el asistente de instalación). Las variables de entorno quedan para lo que el servidor necesita antes de arrancar, o como valor inicial.
 - Si cambias el esquema de la base de datos, genera la migración con `pnpm --filter @cartero/server db:generate` y súbela con el PR.
 
 ## Idiomas (español e inglés)

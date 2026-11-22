@@ -5,6 +5,7 @@ import { config } from '../config.js'
 import { db, schema } from '../db/index.js'
 import { type NotifyTarget, notify } from './notify.js'
 import { startRun } from './runner.js'
+import { publicUrl } from './settings.js'
 import { loadCollection } from './tree.js'
 
 const QUEUE = 'cartero-monitors'
@@ -85,7 +86,7 @@ export async function runMonitor(monitorId: string): Promise<string | undefined>
           title: `Monitor «${m.name}» ${status === 'passed' ? 'OK' : 'ha fallado'}`,
           text,
           status,
-          url: `${config.publicUrl}/w/${m.workspaceId}/runs/${runId}`,
+          url: `${await publicUrl()}/w/${m.workspaceId}/runs/${runId}`,
           data: { monitorId: m.id, runId, stats: s },
         })
         if (errors.length) console.warn(`Avisos del monitor ${m.id} con errores:`, errors)
@@ -118,4 +119,17 @@ export async function closeMonitors() {
   await worker?.close()
   await queue?.close()
   connection?.disconnect()
+}
+
+/** ¿Responde Redis? (para la pestaña Sistema del panel). No crea la cola si no existía. */
+export async function pingRedis(): Promise<boolean> {
+  const r = new Redis(config.redisUrl, { lazyConnect: true, maxRetriesPerRequest: 0, connectTimeout: 2000, retryStrategy: () => null })
+  try {
+    await r.connect()
+    return (await r.ping()) === 'PONG'
+  } catch {
+    return false
+  } finally {
+    r.disconnect()
+  }
 }

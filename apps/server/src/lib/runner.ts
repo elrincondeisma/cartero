@@ -6,6 +6,7 @@ import { and, eq } from 'drizzle-orm'
 import { config } from '../config.js'
 import { db, schema } from '../db/index.js'
 import { openVariables, sealVariables } from './crypto.js'
+import { getSettings } from './settings.js'
 import { broadcast } from './realtime.js'
 
 export interface RunContext {
@@ -96,12 +97,13 @@ export async function persistResult(
   return changed
 }
 
-export function baseRunOptions(): Partial<RunOptions> {
+export async function baseRunOptions(): Promise<Partial<RunOptions>> {
+  const { blockPrivateNetworks } = await getSettings()
   return {
     timeoutRequest: 120_000,
     timeoutScript: 30_000,
     fileResolverBaseDir: path.resolve(config.filesDir),
-    restrictedAddresses: config.blockPrivateNetworks ? PRIVATE_NETWORKS : undefined,
+    restrictedAddresses: blockPrivateNetworks ? PRIVATE_NETWORKS : undefined,
   }
 }
 
@@ -155,7 +157,7 @@ export async function startRun(input: StartRunInput): Promise<string> {
 
   const collectionVariables = input.collection.variable ?? []
   void runIsolated(
-    { ...baseRunOptions(), ...input.options, collection: input.collection, environment: ctx.environment, globals: ctx.globals, cookieJar: ctx.cookieJar },
+    { ...(await baseRunOptions()), ...input.options, collection: input.collection, environment: ctx.environment, globals: ctx.globals, cookieJar: ctx.cookieJar },
     (e) => {
       // Las ejecuciones con cuerpos grandes no se guardan enteras en memoria para el replay
       state.events.push(e)

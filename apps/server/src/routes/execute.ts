@@ -69,7 +69,7 @@ export async function executeRoutes(app: FastifyInstance) {
     const collectionVariables = collection.variable ?? []
 
     const result = await runIsolated(
-      { ...baseRunOptions(), collection, entrypoint: item.id, environment: ctx.environment, globals: ctx.globals, cookieJar: ctx.cookieJar },
+      { ...(await baseRunOptions()), collection, entrypoint: item.id, environment: ctx.environment, globals: ctx.globals, cookieJar: ctx.cookieJar },
       () => {},
       { maxDuration: 3 * 60_000 },
     )

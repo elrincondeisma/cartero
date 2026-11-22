@@ -1,5 +1,8 @@
+import { useQuery } from '@tanstack/react-query'
 import { useEffect } from 'react'
+import { api } from './api/client'
 import { Navigate, Route, Routes, useLocation } from 'react-router'
+import { SetupWizard, useSetupStatus } from './features/setup/SetupWizard'
 import { toast } from 'sonner'
 import { useMe, useWorkspaces } from './api/hooks'
 import { Spinner } from './components/ui'
@@ -22,6 +25,10 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
 
 function Home() {
   const { data, isLoading } = useWorkspaces()
+  const { data: me } = useMe()
+  const { data: setup } = useSetupStatus()
+  // El primer admin que no terminó el asistente vuelve a él
+  if (me?.role === 'admin' && setup?.setupCompleted === false) return <Navigate to="/setup" replace />
   if (isLoading || !data) return <FullSpinner />
   const last = localStorage.getItem('cartero-last-ws')
   const ws = data.find((w) => w.id === last) ?? data[0]
@@ -71,10 +78,30 @@ function useOAuthNotice() {
   }, [openSettings])
 }
 
+/** Una instancia sin cuentas lleva al asistente de instalación (salvo la documentación pública y el manual). */
+function useSetupRedirect() {
+  const { data } = useSetupStatus()
+  const loc = useLocation()
+  const open = /^\/(setup|docs\/|ayuda)/.test(loc.pathname)
+  return data?.needsSetup && !open
+}
+
+/** El título de la pestaña lleva el nombre de la instancia (Administración → General). */
+function useInstanceTitle() {
+  const { data } = useQuery({ queryKey: ['auth-config'], queryFn: () => api.get<{ instanceName?: string }>('/api/auth/config') })
+  const name = data?.instanceName
+  useEffect(() => {
+    if (name && document.title === 'Cartero') document.title = name
+  }, [name])
+}
+
 export function App() {
   useOAuthNotice()
+  useInstanceTitle()
+  if (useSetupRedirect()) return <Navigate to="/setup" replace />
   return (
     <Routes>
+      <Route path="/setup" element={<SetupWizard />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/invite/:token" element={<InvitePage />} />

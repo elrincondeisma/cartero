@@ -1,5 +1,6 @@
 import * as Popover from '@radix-ui/react-popover'
-import { BookOpen, Bot, CircleHelp, Eye, Keyboard, Search, Wand2 } from 'lucide-react'
+import { BookOpen, Bot, CircleHelp, Eye, Keyboard, Rocket, Search, ShieldCheck, Wand2 } from 'lucide-react'
+import { useNavigate } from 'react-router'
 import { useEffect, useState } from 'react'
 import { useEnvironments, useGlobals } from '@/api/hooks'
 import { Dialog, Menu, Tooltip } from '@/components/ui'
@@ -8,7 +9,7 @@ import { useTour } from '../onboarding/Tour'
 import { usePalette } from '../palette/CommandPalette'
 import { useOpen } from '../workspace/actions'
 import { useWs } from '../workspace/context'
-import { t } from "@/i18n";
+import { lang, t } from "@/i18n";
 
 const SHORTCUTS: [string, string][] = [
   [t("Ctrl + K"), t("Buscar peticiones, entornos y acciones")],
@@ -55,6 +56,8 @@ export function HelpMenu() {
   const openSettings = useUi((s) => s.openSettings)
   const setPalette = usePalette((s) => s.setOpen)
   const register = usePalette((s) => s.register)
+  const { me } = useWs()
+  const nav = useNavigate()
 
   useEffect(() => {
     register({ onShortcuts: () => setShortcuts(true) })
@@ -92,6 +95,13 @@ export function HelpMenu() {
           { label: t("Atajos de teclado"), icon: <Keyboard />, shortcut: '?', onSelect: () => setShortcuts(true) },
           'separator',
           { label: t("Conectar con IA (MCP)"), icon: <Bot />, onSelect: () => openSettings('ai') },
+          ...(me.role === 'admin'
+            ? [
+                'separator' as const,
+                { label: t('Guía de administración'), icon: <ShieldCheck />, onSelect: () => window.open(`/ayuda/${lang === 'en' ? '17-admin-and-social-login' : '17-administracion-y-login-social'}`, '_blank') },
+                { label: t('Asistente de instalación'), icon: <Rocket />, onSelect: () => nav('/setup') },
+              ]
+            : []),
         ]}
       />
       <ShortcutsDialog open={shortcuts} onOpenChange={setShortcuts} />

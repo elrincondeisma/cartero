@@ -2,6 +2,7 @@ import { createCarteroMcpServer } from '@cartero/mcp'
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import { config } from '../config.js'
+import { publicUrl } from '../lib/settings.js'
 import { resolveUser } from '../lib/auth.js'
 
 /**
@@ -25,7 +26,7 @@ export async function mcpRoutes(app: FastifyInstance) {
       return reply.code(405).header('allow', 'POST').send({ jsonrpc: '2.0', error: { code: -32000, message: 'Usa POST' }, id: null })
     }
 
-    const server = createCarteroMcpServer({ baseUrl: `http://127.0.0.1:${config.port}`, token, publicUrl: config.publicUrl })
+    const server = createCarteroMcpServer({ baseUrl: `http://127.0.0.1:${config.port}`, token, publicUrl: await publicUrl() })
     const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined, enableJsonResponse: true })
     reply.hijack()
     reply.raw.on('close', () => {

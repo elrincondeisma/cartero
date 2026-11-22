@@ -11,7 +11,7 @@ Cada workspace tiene sus colecciones, entornos, globales, mocks, monitores e his
 
 ## Invitar
 
-**Ajustes → Miembros → Invitar**: escribe el email y el rol. La persona recibe un enlace (por email si el servidor tiene SMTP; si no, el enlace se copia a tu portapapeles para que se lo mandes tú). Caduca en 7 días.
+**Ajustes → Miembros → Invitar**: escribe el email y el rol. La persona recibe un enlace (por email si un admin ha configurado el email en **Administración → Email**; si no, el enlace se copia a tu portapapeles para que se lo mandes tú). Caduca en 7 días.
 
 | Rol | Puede |
 |---|---|

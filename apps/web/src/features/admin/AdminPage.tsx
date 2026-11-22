@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Ban, Check, Copy, ExternalLink, KeyRound, MoreHorizontal, Play, Search, Shield, ShieldCheck, Trash2, UserRound, Users } from 'lucide-react'
+import { ArrowLeft, Ban, CircleCheck, KeyRound, Mail, MoreHorizontal, Play, Search, Server, Settings2, Shield, ShieldAlert, ShieldCheck, Trash2, TriangleAlert, UserRound, Users, Wand2 } from 'lucide-react'
 import { type ReactNode, useEffect, useMemo, useState } from 'react'
-import { Link, Navigate, useSearchParams } from 'react-router'
+import { Link, Navigate, useNavigate, useSearchParams } from 'react-router'
 import { toast } from 'sonner'
 import { api } from '@/api/client'
 import { useMe } from '@/api/hooks'
@@ -9,7 +9,8 @@ import type { OAuthProvider } from '@/api/types'
 import { confirm } from '@/components/dialogs'
 import { Logo } from '@/components/Logo'
 import { PROVIDER_NAME, ProviderIcon } from '@/components/ProviderIcon'
-import { Badge, Button, Field, Input, Menu, Select, Spinner, Switch, cx, timeAgo } from '@/components/ui'
+import { Badge, Button, Input, Menu, Select, Spinner, cx, timeAgo } from '@/components/ui'
+import { AccessForm, type AdminSettings, EmailForm, GeneralForm, ProviderCard, SecurityForm, useAdminSettings } from './forms'
 import { t } from '@/i18n'
 import { initials } from '../workspace/Layout'
 
@@ -25,26 +26,13 @@ interface AdminUser {
   providers: OAuthProvider[]
 }
 
-interface ProviderInfo {
-  enabled: boolean
-  clientId: string
-  hasSecret: boolean
-  callbackUrl: string
-}
-
-interface AdminSettings {
-  allowRegistration: boolean
-  allowedDomains: string[]
-  providers: Record<OAuthProvider, ProviderInfo>
-}
-
-type Tab = 'users' | 'auth'
+type Tab = 'general' | 'users' | 'auth' | 'email' | 'security' | 'system'
 
 /** Panel de administración de la instancia: usuarios e inicio de sesión. */
 export function AdminPage() {
   const { data: me, isLoading } = useMe()
   const [params, setParams] = useSearchParams()
-  const tab = (params.get('tab') as Tab) || 'users'
+  const tab = (params.get('tab') as Tab) || 'general'
   const { data: stats } = useQuery({
     queryKey: ['admin', 'stats'],
     queryFn: () => api.get<{ users: number; admins: number; workspaces: number; collections: number; runs24h: number }>('/api/admin/stats'),
@@ -52,15 +40,19 @@ export function AdminPage() {
   })
 
   useEffect(() => {
-    document.title = `${t('Administración')} · Cartero`
+    document.title = `${t('Administración')} · ${document.title.split(' · ').pop()}`
   }, [])
 
   if (isLoading) return null
   if (me?.role !== 'admin') return <Navigate to="/" replace />
 
   const tabs: { id: Tab; label: string; icon: ReactNode }[] = [
+    { id: 'general', label: t('General'), icon: <Settings2 /> },
     { id: 'users', label: t('Usuarios'), icon: <Users /> },
     { id: 'auth', label: t('Inicio de sesión'), icon: <KeyRound /> },
+    { id: 'email', label: t('Email'), icon: <Mail /> },
+    { id: 'security', label: t('Seguridad'), icon: <ShieldAlert /> },
+    { id: 'system', label: t('Sistema'), icon: <Server /> },
   ]
 
   return (
@@ -93,7 +85,7 @@ export function AdminPage() {
           <Stat label={t('Ejecuciones (24 h)')} value={stats?.runs24h} />
         </div>
 
-        <nav className="mt-8 flex gap-1 border-b border-app" role="tablist">
+        <nav className="mt-8 flex gap-1 overflow-x-auto border-b border-app" role="tablist">
           {tabs.map((tb) => (
             <button
               key={tb.id}
@@ -101,7 +93,7 @@ export function AdminPage() {
               aria-selected={tab === tb.id}
               onClick={() => setParams({ tab: tb.id }, { replace: true })}
               className={cx(
-                '-mb-px flex items-center gap-2 border-b-2 px-3 py-2.5 text-[13px] font-medium transition-colors [&>svg]:size-4',
+                '-mb-px flex shrink-0 items-center gap-2 border-b-2 px-3 py-2.5 text-[13px] font-medium transition-colors [&>svg]:size-4',
                 tab === tb.id ? 'border-brand-600 text-app' : 'border-transparent text-muted hover:text-app',
               )}
             >
@@ -111,7 +103,14 @@ export function AdminPage() {
           ))}
         </nav>
 
-        <div className="mt-6">{tab === 'users' ? <UsersTab meId={me.id} /> : <AuthTab />}</div>
+        <div key={tab} className="auth-rise mt-6">
+          {tab === 'general' && <GeneralTab />}
+          {tab === 'users' && <UsersTab meId={me.id} />}
+          {tab === 'auth' && <AuthTab />}
+          {tab === 'email' && <EmailTab myEmail={me.email} />}
+          {tab === 'security' && <SecurityTab />}
+          {tab === 'system' && <SystemTab />}
+        </div>
       </main>
     </div>
   )
@@ -275,189 +274,151 @@ function UsersTab({ meId }: { meId: string }) {
   )
 }
 
-/* ── Inicio de sesión ─────────────────────────────────────────── */
+/* ── Ajustes ──────────────────────────────────────────────────── */
 
-function AuthTab() {
-  const qc = useQueryClient()
-  const { data: s } = useQuery({ queryKey: ['admin', 'settings'], queryFn: () => api.get<AdminSettings>('/api/admin/settings') })
-  const save = useMutation({
-    mutationFn: (body: Record<string, unknown>) => api.patch<AdminSettings>('/api/admin/settings', body),
-    onSuccess: (data) => {
-      qc.setQueryData(['admin', 'settings'], data)
-      qc.invalidateQueries({ queryKey: ['auth-config'] })
-      toast.success(t('Guardado'))
-    },
-    onError: (e) => toast.error(e.message),
-  })
-  const [domains, setDomains] = useState('')
-  useEffect(() => {
-    if (s) setDomains(s.allowedDomains.join(', '))
-  }, [s])
+function Panel({ title, description, children }: { title: string; description?: ReactNode; children: ReactNode }) {
+  return (
+    <section className="rounded-xl border border-app bg-app p-5">
+      <h2 className="text-[15px] font-semibold">{title}</h2>
+      {description && <p className="mt-0.5 text-xs text-muted">{description}</p>}
+      <div className="mt-5">{children}</div>
+    </section>
+  )
+}
 
-  if (!s)
+function WithSettings({ children }: { children: (s: AdminSettings) => ReactNode }) {
+  const { data } = useAdminSettings()
+  if (!data)
     return (
       <div className="flex justify-center p-10">
         <Spinner />
       </div>
     )
-  const domainList = domains
-    .split(/[\s,]+/)
-    .map((d) => d.trim().toLowerCase().replace(/^@/, ''))
-    .filter(Boolean)
+  return <>{children(data)}</>
+}
 
+function GeneralTab() {
   return (
-    <div className="grid gap-6 lg:grid-cols-[1fr_1.4fr]">
-      <Card title={t('Registro')} description={t('Quién puede crear una cuenta nueva.')}>
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <div className="font-medium">{t('Registro abierto')}</div>
-            <p className="mt-0.5 text-xs text-muted">
-              {s.allowRegistration
-                ? t('Cualquiera con acceso a esta URL puede crearse una cuenta, también con Google o GitHub.')
-                : t('Solo pueden entrar las cuentas que ya existen y las personas invitadas a un workspace.')}
-            </p>
-          </div>
-          <Switch checked={s.allowRegistration} onChange={(v) => save.mutate({ allowRegistration: v })} label={<span className="sr-only">{t('Registro abierto')}</span>} />
+    <WithSettings>
+      {(s) => (
+        <div className="max-w-2xl">
+          <Panel title={t('Tu instancia')} description={t('Cómo se llama y en qué dirección se publica.')}>
+            <GeneralForm s={s} />
+          </Panel>
         </div>
-        <div className="mt-6 border-t border-app pt-5">
-          <Field
-            label={t('Dominios permitidos')}
-            hint={t('Separados por comas. Vacío: cualquier dominio. Las invitaciones no se ven afectadas.')}
-          >
-            <Input value={domains} onChange={(e) => setDomains(e.target.value)} placeholder="empresa.com, empresa.es" />
-          </Field>
-          <div className="mt-3 flex justify-end">
-            <Button
-              variant="primary"
-              size="sm"
-              loading={save.isPending}
-              disabled={domainList.join(',') === s.allowedDomains.join(',')}
-              onClick={() => save.mutate({ allowedDomains: domainList })}
-            >
-              {t('Guardar dominios')}
-            </Button>
-          </div>
-        </div>
-      </Card>
+      )}
+    </WithSettings>
+  )
+}
 
-      <div className="space-y-6">
-        {(['google', 'github'] as const).map((p) => (
-          <ProviderCard key={p} provider={p} info={s.providers[p]} saving={save.isPending} onSave={(body) => save.mutate({ providers: { [p]: body } })} />
-        ))}
+function AuthTab() {
+  return (
+    <WithSettings>
+      {(s) => (
+        <div className="grid items-start gap-6 lg:grid-cols-[1fr_1.4fr]">
+          <Panel title={t('Registro')} description={t('Quién puede crear una cuenta nueva.')}>
+            <AccessForm s={s} />
+          </Panel>
+          <div className="space-y-6">
+            {(['google', 'github'] as const).map((p) => (
+              <ProviderCard key={p} provider={p} info={s.providers[p]} />
+            ))}
+          </div>
+        </div>
+      )}
+    </WithSettings>
+  )
+}
+
+function EmailTab({ myEmail }: { myEmail: string }) {
+  return (
+    <WithSettings>
+      {(s) => (
+        <div className="max-w-2xl">
+          <Panel title={t('Email')} description={t('Servidor de correo para invitaciones y avisos.')}>
+            <EmailForm s={s} myEmail={myEmail} />
+          </Panel>
+        </div>
+      )}
+    </WithSettings>
+  )
+}
+
+function SecurityTab() {
+  return (
+    <WithSettings>
+      {(s) => (
+        <div className="max-w-2xl">
+          <Panel title={t('Dónde está tu instancia')} description={t('Decide si las peticiones pueden llegar a tu red privada.')}>
+            <SecurityForm s={s} />
+          </Panel>
+        </div>
+      )}
+    </WithSettings>
+  )
+}
+
+interface SystemInfo {
+  version: string
+  node: string
+  database: boolean
+  redis: boolean
+  inlineWorker: boolean
+  secretKeyFromEnv: boolean
+  production: boolean
+  secureCookies: boolean
+  filesDir: string
+  envPublicUrl: string
+}
+
+function SystemTab() {
+  const nav = useNavigate()
+  const { data: sys } = useQuery({ queryKey: ['admin', 'system'], queryFn: () => api.get<SystemInfo>('/api/admin/system') })
+  if (!sys)
+    return (
+      <div className="flex justify-center p-10">
+        <Spinner />
       </div>
+    )
+  const rows: { label: string; ok: boolean | null; value: ReactNode; hint?: string }[] = [
+    { label: t('Base de datos'), ok: sys.database, value: sys.database ? t('Conectada') : t('Sin conexión') },
+    { label: 'Redis', ok: sys.redis, value: sys.redis ? t('Conectado') : t('Sin conexión'), hint: sys.redis ? undefined : t('Sin Redis no se ejecutan los monitores programados.') },
+    {
+      label: t('Clave de cifrado'),
+      ok: sys.secretKeyFromEnv,
+      value: sys.secretKeyFromEnv ? t('Definida en CARTERO_SECRET_KEY') : t('Clave de desarrollo'),
+      hint: sys.secretKeyFromEnv ? undefined : t('Define CARTERO_SECRET_KEY con un valor largo y aleatorio antes de guardar secretos de verdad.'),
+    },
+    { label: t('Modo'), ok: null, value: sys.production ? t('Producción') : t('Desarrollo') },
+    { label: t('Cookies seguras (HTTPS)'), ok: null, value: sys.secureCookies ? t('Sí') : t('No') },
+    { label: t('Monitores'), ok: null, value: sys.inlineWorker ? t('En el mismo proceso') : t('En un worker aparte') },
+    { label: t('Carpeta de ficheros'), ok: null, value: <code className="font-mono text-xs">{sys.filesDir}</code> },
+    { label: t('Versión'), ok: null, value: `Cartero ${sys.version} · Node ${sys.node}` },
+  ]
+  return (
+    <div className="grid items-start gap-6 lg:grid-cols-[1.4fr_1fr]">
+      <Panel title={t('Estado del servidor')} description={t('Esto se configura con variables de entorno, porque el servidor lo necesita antes de arrancar.')}>
+        <dl className="divide-y divide-[var(--border)]">
+          {rows.map((r) => (
+            <div key={r.label} className="flex items-start justify-between gap-4 py-2.5">
+              <dt className="text-muted">{r.label}</dt>
+              <dd className="text-right">
+                <span className="inline-flex items-center gap-1.5">
+                  {r.ok === true && <CircleCheck className="size-4 text-emerald-500" />}
+                  {r.ok === false && <TriangleAlert className="size-4 text-amber-500" />}
+                  {r.value}
+                </span>
+                {r.hint && <div className="mt-0.5 max-w-xs text-xs text-amber-700 dark:text-amber-400">{r.hint}</div>}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </Panel>
+      <Panel title={t('Asistente de instalación')} description={t('Repasa la configuración paso a paso, como la primera vez.')}>
+        <Button icon={<Wand2 />} onClick={() => nav('/setup')}>
+          {t('Abrir el asistente')}
+        </Button>
+      </Panel>
     </div>
-  )
-}
-
-const CONSOLE: Record<OAuthProvider, { url: string; steps: string }> = {
-  google: {
-    url: 'https://console.cloud.google.com/apis/credentials',
-    steps: 'En Google Cloud: Credenciales → Crear credenciales → ID de cliente de OAuth → Aplicación web. Pega la URL de callback en «URIs de redireccionamiento autorizados».',
-  },
-  github: {
-    url: 'https://github.com/settings/applications/new',
-    steps: 'En GitHub: Settings → Developer settings → OAuth Apps → New OAuth App. Pega la URL de callback en «Authorization callback URL».',
-  },
-}
-
-function ProviderCard({ provider, info, saving, onSave }: { provider: OAuthProvider; info: ProviderInfo; saving: boolean; onSave: (body: Record<string, unknown>) => void }) {
-  const [clientId, setClientId] = useState(info.clientId)
-  const [secret, setSecret] = useState('')
-  useEffect(() => {
-    setClientId(info.clientId)
-    setSecret('')
-  }, [info.clientId, info.hasSecret])
-  const dirty = clientId !== info.clientId || secret !== ''
-  const ready = !!clientId && (info.hasSecret || !!secret)
-  const name = PROVIDER_NAME[provider]
-
-  return (
-    <Card
-      title={
-        <span className="flex items-center gap-2.5">
-          <span className="flex size-8 items-center justify-center rounded-lg border border-app bg-soft">
-            <ProviderIcon provider={provider} className="size-[18px]" />
-          </span>
-          {name}
-          {info.enabled ? (
-            <Badge tone="green">
-              <Check className="size-3" />
-              {t('Activo')}
-            </Badge>
-          ) : (
-            <Badge>{t('Desactivado')}</Badge>
-          )}
-        </span>
-      }
-      action={
-        <Switch
-          checked={info.enabled}
-          onChange={(v) => {
-            if (v && !ready) return toast.error(t('Rellena el Client ID y el Client secret antes de activarlo'))
-            onSave({ enabled: v, ...(dirty ? { clientId, ...(secret ? { clientSecret: secret } : {}) } : {}) })
-          }}
-          label={<span className="sr-only">{t('Activar {0}', [name])}</span>}
-        />
-      }
-    >
-      <div className="space-y-4">
-        <Field label={t('URL de callback')} hint={t('Pégala tal cual al crear la aplicación OAuth.')}>
-          <div className="flex gap-2">
-            <Input value={info.callbackUrl} readOnly className="font-mono text-xs" onFocus={(e) => e.currentTarget.select()} />
-            <Button
-              size="sm"
-              onClick={() => {
-                navigator.clipboard.writeText(info.callbackUrl)
-                toast.success(t('Copiado'))
-              }}
-              aria-label={t('Copiar URL de callback')}
-            >
-              <Copy className="size-3.5" />
-            </Button>
-          </div>
-        </Field>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Client ID">
-            <Input value={clientId} onChange={(e) => setClientId(e.target.value)} autoComplete="off" spellCheck={false} />
-          </Field>
-          <Field label="Client secret" hint={info.hasSecret ? t('Guardado y cifrado. Escribe uno nuevo para cambiarlo.') : undefined}>
-            <Input
-              type="password"
-              value={secret}
-              onChange={(e) => setSecret(e.target.value)}
-              placeholder={info.hasSecret ? '••••••••••••' : ''}
-              autoComplete="new-password"
-            />
-          </Field>
-        </div>
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-soft px-3 py-2.5 text-xs text-muted">
-          <span className="max-w-md">{t(CONSOLE[provider].steps)}</span>
-          <a href={CONSOLE[provider].url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 font-medium text-brand-600 hover:underline dark:text-brand-400">
-            {t('Abrir {0}', [name])}
-            <ExternalLink className="size-3" />
-          </a>
-        </div>
-        <div className="flex justify-end">
-          <Button variant="primary" size="sm" loading={saving} disabled={!dirty} onClick={() => onSave({ clientId, ...(secret ? { clientSecret: secret } : {}) })}>
-            {t('Guardar credenciales')}
-          </Button>
-        </div>
-      </div>
-    </Card>
-  )
-}
-
-function Card({ title, description, action, children }: { title: ReactNode; description?: string; action?: ReactNode; children: ReactNode }) {
-  return (
-    <section className="self-start rounded-xl border border-app bg-app p-5">
-      <div className="mb-5 flex items-start justify-between gap-4">
-        <div>
-          <h2 className="text-[15px] font-semibold">{title}</h2>
-          {description && <p className="mt-0.5 text-xs text-muted">{description}</p>}
-        </div>
-        {action}
-      </div>
-      {children}
-    </section>
   )
 }

@@ -5,7 +5,7 @@
 ## Install with Docker
 
 ```bash
-git clone <repository> cartero && cd cartero
+git clone https://github.com/elrincondeisma/cartero.git && cd cartero
 cp .env.example .env
 # Edit .env: at least CARTERO_SECRET_KEY (openssl rand -base64 32) and POSTGRES_PASSWORD
 docker compose up -d
@@ -13,19 +13,42 @@ docker compose up -d
 
 Three containers start: **cartero** (web, API and monitor worker), **postgres** and **redis**. Open `http://localhost:3000` (or the `CARTERO_PORT` port).
 
-## Configuration variables
+## First start: the setup wizard
+
+The first time you open a new Cartero, a step-by-step wizard appears instead of the login page. Nobody can sign up until it creates the first account.
+
+1. **Welcome**: checks that the database is ready and warns you if you're still using the development encryption key. You also pick the language.
+2. **Admin account**: the account you'll manage Cartero with.
+3. **Your instance**: its name and the **public URL** people will use. Cartero fills in the address you opened it from.
+4. **Who can get in**: open sign-up, only your company's email domains, or invitation only.
+5. **Google and GitHub** (optional): turn on social sign-in with the credentials of an OAuth app.
+6. **Email** (optional): an SMTP server for invitations and alerts, with a test email.
+7. **Security**: whether Cartero lives on a private network (requests can reach your LAN) or is exposed to the Internet (private IPs are blocked).
+8. **Done**: a summary. When you go in, Cartero offers a guided tour and sample data.
+
+If you close the browser halfway, you'll continue where you left off the next time you sign in. Everything you choose can be changed later in [Administration](17-admin-and-social-login.md), where you can also reopen the wizard (**System** tab, or **?** → **Setup wizard**).
+
+## Environment variables
+
+Only what the server needs **before it starts** has to be an environment variable:
 
 | Variable | Description |
 |---|---|
-| `CARTERO_SECRET_KEY` | **Required.** Encrypts secrets. If you lose it, stored secret variables can't be decrypted |
-| `PUBLIC_URL` | Public URL (invitation links, OAuth callback, alerts) |
-| `ALLOW_REGISTRATION` | Initial value for open sign-up. After that it's changed in the [administration panel](17-admin-and-social-login.md) |
-| `ADMIN_EMAILS` | Accounts that are instance admins (comma-separated) |
-| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Sign in with Google (optional; also from the panel) |
-| `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | Sign in with GitHub (optional; also from the panel) |
-| `BLOCK_PRIVATE_NETWORKS` | `true` to block requests to private IPs (recommended if reachable from the Internet) |
-| `SMTP_URL`, `SMTP_FROM` | To send invitations and alerts by email, e.g. `smtps://user:pass@smtp.example.com:465` |
+| `CARTERO_SECRET_KEY` | **Required in production.** Encrypts secrets. If you lose it, stored secrets can't be decrypted |
+| `DATABASE_URL`, `REDIS_URL` | PostgreSQL 14+ and Redis (docker-compose sets them for you) |
+| `POSTGRES_PASSWORD`, `CARTERO_PORT` | Database password and published port (docker-compose) |
+| `ADMIN_EMAILS` | Accounts that become instance admins at every start (comma-separated). Useful to recover access |
 | `INLINE_WORKER` | `false` to run monitors in a separate process (`node dist/worker.js`) |
+
+Everything else is set in **Administration**. These variables still exist, but only as the **initial value** for a new instance:
+
+| Variable | In Administration |
+|---|---|
+| `PUBLIC_URL` | General → Public URL |
+| `ALLOW_REGISTRATION` | Sign-in → Who can create an account |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`, `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | Sign-in → Google / GitHub |
+| `SMTP_URL`, `SMTP_FROM` | Email |
+| `BLOCK_PRIVATE_NETWORKS` | Security |
 
 ## Behind a reverse proxy
 
@@ -48,6 +71,10 @@ With Tailscale (private network only): `tailscale serve --bg --https=443 http://
 - **Data**: back up the database (`docker compose exec postgres pg_dump -U cartero cartero > backup.sql`) and the `cartero-data` volume (files uploaded for form-data).
 - **Also keep `CARTERO_SECRET_KEY`**: without it secrets can't be decrypted.
 - Each user can export their workspace in **Settings → Workspace → Export workspace**.
+
+## Recovering access
+
+If nobody can sign in as admin, use the commands in [Administration → If nobody can get in](17-admin-and-social-login.md#if-nobody-can-get-in).
 
 ## Updating
 

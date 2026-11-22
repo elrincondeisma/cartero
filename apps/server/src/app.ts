@@ -22,6 +22,7 @@ import { executeRoutes } from './routes/execute.js'
 import { mcpRoutes } from './routes/mcp.js'
 import { mockRoutes } from './routes/mocks.js'
 import { oauthRoutes } from './routes/oauth.js'
+import { setupRoutes } from './routes/setup.js'
 import { monitorRoutes } from './routes/monitors.js'
 import { toolRoutes } from './routes/tools.js'
 import { workspaceRoutes } from './routes/workspaces.js'
@@ -57,6 +58,7 @@ export async function buildApp(opts: { logger?: boolean } = {}) {
   await app.register(authRoutes)
   await app.register(oauthRoutes)
   await app.register(adminRoutes)
+  await app.register(setupRoutes)
   await app.register(workspaceRoutes)
   await app.register(collectionRoutes)
   await app.register(environmentRoutes)

@@ -17,5 +17,5 @@
 - [Conectar asistentes de IA (MCP)](13-ia-mcp.md)
 - [Atajos de teclado](14-atajos.md)
 - [Instalación y administración](15-autoalojamiento.md)
-- [Administración y login social](17-administracion-y-login-social.md)
+- [Administración](17-administracion-y-login-social.md)
 - [Preguntas frecuentes](16-preguntas-frecuentes.md)

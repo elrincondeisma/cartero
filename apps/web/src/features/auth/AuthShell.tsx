@@ -144,7 +144,7 @@ export function StrengthMeter({ password }: { password: string }) {
   )
 }
 
-export function SubmitButton({ loading, children, delay = 0 }: { loading?: boolean; children: ReactNode; delay?: number }) {
+export function SubmitButton({ loading, children, delay = 0, arrow = true }: { loading?: boolean; children: ReactNode; delay?: number; arrow?: boolean }) {
   return (
     <div className="auth-rise pt-2" style={d(delay)}>
       <button
@@ -153,7 +153,7 @@ export function SubmitButton({ loading, children, delay = 0 }: { loading?: boole
         className="auth-btn group relative flex h-12 w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-b from-brand-500 to-brand-600 text-[15px] font-semibold text-white shadow-lg shadow-brand-600/25 transition-all hover:shadow-xl hover:shadow-brand-600/35 active:scale-[0.99] disabled:opacity-80"
       >
         {loading ? <Spinner className="size-4 text-white" /> : children}
-        {!loading && <ArrowRight className="size-[18px] transition-transform duration-300 group-hover:translate-x-1" />}
+        {!loading && arrow && <ArrowRight className="size-[18px] transition-transform duration-300 group-hover:translate-x-1" />}
       </button>
     </div>
   )

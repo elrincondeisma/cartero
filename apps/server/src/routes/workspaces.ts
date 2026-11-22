@@ -9,6 +9,7 @@ import { openVariables, randomToken, sealVariables } from '../lib/crypto.js'
 import { badRequest, forbidden } from '../lib/errors.js'
 import { unscheduleMonitor } from '../lib/monitors.js'
 import { sendMail } from '../lib/notify.js'
+import { getSettings, publicUrl } from '../lib/settings.js'
 import { broadcast } from '../lib/realtime.js'
 
 const variableSchema = z.object({
@@ -125,10 +126,10 @@ export async function workspaceRoutes(app: FastifyInstance) {
       })
       .returning()
     const [w] = await db.select({ name: schema.workspaces.name }).from(schema.workspaces).where(eq(schema.workspaces.id, ws))
-    const link = `${config.publicUrl}/invite/${token}`
+    const link = `${await publicUrl()}/invite/${token}`
     const sent = await sendMail(
       body.email,
-      `${user.name} te invita a «${w.name}» en Cartero`,
+      `${user.name} te invita a «${w.name}» en ${(await getSettings()).instanceName}`,
       `${user.name} te ha invitado al workspace «${w.name}» como ${body.role}.\n\nAcepta la invitación aquí: ${link}\n\nCaduca en 7 días.`,
     )
     return { id: inv.id, link, emailSent: sent }

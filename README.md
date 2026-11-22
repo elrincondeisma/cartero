@@ -26,7 +26,7 @@
 | **Languages** | UI, user guide and sample data in **English and Spanish**, with a language switch saved to your account |
 | **Help** | Welcome wizard, guided tour, command palette (Ctrl+K), [full user guide](docs/manual/README.md) at `/ayuda` and sample data with real APIs that you can remove in one click |
 | **Teams** | Workspaces, invitations, roles (owner, admin, editor, viewer), real-time presence, comments, change history with restore, fork and merge, API tokens |
-| **Sign-in and admin** | Email and password, **Google** and **GitHub**. Admin panel to manage accounts (admin/user roles, disable, delete), open sign-up, allowed email domains and OAuth credentials |
+| **Sign-in and admin** | Email and password, **Google** and **GitHub**. Step-by-step **setup wizard** on first start, and an admin panel for every setting: accounts and roles, sign-up, OAuth, email (SMTP) and SSRF protection |
 
 ## Getting started
 
@@ -36,25 +36,23 @@ cp .env.example .env        # change CARTERO_SECRET_KEY and POSTGRES_PASSWORD
 docker compose up -d
 ```
 
-Open `http://localhost:3000` and create your account.
+Open `http://localhost:3000`. The **setup wizard** walks you through it step by step: create the admin account, set the public URL, decide who can sign up, and optionally turn on Google and GitHub sign-in and email. See [First start](docs/manual/15-self-hosting.md#first-start-the-setup-wizard).
 
-The first account you create is the instance admin. From **Administration** (account menu) you can close sign-up, limit it to your email domains, turn on Google and GitHub sign-in and manage accounts. See the [user guide](docs/manual/17-admin-and-social-login.md).
+Everything you choose can be changed later in **Administration** (account menu), along with user management. See the [admin guide](docs/manual/17-admin-and-social-login.md).
 
 ### Configuration
+
+Only what the server needs **before it starts** goes in `.env`:
 
 | Variable | Default | Description |
 |---|---|---|
 | `CARTERO_SECRET_KEY` | — (required) | Key used to encrypt secrets. Generate one with `openssl rand -base64 32` and **don't lose it** |
 | `DATABASE_URL` | — | PostgreSQL 14 or later |
 | `REDIS_URL` | — | Redis (for monitors) |
-| `PUBLIC_URL` | `http://localhost:3000` | Public URL: invitation links, OAuth and alerts |
-| `ALLOW_REGISTRATION` | `true` | Initial value for open sign-up (then changed in the admin panel) |
-| `ADMIN_EMAILS` | — | Accounts that are instance admins, comma-separated |
-| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | — | Google sign-in (optional; can also be set in the admin panel) |
-| `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | — | GitHub sign-in (optional; can also be set in the admin panel) |
-| `BLOCK_PRIVATE_NETWORKS` | `false` | Blocks requests to private IPs (SSRF protection). Turn it on if your instance is public |
-| `SMTP_URL` / `SMTP_FROM` | — | To send invitations and email alerts |
+| `ADMIN_EMAILS` | — | Accounts that become instance admins at every start, comma-separated (useful to recover access) |
 | `INLINE_WORKER` | `true` | `false` to run monitors in a separate process (`node dist/worker.js`) |
+
+Everything else is set in **Administration**. These variables only provide the initial value for a new instance: `PUBLIC_URL`, `ALLOW_REGISTRATION`, `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`, `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET`, `SMTP_URL` / `SMTP_FROM` and `BLOCK_PRIVATE_NETWORKS`.
 
 > **Behind a proxy (Traefik, Caddy, Nginx):** also forward the WebSocket connections on `/api/ws`, used for presence and live changes.
 
@@ -117,7 +115,7 @@ Tests:
 
 ```bash
 pnpm test                      # unit and integration (needs pnpm db:up)
-npx playwright test            # E2E (with the API and web running)
+npx playwright test            # E2E: starts its own isolated instances (ports 3201-3202), never your dev database
 ```
 
 Read [CONTRIBUTING.md](CONTRIBUTING.md) before sending a PR.

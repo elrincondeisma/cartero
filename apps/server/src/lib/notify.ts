@@ -1,18 +1,34 @@
 import nodemailer, { type Transporter } from 'nodemailer'
-import { config } from '../config.js'
+import { getSettings, smtpConfig } from './settings.js'
 
-let transport: Transporter | undefined
+let transport: { url: string; t: Transporter } | undefined
 
-/** Envía un email si hay SMTP configurado. Devuelve false si no se pudo enviar. */
+function transporter(url: string) {
+  if (transport?.url !== url) transport = { url, t: nodemailer.createTransport(url) }
+  return transport.t
+}
+
+/** Envía un email si hay SMTP configurado (en Administración → Email). Devuelve false si no se pudo enviar. */
 export async function sendMail(to: string, subject: string, text: string): Promise<boolean> {
-  if (!config.smtp) return false
-  transport ??= nodemailer.createTransport(config.smtp)
+  const smtp = await smtpConfig()
+  if (!smtp) return false
   try {
-    await transport.sendMail({ from: config.smtpFrom, to, subject, text })
+    await transporter(smtp.url).sendMail({ from: smtp.from, to, subject, text })
     return true
   } catch (e) {
     console.error('Error enviando email', e)
     return false
+  }
+}
+
+/** Prueba una configuración SMTP enviando un email; lanza el error del servidor de correo si falla. */
+export async function sendTestMail(smtp: { url: string; from: string }, to: string, subject: string, text: string) {
+  const t = nodemailer.createTransport(smtp.url, { connectionTimeout: 10_000, greetingTimeout: 10_000 } as any)
+  try {
+    await t.verify()
+    await t.sendMail({ from: smtp.from, to, subject, text })
+  } finally {
+    t.close()
   }
 }
 
@@ -52,7 +68,7 @@ export async function notify(targets: NotifyTarget[], payload: NotifyPayload): P
         try {
           switch (t.type) {
             case 'email':
-              if (!(await sendMail(t.target, `${emoji} ${payload.title}`, line))) throw new Error('SMTP no configurado')
+              if (!(await sendMail(t.target, `${emoji} [${(await getSettings()).instanceName}] ${payload.title}`, line))) throw new Error('SMTP no configurado')
               break
             case 'slack':
               await post(t.target, { text: line })

@@ -18,7 +18,7 @@ Un monitor ejecuta una colección **periódicamente** y te avisa si algo falla. 
 | Slack | URL del *Incoming Webhook* |
 | Discord | URL del webhook del canal |
 | Telegram | `TOKEN_DEL_BOT:CHAT_ID` |
-| Email | La dirección (requiere SMTP configurado en el servidor) |
+| Email | La dirección (requiere el email configurado en **Administración → Email**) |
 | Webhook | Una URL que recibirá un POST con el resultado en JSON |
 
 Marca **Solo fallos** para no recibir avisos cuando todo va bien. Con **Enviar prueba** compruebas la configuración.

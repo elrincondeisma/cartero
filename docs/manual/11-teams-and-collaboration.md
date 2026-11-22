@@ -11,7 +11,7 @@ Each workspace has its own collections, environments, globals, mocks, monitors a
 
 ## Invite people
 
-**Settings → Members → Invite**: enter the email and role. They get a link (by email if the server has SMTP; otherwise the link is copied to your clipboard so you can send it). It expires in 7 days.
+**Settings → Members → Invite**: enter the email and role. They get a link (by email if an admin has set up email in **Administration → Email**; otherwise the link is copied to your clipboard so you can send it). It expires in 7 days.
 
 | Role | Can |
 |---|---|

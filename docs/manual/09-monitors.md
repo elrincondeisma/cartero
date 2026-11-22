@@ -18,7 +18,7 @@ A monitor runs a collection **on a schedule** and alerts you when something fail
 | Slack | *Incoming Webhook* URL |
 | Discord | The channel's webhook URL |
 | Telegram | `BOT_TOKEN:CHAT_ID` |
-| Email | The address (requires SMTP configured on the server) |
+| Email | The address (requires email set up in **Administration → Email**) |
 | Webhook | A URL that will receive a POST with the result as JSON |
 
 Tick **Failures only** to skip alerts when everything passes. **Send test** checks your configuration.
