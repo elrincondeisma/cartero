@@ -1,0 +1,23 @@
+[package]
+name = "cartero-runner"
+description = "Ejecuta peticiones con sus scripts y colecciones enteras (iteraciones, datos, informes)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+cartero-model = { path = "../model" }
+cartero-http = { path = "../http" }
+cartero-script = { path = "../script" }
+tokio.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+csv = "1"
+chrono = { version = "0.4", default-features = false, features = ["clock", "std", "serde"] }
+url = "2"
+
+[lints]
+workspace = true

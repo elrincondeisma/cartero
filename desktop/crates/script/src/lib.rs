@@ -1,16 +1,57 @@
 //! Sandbox de scripts `pm.*` de Cartero sobre QuickJS.
 //!
-//! Cada ejecución usa un runtime nuevo, con límite de memoria y de tiempo: un script
-//! no puede bloquear la app ni ver nada fuera de lo que le pasamos.
+//! Cada ejecución usa un runtime nuevo, con límite de memoria y de tiempo: un script no puede
+//! bloquear la app ni ver nada fuera de lo que le pasamos. Las librerías (lodash, moment…) se
+//! cargan solo si el script las pide con `require`. `pm.sendRequest` y el bote de cookies se
+//! resuelven en Rust a través de [`Host`].
 
+use std::sync::Arc;
 use std::time::{Duration, Instant};
 
-use rquickjs::{Context, Runtime};
+use rquickjs::{Context, Ctx, Function, Runtime};
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
+use serde_json::{Map, Value};
 
-const LIBS: &str = include_str!("../assets/sandbox-libs.js");
 const PRELUDE: &str = include_str!("../assets/prelude.js");
+
+/// Fuente de cada librería disponible con `require`, empaquetada con esbuild (ver desktop/js).
+fn library(name: &str) -> Option<&'static str> {
+    Some(match name {
+        "chai" => include_str!("../assets/libs/chai.js"),
+        "lodash" => include_str!("../assets/libs/lodash.js"),
+        "crypto-js" => include_str!("../assets/libs/crypto-js.js"),
+        "moment" => include_str!("../assets/libs/moment.js"),
+        "uuid" => include_str!("../assets/libs/uuid.js"),
+        "ajv" => include_str!("../assets/libs/ajv.js"),
+        "tv4" => include_str!("../assets/libs/tv4.js"),
+        "csv-parse/lib/sync" => include_str!("../assets/libs/csv-parse_lib_sync.js"),
+        "xml2js" => include_str!("../assets/libs/xml2js.js"),
+        "cheerio" => include_str!("../assets/libs/cheerio.js"),
+        "buffer" => include_str!("../assets/libs/buffer.js"),
+        _ => return None,
+    })
+}
+
+/// Lo que el script puede pedir fuera del sandbox.
+pub trait Host: Send + Sync {
+    /// `pm.sendRequest`: recibe `{ url, method, header: [{key,value}], body }` y devuelve
+    /// `{ code, status, headers: [{key,value}], body, responseTime }`.
+    fn send_request(&self, request: Value) -> Result<Value, String>;
+    /// `pm.cookies.jar()`: `{ op: get|getAll|set|unset|clear, url, name?, cookie? }`.
+    fn cookie(&self, op: Value) -> Result<Value, String>;
+}
+
+/// Anfitrión sin red ni cookies (tests, vista previa).
+pub struct NoHost;
+
+impl Host for NoHost {
+    fn send_request(&self, _: Value) -> Result<Value, String> {
+        Err("pm.sendRequest no está disponible aquí".into())
+    }
+    fn cookie(&self, _: Value) -> Result<Value, String> {
+        Err("el bote de cookies no está disponible aquí".into())
+    }
+}
 
 #[derive(Debug, Clone, Default, Serialize)]
 pub struct ScriptInput {
@@ -19,13 +60,26 @@ pub struct ScriptInput {
     pub event: String,
     #[serde(rename = "requestName")]
     pub request_name: String,
+    #[serde(rename = "requestId")]
+    pub request_id: String,
+    #[serde(rename = "collectionName")]
+    pub collection_name: String,
     pub iteration: u32,
-    /// Ámbitos: environment, globals, collection
-    pub variables: serde_json::Map<String, Value>,
+    #[serde(rename = "iterationCount")]
+    pub iteration_count: u32,
+    /// Ámbitos: environment, globals, collection (clave → texto)
+    pub variables: Map<String, Value>,
+    #[serde(rename = "environmentName")]
+    pub environment_name: String,
     #[serde(rename = "iterationData")]
-    pub iteration_data: serde_json::Map<String, Value>,
+    pub iteration_data: Map<String, Value>,
+    /// Variables locales (`pm.variables.set`): pasan del pre-request a los tests
+    pub local: Map<String, Value>,
+    /// `{ method, url, header, body, auth }` sin resolver
     pub request: Value,
     pub response: Option<ScriptResponse>,
+    /// Cookies del bote que corresponden a la URL
+    pub cookies: Vec<Value>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -36,15 +90,17 @@ pub struct ScriptResponse {
     pub body: String,
     #[serde(rename = "responseTime")]
     pub response_time: u64,
+    #[serde(rename = "responseSize")]
+    pub response_size: usize,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Header {
     pub key: String,
     pub value: String,
 }
 
-#[derive(Debug, Clone, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Deserialize, PartialEq, Serialize)]
 pub struct TestResult {
     pub name: String,
     pub passed: bool,
@@ -54,10 +110,20 @@ pub struct TestResult {
     pub error: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 pub struct ConsoleLine {
     pub level: String,
     pub text: String,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum NextRequest {
+    /// El script no lo ha tocado
+    Unchanged,
+    /// `setNextRequest(null)`: para la ejecución
+    Stop,
+    /// `setNextRequest("nombre")`
+    Named(String),
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -65,9 +131,41 @@ pub struct ScriptOutput {
     pub tests: Vec<TestResult>,
     pub console: Vec<ConsoleLine>,
     /// Estado final de cada ámbito de variables
-    pub variables: serde_json::Map<String, Value>,
+    pub variables: Map<String, Value>,
+    #[serde(default)]
+    pub local: Map<String, Value>,
     /// Error no capturado del script (no de un test)
     pub error: Option<String>,
+    /// La petición tal y como la dejó el pre-request
+    #[serde(default)]
+    pub request: Option<Value>,
+    #[serde(default, rename = "nextRequest", deserialize_with = "next_request")]
+    pub next_request: Option<Option<String>>,
+    #[serde(default, rename = "skipRequest")]
+    pub skip_request: bool,
+    #[serde(default)]
+    pub visualizer: Option<Value>,
+}
+
+fn next_request<'de, D: serde::Deserializer<'de>>(d: D) -> Result<Option<Option<String>>, D::Error> {
+    Ok(Some(match Value::deserialize(d)? {
+        Value::String(s) => Some(s),
+        _ => None,
+    }))
+}
+
+impl ScriptOutput {
+    pub fn next(&self) -> NextRequest {
+        match &self.next_request {
+            None => NextRequest::Unchanged,
+            Some(None) => NextRequest::Stop,
+            Some(Some(n)) => NextRequest::Named(n.clone()),
+        }
+    }
+    /// Variables de un ámbito como mapa de texto.
+    pub fn scope(&self, name: &str) -> Map<String, Value> {
+        self.variables.get(name).and_then(|v| v.as_object()).cloned().unwrap_or_default()
+    }
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -78,6 +176,7 @@ pub enum ScriptError {
     Engine(String),
 }
 
+#[derive(Debug, Clone)]
 pub struct Limits {
     pub timeout: Duration,
     pub memory_bytes: usize,
@@ -89,125 +188,85 @@ impl Default for Limits {
     }
 }
 
+fn host_reply(r: Result<Value, String>) -> String {
+    match r {
+        Ok(v) => serde_json::json!({ "value": v }).to_string(),
+        Err(e) => serde_json::json!({ "error": e }).to_string(),
+    }
+}
+
 /// Ejecuta un script pre-request o post-response y devuelve tests, consola y variables.
-pub fn run(input: &ScriptInput, limits: &Limits) -> Result<ScriptOutput, ScriptError> {
-    let rt = Runtime::new().map_err(|e| ScriptError::Engine(e.to_string()))?;
+pub fn run(input: &ScriptInput, limits: &Limits, host: Arc<dyn Host>) -> Result<ScriptOutput, ScriptError> {
+    let engine = |e: rquickjs::Error| ScriptError::Engine(e.to_string());
+    let rt = Runtime::new().map_err(engine)?;
     rt.set_memory_limit(limits.memory_bytes);
     rt.set_max_stack_size(4 * 1024 * 1024);
     let deadline = Instant::now() + limits.timeout;
     rt.set_interrupt_handler(Some(Box::new(move || Instant::now() > deadline)));
-    let ctx = Context::full(&rt).map_err(|e| ScriptError::Engine(e.to_string()))?;
+    let ctx = Context::full(&rt).map_err(engine)?;
     let json_in = serde_json::to_string(input).map_err(|e| ScriptError::Engine(e.to_string()))?;
 
-    ctx.with(|ctx| -> Result<ScriptOutput, ScriptError> {
+    let fail = |ctx: &Ctx, e: rquickjs::Error| {
+        if Instant::now() > deadline {
+            ScriptError::Timeout(limits.timeout)
+        } else {
+            let detail = ctx.catch().into_exception().map(|ex| ex.to_string()).unwrap_or_else(|| e.to_string());
+            ScriptError::Engine(detail)
+        }
+    };
+
+    ctx.with(|ctx| -> Result<(), ScriptError> {
         let globals = ctx.globals();
-        globals.set("__cartero_input", json_in).map_err(|e| ScriptError::Engine(e.to_string()))?;
-        let eval = |src: &str| {
-            ctx.eval::<(), _>(src).map_err(|e| {
-                if Instant::now() > deadline {
-                    ScriptError::Timeout(limits.timeout)
-                } else {
-                    let detail = ctx.catch().into_exception().map(|ex| ex.to_string()).unwrap_or_else(|| e.to_string());
-                    ScriptError::Engine(detail)
+        globals.set("__cartero_input", json_in).map_err(engine)?;
+        let host = host.clone();
+        let f = Function::new(ctx.clone(), move |ctx: Ctx<'_>, op: String, arg: String| -> String {
+            let arg: Value = serde_json::from_str(&arg).unwrap_or(Value::Null);
+            match op.as_str() {
+                "load" => {
+                    let name = arg.as_str().unwrap_or_default();
+                    match library(name) {
+                        Some(src) => host_reply(
+                            ctx.eval::<(), _>(src)
+                                .map(|_| Value::Null)
+                                .map_err(|e| ctx.catch().into_exception().map(|ex| ex.to_string()).unwrap_or_else(|| e.to_string())),
+                        ),
+                        None => host_reply(Err(format!("Cannot find module '{name}'"))),
+                    }
                 }
-            })
-        };
-        eval(LIBS)?;
-        eval(PRELUDE)?;
-        let raw: String = globals.get("__cartero_output").map_err(|e| ScriptError::Engine(e.to_string()))?;
+                "random" => {
+                    let n = arg.as_u64().unwrap_or(0).min(65536) as usize;
+                    let bytes: Vec<u8> = (0..n).map(|_| rand::random::<u8>()).collect();
+                    host_reply(Ok(serde_json::json!(bytes)))
+                }
+                "sendRequest" => host_reply(host.send_request(arg)),
+                "cookie" => host_reply(host.cookie(arg)),
+                other => host_reply(Err(format!("operación desconocida: {other}"))),
+            }
+        })
+        .map_err(engine)?;
+        globals.set("__cartero_host", f).map_err(engine)?;
+        ctx.eval::<(), _>(PRELUDE).map_err(|e| fail(&ctx, e))
+    })?;
+
+    // Promesas y temporizadores: se van resolviendo hasta que no queda nada pendiente
+    for _ in 0..10_000 {
+        while rt.is_job_pending() {
+            if rt.execute_pending_job().is_err() && Instant::now() > deadline {
+                return Err(ScriptError::Timeout(limits.timeout));
+            }
+        }
+        let more = ctx.with(|ctx| ctx.eval::<bool, _>("__cartero_tick()").map_err(|e| fail(&ctx, e)))?;
+        if !more && !rt.is_job_pending() {
+            break;
+        }
+    }
+
+    ctx.with(|ctx| {
+        ctx.eval::<(), _>("__cartero_finish()").map_err(|e| fail(&ctx, e))?;
+        let raw: String = ctx.globals().get("__cartero_output").map_err(engine)?;
         serde_json::from_str(&raw).map_err(|e| ScriptError::Engine(e.to_string()))
     })
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use serde_json::json;
-
-    fn response(code: u16, body: Value) -> ScriptResponse {
-        ScriptResponse {
-            code,
-            status: "OK".into(),
-            headers: vec![Header { key: "Content-Type".into(), value: "application/json".into() }],
-            body: body.to_string(),
-            response_time: 42,
-        }
-    }
-
-    fn input(script: &str, resp: Option<ScriptResponse>) -> ScriptInput {
-        let mut vars = serde_json::Map::new();
-        vars.insert("environment".into(), json!({ "baseUrl": "http://localhost" }));
-        ScriptInput {
-            script: script.into(),
-            event: "test".into(),
-            request_name: "Get user".into(),
-            variables: vars,
-            response: resp,
-            ..Default::default()
-        }
-    }
-
-    #[test]
-    fn tests_de_postman_y_variables() {
-        // Los mismos scripts que usa la suite del servidor con postman-runtime
-        let script = r#"
-            pm.test("ok", () => pm.response.to.have.status(200))
-            pm.test("es json", () => pm.response.to.have.header("Content-Type", "application/json"))
-            pm.test("falla", () => pm.expect(pm.response.json().id).to.equal(2))
-            pm.environment.set("last", pm.response.json().url)
-            console.log("id", pm.response.json().id)
-        "#;
-        let out = run(&input(script, Some(response(200, json!({ "id": 1, "url": "/users?page=1" })))), &Limits::default()).unwrap();
-        assert_eq!(out.tests.len(), 3);
-        assert!(out.tests[0].passed && out.tests[1].passed);
-        assert!(!out.tests[2].passed);
-        assert_eq!(out.tests[2].error.as_deref(), Some("expected 1 to equal 2"));
-        assert_eq!(out.variables["environment"]["last"], "/users?page=1");
-        assert_eq!(out.variables["environment"]["baseUrl"], "http://localhost");
-        assert_eq!(out.console[0].text, "id 1");
-        assert!(out.error.is_none());
-    }
-
-    #[test]
-    fn librerias_como_en_postman() {
-        let script = r#"
-            const _ = require('lodash')
-            const CryptoJS = require('crypto-js')
-            pm.test("lodash", () => pm.expect(_.sum([1, 2, 3])).to.equal(6))
-            pm.test("crypto-js", () => pm.expect(CryptoJS.SHA256("cartero").toString()).to.have.lengthOf(64))
-            pm.test("ok", () => pm.response.to.be.ok)
-        "#;
-        let out = run(&input(script, Some(response(201, json!({})))), &Limits::default()).unwrap();
-        assert!(out.tests.iter().all(|t| t.passed), "{:?}", out.tests);
-    }
-
-    #[test]
-    fn errores_del_script_y_modulos_desconocidos() {
-        let out = run(&input("require('fs')", None), &Limits::default()).unwrap();
-        assert!(out.error.unwrap().contains("Cannot find module 'fs'"));
-    }
-
-    #[test]
-    fn un_bucle_infinito_se_corta() {
-        let limits = Limits { timeout: Duration::from_millis(300), ..Default::default() };
-        let start = Instant::now();
-        let r = run(&input("while (true) {}", None), &limits);
-        // El script se interrumpe: o el motor lo reporta como error del script, o como timeout
-        match r {
-            Ok(out) => assert!(out.error.unwrap().contains("interrupted")),
-            Err(e) => assert!(matches!(e, ScriptError::Timeout(_)), "{e}"),
-        }
-        assert!(start.elapsed() < Duration::from_secs(3));
-    }
-
-    #[test]
-    fn el_coste_de_arranque_es_bajo() {
-        let start = Instant::now();
-        for _ in 0..10 {
-            run(&input("pm.test('x', () => {})", None), &Limits::default()).unwrap();
-        }
-        let per_run = start.elapsed() / 10;
-        eprintln!("arranque por ejecución: {per_run:?}");
-        assert!(per_run < Duration::from_millis(250), "{per_run:?}");
-    }
-}
+mod tests;

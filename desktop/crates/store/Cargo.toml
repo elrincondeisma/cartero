@@ -1,0 +1,23 @@
+[package]
+name = "cartero-store"
+description = "Almacenamiento local de Cartero en SQLite (mismo esquema lógico que el servidor)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+cartero-model = { path = "../model" }
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+rusqlite = { version = "0.37", features = ["bundled"] }
+chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
+uuid = { version = "1", features = ["v4"] }
+chacha20poly1305 = "0.10"
+base64 = "0.22"
+rand = "0.9"
+
+[lints]
+workspace = true

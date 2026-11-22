@@ -12,6 +12,7 @@ rquickjs = { version = "0.10", features = ["bindgen", "classes", "properties", "
 serde.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true
+rand = "0.9"
 
 [lints]
 workspace = true
