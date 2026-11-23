@@ -6,6 +6,7 @@ import { api } from '@/api/client'
 import { qk, useComments, useRevisions } from '@/api/hooks'
 import { confirm } from '@/components/dialogs'
 import { Button, IconButton, Spinner, SubTabs, Textarea, cx, timeAgo } from '@/components/ui'
+import { revisionSummary } from '@/lib/revisions'
 import { useWs } from '../workspace/context'
 import { t } from "@/i18n";
 
@@ -114,7 +115,7 @@ function Revisions({ collectionId, itemId }: { collectionId: string; itemId?: st
         {data?.map((r) => (
           <li key={r.id} className="group relative mb-1 ml-3 rounded-md px-2 py-1.5 hover:bg-soft">
             <span className="absolute top-3 -left-[17px] size-2 rounded-full border-2 border-[var(--bg)] bg-brand-500" />
-            <div className="text-[12.5px]">{r.summary}</div>
+            <div className="text-[12.5px]">{revisionSummary(r.summary)}</div>
             <div className="text-[11px] text-muted">
               {r.user ?? t("Sistema")} · {timeAgo(r.createdAt)}
             </div>
@@ -122,7 +123,7 @@ function Revisions({ collectionId, itemId }: { collectionId: string; itemId?: st
               <button
                 className="absolute top-1.5 right-1.5 hidden items-center gap-1 rounded px-1.5 py-0.5 text-[11px] text-brand-700 group-hover:flex hover:bg-muted dark:text-brand-400"
                 onClick={async () => {
-                  const ok = await confirm(t("Restaurar versión"), t("Se restaurará el estado anterior a «{0}».", [r.summary]), { confirm: t("Restaurar") })
+                  const ok = await confirm(t("Restaurar versión"), t("Se restaurará el estado anterior a «{0}».", [revisionSummary(r.summary)]), { confirm: t("Restaurar") })
                   if (!ok) return
                   try {
                     await api.post(`/api/revisions/${r.id}/restore`)

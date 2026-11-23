@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { api } from '@/api/client'
 import { useRevisions } from '@/api/hooks'
 import { Badge, Spinner, cx, timeAgo } from '@/components/ui'
+import { revisionSummary } from '@/lib/revisions'
 import { t } from '@/i18n'
 
 function paramLabel(kind: NonNullable<ContractChange['param']>) {
@@ -68,7 +69,7 @@ export function ContractHistory({ collectionId, itemId }: { collectionId: string
         {data?.map((r) => (
           <li key={r.id} className="rounded-md border border-app p-2.5">
             <div className="mb-1.5 flex items-baseline justify-between gap-3">
-              <span className="text-[12.5px] font-medium">{r.summary}</span>
+              <span className="text-[12.5px] font-medium">{revisionSummary(r.summary)}</span>
               <span className="shrink-0 text-[11px] text-muted">
                 {r.user ?? t('Sistema')} · {timeAgo(r.createdAt)}
               </span>
