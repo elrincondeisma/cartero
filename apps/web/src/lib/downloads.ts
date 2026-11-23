@@ -17,7 +17,8 @@ export const downloadUrl = (file: string) => `${RELEASES}/latest/download/${file
 /** Sistema de quien usa la web (Linux: el .deb, el más habitual). */
 export function currentOs(): DesktopOs | null {
   const ua = navigator.userAgent
-  if (/Mac/.test(ua) && !/iPhone|iPad/.test(ua)) return 'mac'
+  if (/iPhone|iPad|Android/.test(ua)) return null
+  if (/Mac/.test(ua)) return 'mac'
   if (/Win/.test(ua)) return 'win'
   if (/Linux/.test(ua) && !/Android/.test(ua)) return 'deb'
   return null

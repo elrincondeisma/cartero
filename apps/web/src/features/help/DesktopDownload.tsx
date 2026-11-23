@@ -43,7 +43,7 @@ export function DesktopDownloadDialog({ open, onOpenChange }: { open: boolean; o
               <Download className={cx('size-4 shrink-0', highlight ? 'text-brand-600 dark:text-brand-400' : 'text-muted')} />
               <span className="min-w-0">
                 <span className="block text-[13px] font-medium">{name}</span>
-                <span className="block truncate text-xs text-muted">{sub}</span>
+                <span className="block text-xs text-muted">{sub}</span>
               </span>
             </a>
           )

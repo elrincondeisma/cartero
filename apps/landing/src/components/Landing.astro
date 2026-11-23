@@ -285,14 +285,14 @@ const stack = ['TypeScript', 'React 19', 'Fastify', 'PostgreSQL', 'Redis', 'post
       <h2 class="mt-2 text-4xl font-bold tracking-tight">{t.desktop.title}</h2>
       <p class="mt-4 text-lg text-zinc-600">{t.desktop.text}</p>
       <!-- Descarga directa de la última versión; el botón del sistema de quien visita se resalta -->
-      <div class="mt-8 flex flex-wrap justify-center gap-3" id="desktop-downloads">
+      <div class="mx-auto mt-8 grid max-w-sm grid-cols-2 gap-3 md:flex md:max-w-none md:justify-center" id="desktop-downloads">
         {([
           ['mac', t.desktop.mac, t.desktop.macSub, DESKTOP_DOWNLOADS.mac],
           ['win', t.desktop.win, t.desktop.winSub, DESKTOP_DOWNLOADS.win],
           ['deb', t.desktop.deb, t.desktop.debSub, DESKTOP_DOWNLOADS.deb],
           ['appimage', t.desktop.appimage, t.desktop.appimageSub, DESKTOP_DOWNLOADS.appimage],
         ] as const).map(([os, label, sub, file]) => (
-          <a href={downloadUrl(file)} data-os={os} download class="inline-flex min-w-44 items-center gap-3 rounded-xl bg-ink-950 px-5 py-3 text-left text-white shadow-lg hover:bg-zinc-800 data-[mine]:bg-brand-600 data-[mine]:hover:bg-brand-500">
+          <a href={downloadUrl(file)} data-os={os} download class="inline-flex items-center gap-3 rounded-xl bg-ink-950 px-4 py-3 text-left text-white shadow-lg hover:bg-zinc-800 data-[mine]:bg-brand-600 data-[mine]:hover:bg-brand-500">
             <Icon name="download" class="size-4 shrink-0" />
             <span class="flex flex-col leading-tight"><span class="text-sm font-semibold">{label}</span><span class="text-xs text-white/60">{sub}</span></span>
           </a>
@@ -390,6 +390,7 @@ const stack = ['TypeScript', 'React 19', 'Fastify', 'PostgreSQL', 'Redis', 'post
 <script>
   // Resalta la descarga del sistema de quien visita (Linux: el .deb, el más habitual)
   const ua = navigator.userAgent
-  const os = /Mac/.test(ua) ? 'mac' : /Win/.test(ua) ? 'win' : /Linux/.test(ua) && !/Android/.test(ua) ? 'deb' : null
+  // En móviles no hay app que descargar (un iPhone también dice «Mac OS X»)
+  const os = /iPhone|iPad|Android/.test(ua) ? null : /Mac/.test(ua) ? 'mac' : /Win/.test(ua) ? 'win' : /Linux/.test(ua) ? 'deb' : null
   if (os) document.querySelector(`#desktop-downloads [data-os="${os}"]`)?.setAttribute('data-mine', '')
 </script>
