@@ -8,9 +8,16 @@ import { HttpError } from '../lib/errors.js'
 import { getSettings, saveSettings } from '../lib/settings.js'
 import { createUser } from '../lib/users.js'
 
-/** URL con la que el navegador ha llegado al servidor (detrás de un proxy, la del proxy). */
+const firstHeader = (req: FastifyRequest, name: string) =>
+  (req.headers[name] as string | undefined)?.split(',')[0]?.trim() || undefined
+
+/**
+ * URL con la que el navegador ha llegado al servidor (detrás de un proxy, la del proxy). Con
+ * CloudFront delante de un balanceador, X-Forwarded-Proto dice http (el tramo CloudFront → ALB):
+ * el protocolo real del navegador llega en CloudFront-Forwarded-Proto.
+ */
 function detectedUrl(req: FastifyRequest) {
-  const proto = (req.headers['x-forwarded-proto'] as string | undefined)?.split(',')[0]?.trim() || req.protocol
+  const proto = firstHeader(req, 'cloudfront-forwarded-proto') || firstHeader(req, 'x-forwarded-proto') || req.protocol
   const host = (req.headers['x-forwarded-host'] as string | undefined)?.split(',')[0]?.trim() || req.headers.host
   return host ? `${proto}://${host}` : undefined
 }

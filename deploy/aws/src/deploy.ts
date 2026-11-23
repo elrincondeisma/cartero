@@ -9,10 +9,20 @@ import { createRequire } from 'node:module'
 import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { CreateSnapshotCommand, DescribeInstancesCommand, EC2Client } from '@aws-sdk/client-ec2'
+import { CloudFormationClient, DescribeStackResourcesCommand } from '@aws-sdk/client-cloudformation'
+import {
+  CreateSnapshotCommand,
+  DeleteSecurityGroupCommand,
+  DeleteVpcEndpointsCommand,
+  DescribeInstancesCommand,
+  DescribeSecurityGroupsCommand,
+  DescribeVpcEndpointsCommand,
+  EC2Client,
+} from '@aws-sdk/client-ec2'
 import { GetCommandInvocationCommand, SendCommandCommand, SSMClient } from '@aws-sdk/client-ssm'
 import { childEnv, type Session } from './aws/session.js'
 import { configFile, type DeployConfig, saveConfig } from './config.js'
+import { m } from './i18n.js'
 
 /** Carpeta del paquete (donde están cdk.json y dist/app.js). */
 export const PACKAGE_DIR = join(dirname(fileURLToPath(import.meta.url)), '..')
@@ -67,7 +77,12 @@ export async function deploy(s: Session, c: DeployConfig): Promise<Record<string
     '--progress',
     'events',
   ])
-  if (code !== 0) throw new Error(`cdk deploy terminó con el código ${code}`)
+  if (code !== 0) {
+    // Si el rollback se atasca por el endpoint de GuardDuty, quitarlo deja la VPC lista para borrar
+    if (c.network.mode === 'new' && (await removeGuardDutyEndpoint(s, c.stackName).catch(() => 0)) > 0)
+      throw new Error(m.deployFailedGuardDuty(c.stackName))
+    throw new Error(m.deployFailed(code))
+  }
   const all = JSON.parse(readFileSync(outputsFile(c.stackName), 'utf8')) as Record<
     string,
     Record<string, string>
@@ -76,6 +91,7 @@ export async function deploy(s: Session, c: DeployConfig): Promise<Record<string
 }
 
 export async function destroy(s: Session, c: DeployConfig): Promise<void> {
+  if (c.network.mode === 'new') await removeGuardDutyEndpoint(s, c.stackName)
   const code = await runCdk(s, [
     'destroy',
     c.stackName,
@@ -85,10 +101,63 @@ export async function destroy(s: Session, c: DeployConfig): Promise<void> {
     join('cdk.out', c.stackName),
     '--force',
   ])
-  if (code !== 0) throw new Error(`cdk destroy terminó con el código ${code}`)
+  if (code !== 0) throw new Error(m.destroyFailed(code))
   // Ya no hay nada que actualizar: se olvida el despliegue (lo conservado se limpia a mano)
   rmSync(configFile(STATE_DIR, c.stackName), { force: true })
   rmSync(outputsFile(c.stackName), { force: true })
+}
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
+
+/**
+ * Con GuardDuty Runtime Monitoring, GuardDuty crea por su cuenta un endpoint (guardduty-data) y un
+ * grupo de seguridad en la VPC donde corre Cartero. No son del stack y bloquean el borrado de las
+ * subredes y la VPC. Solo se llama para la VPC que creó el asistente, nunca para una existente.
+ * Devuelve cuántos endpoints ha borrado.
+ */
+export async function removeGuardDutyEndpoint(s: Session, stackName: string): Promise<number> {
+  const opts = { region: s.region, credentials: s.credentials }
+  const res = await new CloudFormationClient(opts)
+    .send(new DescribeStackResourcesCommand({ StackName: stackName }))
+    .catch(() => undefined)
+  const vpcId = res?.StackResources?.find((r) => r.ResourceType === 'AWS::EC2::VPC')?.PhysicalResourceId
+  if (!vpcId) return 0
+  const ec2 = new EC2Client(opts)
+  const endpoints = async () =>
+    (
+      await ec2.send(
+        new DescribeVpcEndpointsCommand({
+          Filters: [
+            { Name: 'vpc-id', Values: [vpcId] },
+            { Name: 'service-name', Values: [`com.amazonaws.${s.region}.guardduty-data`] },
+          ],
+        }),
+      )
+    ).VpcEndpoints?.filter((e) => String(e.State).toLowerCase() !== 'deleted') ?? []
+  const found = await endpoints()
+  if (found.length === 0) return 0
+  await ec2.send(new DeleteVpcEndpointsCommand({ VpcEndpointIds: found.map((e) => e.VpcEndpointId ?? '') }))
+  for (let i = 0; i < 60 && (await endpoints()).length > 0; i++) await sleep(5000)
+  // El grupo de seguridad de GuardDuty se puede borrar cuando sus interfaces de red desaparecen
+  const sgs = await ec2.send(
+    new DescribeSecurityGroupsCommand({
+      Filters: [
+        { Name: 'vpc-id', Values: [vpcId] },
+        { Name: 'group-name', Values: ['GuardDutyManagedSecurityGroup*'] },
+      ],
+    }),
+  )
+  for (const sg of sgs.SecurityGroups ?? []) {
+    for (let i = 0; i < 24; i++) {
+      const ok = await ec2
+        .send(new DeleteSecurityGroupCommand({ GroupId: sg.GroupId }))
+        .then(() => true)
+        .catch(() => false)
+      if (ok) break
+      await sleep(5000)
+    }
+  }
+  return found.length
 }
 
 /** Espera a que /api/health responda 200 (la EC2 tarda unos minutos en instalar Docker y pedir el certificado). */

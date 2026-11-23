@@ -317,7 +317,8 @@ export class CarteroStack extends Stack {
           viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
           allowedMethods: cloudfront.AllowedMethods.ALLOW_ALL,
           cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,
-          originRequestPolicy: cloudfront.OriginRequestPolicy.ALL_VIEWER,
+          // Incluye CloudFront-Forwarded-Proto: el ALB pone X-Forwarded-Proto=http y Cartero debe saber que es https
+          originRequestPolicy: cloudfront.OriginRequestPolicy.ALL_VIEWER_AND_CLOUDFRONT_2022,
         },
         priceClass: cloudfront.PriceClass.PRICE_CLASS_100,
       })
@@ -348,6 +349,13 @@ export class CarteroStack extends Stack {
         operatingSystemFamily: ecs.OperatingSystemFamily.LINUX,
       },
     })
+    // Permisos de ECR: si la cuenta tiene GuardDuty Runtime Monitoring, ECS añade a la tarea su
+    // agente, que se descarga de ECR con este rol (la imagen de Cartero viene de GHCR y no los pide)
+    task
+      .obtainExecutionRole()
+      .addManagedPolicy(
+        iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AmazonECSTaskExecutionRolePolicy'),
+      )
     task.addVolume({
       name: 'files',
       efsVolumeConfiguration: {

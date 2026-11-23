@@ -173,6 +173,11 @@ const es = {
   keptExisting: 'todo lo que ya existía (VPC, base de datos, Redis): no se toca',
   confirmDeploy: '¿Despliego?',
 
+  deployFailed: (code: number) =>
+    `cdk deploy terminó con el código ${code}. Arriba está el recurso que falló.`,
+  deployFailedGuardDuty: (s: string) =>
+    `El despliegue falló. He quitado el endpoint que GuardDuty creó en la VPC; si el stack quedó en ROLLBACK_FAILED, elige «Destruir ${s}» para limpiarlo.`,
+  destroyFailed: (code: number) => `cdk destroy terminó con el código ${code}.`,
   secretCreating: 'Guardando las credenciales en Secrets Manager',
   deploying: 'Desplegando con CDK (Fargate con RDS tarda unos 15 minutos; la EC2, unos 5)',
   waitHealthy: (url: string) => `Esperando a que ${url} responda`,
@@ -376,6 +381,10 @@ const en: Messages = {
   keptExisting: 'everything that already existed (VPC, database, Redis): untouched',
   confirmDeploy: 'Deploy?',
 
+  deployFailed: (code) => `cdk deploy exited with code ${code}. The resource that failed is shown above.`,
+  deployFailedGuardDuty: (s) =>
+    `The deployment failed. I removed the endpoint GuardDuty created in the VPC; if the stack is in ROLLBACK_FAILED, choose "Destroy ${s}" to clean it up.`,
+  destroyFailed: (code) => `cdk destroy exited with code ${code}.`,
   secretCreating: 'Storing the credentials in Secrets Manager',
   deploying: 'Deploying with CDK (Fargate with RDS takes about 15 minutes; EC2, about 5)',
   waitHealthy: (url) => `Waiting for ${url} to respond`,

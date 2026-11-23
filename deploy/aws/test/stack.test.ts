@@ -158,6 +158,10 @@ describe('Fargate, todo nuevo y sin dominio (CloudFront)', () => {
       ],
     })
     expect(taskEnv(t)).toMatchObject({ DB_SSL: 'true', REDIS_TLS: 'true', ALLOW_REGISTRATION: 'false' })
+    // Con GuardDuty Runtime Monitoring, ECS descarga su agente de ECR con el rol de ejecución
+    expect(JSON.stringify(t.findResources('AWS::IAM::Role'))).toContain(
+      'service-role/AmazonECSTaskExecutionRolePolicy',
+    )
     expectNoPlainSecrets(t)
   })
 })

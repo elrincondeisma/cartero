@@ -53,6 +53,15 @@ describe('asistente de instalación', () => {
     expect((await req('GET', '/api/auth/config')).body.needsSetup).toBe(true)
   })
 
+  it('detrás de CloudFront y un balanceador, usa el protocolo que vio CloudFront', async () => {
+    const r = await req('GET', '/api/setup', undefined, {
+      host: 'd123.cloudfront.net',
+      'x-forwarded-proto': 'http',
+      'cloudfront-forwarded-proto': 'https',
+    })
+    expect(r.body).toMatchObject({ detectedUrl: 'https://d123.cloudfront.net' })
+  })
+
   it('crea la cuenta admin, guarda la URL y deja el asistente pendiente', async () => {
     const r = await req('POST', '/api/setup/admin', {
       name: 'Root',

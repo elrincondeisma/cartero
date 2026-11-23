@@ -86,4 +86,5 @@ node deploy/aws/dist/cli.js destroy --config cartero-aws.Cartero.json --yes
 - **Una sola instancia.** Cartero guarda en memoria la presencia y el progreso en vivo del runner, así que corre en una tarea o una máquina. Las migraciones se lanzan al arrancar.
 - **Los secretos nunca van en claro.** Las contraseñas viven en Secrets Manager. En Fargate, la tarea compone `DATABASE_URL` y `REDIS_URL` al arrancar. En EC2, `/opt/cartero/apply.sh` las lee con el rol de la instancia.
 - **Logs.** En Fargate van a CloudWatch (`aws logs tail <grupo> --follow`). En EC2, usa `docker compose logs` en `/opt/cartero` (`aws ssm start-session --target <instancia>`).
+- **GuardDuty.** Si tu cuenta tiene GuardDuty Runtime Monitoring, GuardDuty añade su agente a la tarea de Fargate y crea su propio endpoint en la VPC. El rol de la tarea puede descargar el agente de ECR. Al destruir, el asistente quita primero ese endpoint, solo en la VPC que creó él, para que la VPC se pueda borrar.
 - Para cambiar el stack, mira [`deploy/aws`](../../../deploy/aws/README.es.md).
