@@ -1,6 +1,7 @@
 import { readdirSync } from 'node:fs'
 import sitemap from '@astrojs/sitemap'
 import starlight from '@astrojs/starlight'
+import vercel from '@astrojs/vercel'
 import tailwindcss from '@tailwindcss/vite'
 import { defineConfig } from 'astro/config'
 import { GROUPS } from './scripts/docs-groups.mjs'
@@ -14,6 +15,8 @@ const slugs = Object.fromEntries(
 
 export default defineConfig({
   site: process.env.SITE_URL ?? 'https://cartero.elrincondeisma.com',
+  // Todo es estático salvo el colector de telemetría y su panel (prerender = false)
+  adapter: vercel(),
   // Starlight toma de aquí los idiomas: inglés en /docs y español en /es/docs
   i18n: {
     locales: ['en', 'es'],

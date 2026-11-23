@@ -28,6 +28,7 @@ import { setupRoutes } from './routes/setup.js'
 import { syncRoutes } from './routes/sync.js'
 import { toolRoutes } from './routes/tools.js'
 import { workspaceRoutes } from './routes/workspaces.js'
+import { countEvent } from './lib/telemetry.js'
 
 export async function buildApp(opts: { logger?: boolean } = {}) {
   const app = Fastify({
@@ -52,7 +53,11 @@ export async function buildApp(opts: { logger?: boolean } = {}) {
     if (err instanceof HttpError)
       return reply.code(err.statusCode).send({ error: err.code, message: err.message })
     const status = (err as FastifyError).statusCode ?? 500
-    if (status >= 500) req.log.error(err)
+    if (status >= 500) {
+      req.log.error(err)
+      // Telemetría: solo método, ruta-patrón (/api/workspaces/:ws/…) y código; nunca el mensaje
+      countEvent(`error.${req.method} ${req.routeOptions?.url ?? 'unknown'} ${status}`)
+    }
     return reply
       .code(status)
       .send({ error: 'error', message: status >= 500 ? 'Error interno del servidor' : err.message })

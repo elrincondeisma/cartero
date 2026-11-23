@@ -19,6 +19,7 @@
 - [Instalación y administración](15-autoalojamiento.md)
 - [Desplegar en AWS](20-desplegar-en-aws.md)
 - [Actualizar Cartero](21-actualizar.md)
+- [Telemetría](22-telemetria.md)
 - [Administración](17-administracion-y-login-social.md)
 - [App de escritorio](18-app-de-escritorio.md)
 - [Contratos](19-contratos.md)

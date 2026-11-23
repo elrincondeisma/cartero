@@ -26,6 +26,7 @@ export interface AdminSettings {
   smtp: { configured: boolean; host: string; from: string }
   blockPrivateNetworks: boolean
   updates: { check: boolean; auto: boolean }
+  telemetry: { enabled: boolean; disabledByEnv: boolean }
   setupCompleted: boolean
 }
 

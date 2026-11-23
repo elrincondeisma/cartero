@@ -41,6 +41,7 @@ Only what the server needs **before it starts** has to be an environment variabl
 | `POSTGRES_PASSWORD`, `CARTERO_PORT` | Database password and published port (docker-compose) |
 | `ADMIN_EMAILS` | Accounts that become instance admins at every start (comma-separated). Useful to recover access |
 | `INLINE_WORKER` | `false` to run monitors in a separate process (`node dist/worker.js`) |
+| `CARTERO_TELEMETRY` | `off` turns off the anonymous daily statistics, overriding Administration. See [Telemetry](22-telemetry.md) |
 
 Everything else is set in **Administration**. These variables still exist, but only as the **initial value** for a new instance:
 

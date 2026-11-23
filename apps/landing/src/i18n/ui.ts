@@ -133,7 +133,7 @@ export const ui = {
     cli: { kicker: 'CLI', title: 'Tus tests de API, en cada push', text: 'La misma colección que usas en la interfaz, en tu CI. Sale con código 1 si algo falla y genera informes JUnit que entienden GitHub, GitLab y Jenkins.' },
     oss: {
       title: 'Open source, de verdad',
-      text: 'Licencia MIT. Sin funciones bloqueadas, sin telemetría, sin límites artificiales. Léelo, cámbialo, contribuye.',
+      text: 'Licencia MIT. Sin funciones bloqueadas ni límites artificiales, y con estadísticas anónimas que puedes apagar. Léelo, cámbialo, contribuye.',
       stack: 'Hecho con',
       star: 'Dale una estrella en GitHub',
     },
@@ -147,6 +147,7 @@ export const ui = {
         { q: '¿Puedo usarlo con mi equipo?', a: 'Sí: workspaces compartidos, roles, invitaciones, presencia en tiempo real, comentarios e historial de cambios.' },
         { q: '¿Es difícil de instalar?', a: 'No. Un docker compose up y, al abrirlo por primera vez, un asistente te guía: creas la cuenta de administrador y eliges quién puede entrar, el login con Google o GitHub, el email y la seguridad. Todo se puede cambiar después desde el panel de administración.' },
         { q: '¿Puedo desplegarlo en AWS?', a: 'Sí. pnpm deploy:aws lanza un asistente que lo despliega en tu cuenta con CDK, en ECS Fargate o en una EC2, reutilizando tu VPC, RDS, Redis o dominio si quieres. Después se actualiza desde el propio Cartero, igual que con Docker.' },
+        { q: '¿Envía datos a algún sitio?', a: 'Solo estadísticas anónimas una vez al día (versión, cuántos usuarios y colecciones, qué funciones se usan, errores), para saber cuánta gente lo usa. Nunca tus peticiones, URLs, colecciones, secretos ni emails. Ves el informe exacto en Administración y la apagas ahí o con CARTERO_TELEMETRY=off.' },
         { q: '¿Cómo se actualiza?', a: 'Desde Administración → Sistema, con un botón, o solo cada noche si lo activas. Cartero te avisa cuando sale una versión nueva y las migraciones se aplican al arrancar.' },
         { q: '¿Puedo entrar con Google o GitHub?', a: 'Sí. El administrador pega las credenciales OAuth en el panel y activa cada proveedor. También puede cerrar el registro o limitarlo a los dominios de email de su empresa.' },
         { q: '¿Hay app de escritorio?', a: 'Sí, para macOS, Windows y Linux. Funciona sin servidor, con tus datos en tu ordenador, y puede sincronizar con tu instancia de Cartero.' },
@@ -275,7 +276,7 @@ export const ui = {
     cli: { kicker: 'CLI', title: 'Your API tests, on every push', text: 'The same collection you use in the app, in your CI. Exits with code 1 when something fails and writes JUnit reports GitHub, GitLab and Jenkins understand.' },
     oss: {
       title: 'Truly open source',
-      text: 'MIT licensed. No locked features, no telemetry, no artificial limits. Read it, change it, contribute.',
+      text: 'MIT licensed. No locked features, no artificial limits, and anonymous statistics you can turn off. Read it, change it, contribute.',
       stack: 'Built with',
       star: 'Star it on GitHub',
     },
@@ -289,6 +290,7 @@ export const ui = {
         { q: 'Can I use it with my team?', a: 'Yes: shared workspaces, roles, invitations, real-time presence, comments and change history.' },
         { q: 'Is it hard to install?', a: 'No. One docker compose up and, the first time you open it, a wizard guides you: you create the admin account and choose who can sign up, Google or GitHub sign-in, email and security. Everything can be changed later from the admin panel.' },
         { q: 'Can I deploy it on AWS?', a: 'Yes. pnpm deploy:aws starts a wizard that deploys it to your account with CDK, on ECS Fargate or an EC2 instance, reusing your VPC, RDS, Redis or domain if you want. After that it updates from Cartero itself, just like with Docker.' },
+        { q: 'Does it send data anywhere?', a: 'Only anonymous statistics once a day (version, how many users and collections, which features are used, errors), so we know how many people use it. Never your requests, URLs, collections, secrets or emails. You can see the exact report in Administration and turn it off there or with CARTERO_TELEMETRY=off.' },
         { q: 'How do I update it?', a: 'From Administration → System, with one button, or automatically every night if you turn it on. Cartero tells you when a new version is out, and migrations run on startup.' },
         { q: 'Can people sign in with Google or GitHub?', a: 'Yes. The admin pastes the OAuth credentials into the panel and turns each provider on. They can also close sign-up or limit it to their company’s email domains.' },
         { q: 'Is there a desktop app?', a: 'Yes, for macOS, Windows and Linux. It works without a server, with your data on your computer, and can sync with your Cartero instance.' },

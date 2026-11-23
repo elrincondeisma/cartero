@@ -7,13 +7,20 @@
     "dev": "node scripts/sync-docs.mjs && astro dev --port 4321",
     "build": "node scripts/sync-docs.mjs && astro build",
     "preview": "astro preview --port 4321",
-    "docs:sync": "node scripts/sync-docs.mjs"
+    "docs:sync": "node scripts/sync-docs.mjs",
+    "test": "vitest run"
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.6",
     "@astrojs/starlight": "^0.43.1",
+    "@astrojs/vercel": "^11.0.22",
+    "@neondatabase/serverless": "^1.2.1",
     "@tailwindcss/vite": "^4.3.5",
     "astro": "7.4.1",
-    "tailwindcss": "^4.3.5"
+    "tailwindcss": "^4.3.5",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "vitest": "^5.1.1"
   }
 }

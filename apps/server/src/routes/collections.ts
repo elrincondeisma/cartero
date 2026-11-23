@@ -24,6 +24,7 @@ import {
   loadCollection,
   rowToItem,
 } from '../lib/tree.js'
+import { countEvent, importKey } from '../lib/telemetry.js'
 
 const itemBody = z.object({
   parentId: z.string().uuid().nullable().optional(),
@@ -163,6 +164,7 @@ export async function replaceCollectionContents(
 /** Guarda el resultado de una importación en un workspace. */
 export async function saveImport(ws: string, userId: string, input: string | Uint8Array) {
   const result = await importAny(input)
+  countEvent(importKey(result.format))
   const created: { id: string; name: string }[] = []
   for (const col of result.collections) {
     const row = await insertCollection(ws, col, userId)

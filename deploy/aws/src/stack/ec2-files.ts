@@ -27,6 +27,7 @@ export const COMPOSE = `services:
       FILES_DIR: /data/files
       CARTERO_UPDATER: compose
       CARTERO_CHANNEL: \${CARTERO_CHANNEL}
+      CARTERO_DEPLOY: aws-ec2
     volumes:
       - /data/cartero/files:/data/files
       - /data/cartero/updater:/data/updater

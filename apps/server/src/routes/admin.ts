@@ -11,6 +11,7 @@ import { config } from '../config.js'
 import { sendTestMail } from '../lib/notify.js'
 import { PROVIDERS, callbackUrl, getSettings, saveSettings, smtpConfig } from '../lib/settings.js'
 import { pingRedis } from '../lib/monitors.js'
+import { telemetryStatus } from '../lib/telemetry.js'
 import { triggerUpdate, updateStatus } from '../lib/updates.js'
 
 const providerPatch = z.object({
@@ -39,6 +40,7 @@ const settingsPatch = z.object({
   smtp: z.object({ url: z.string().trim().max(1000).optional(), from: z.string().trim().max(200).optional() }).optional(),
   blockPrivateNetworks: z.boolean().optional(),
   updates: z.object({ check: z.boolean().optional(), auto: z.boolean().optional() }).optional(),
+  telemetry: z.object({ enabled: z.boolean() }).optional(),
   setupCompleted: z.boolean().optional(),
 })
 
@@ -64,6 +66,7 @@ export async function publicSettings() {
     smtp: { configured: !!s.smtp.url, host: smtpHost, from: s.smtp.from },
     blockPrivateNetworks: s.blockPrivateNetworks,
     updates: s.updates,
+    telemetry: { enabled: s.telemetry.enabled, disabledByEnv: config.telemetryDisabledByEnv },
     setupCompleted: s.setupCompleted !== false,
   }
 }
@@ -127,6 +130,7 @@ export async function adminRoutes(app: FastifyInstance) {
       smtp,
       blockPrivateNetworks: body.blockPrivateNetworks,
       updates: body.updates ? { ...current.updates, ...body.updates } : undefined,
+      telemetry: body.telemetry,
       setupCompleted: body.setupCompleted,
       allowRegistration: body.allowRegistration,
       allowedDomains: body.allowedDomains ? [...new Set(body.allowedDomains)] : undefined,
@@ -164,6 +168,12 @@ export async function adminRoutes(app: FastifyInstance) {
     await triggerUpdate()
     req.log.info(`Actualización pedida por ${admin.email}`)
     return updateStatus()
+  })
+
+  // Telemetría: si está activa, el último informe enviado y el que se enviará (tal cual)
+  app.get('/api/admin/telemetry', async (req) => {
+    requireAdmin(req)
+    return telemetryStatus()
   })
 
   // Estado del servidor: lo que no se puede cambiar desde el panel (variables de entorno)

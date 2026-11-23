@@ -3,6 +3,7 @@ import path from 'node:path'
 import { config } from '../config.js'
 import { badRequest } from './errors.js'
 import { getSettings } from './settings.js'
+import { countEvent } from './telemetry.js'
 
 /**
  * Actualizaciones de la instancia.
@@ -222,8 +223,13 @@ export async function triggerUpdate(): Promise<void> {
   if (s.blocked) throw badRequest(`No se puede actualizar desde la app (${s.blocked})`)
   if (!s.updateAvailable) throw badRequest('Ya tienes la última versión')
   if (s.state === 'running') throw badRequest('Ya hay una actualización en marcha')
-  if (config.updater === 'ecs') await ecsRequest()
-  else composeRequest()
+  try {
+    if (config.updater === 'ecs') await ecsRequest()
+    else composeRequest()
+  } catch (e) {
+    countEvent(`error.update.${config.updater}`)
+    throw e
+  }
 }
 
 // ───────── Automática, de noche ─────────
@@ -249,6 +255,7 @@ export async function autoUpdateTick(
     return true
   } catch (e) {
     log?.warn(`No se pudo pedir la actualización automática: ${(e as Error).message}`)
+    countEvent('error.update.auto')
     return false
   }
 }

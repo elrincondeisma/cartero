@@ -36,6 +36,13 @@
       "when": 1795425662574,
       "tag": "0004_postman_import",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1795471003283,
+      "tag": "0005_telemetry",
+      "breakpoints": true
     }
   ]
 }

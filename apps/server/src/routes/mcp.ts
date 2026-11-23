@@ -4,6 +4,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import { config } from '../config.js'
 import { publicUrl } from '../lib/settings.js'
 import { resolveUser } from '../lib/auth.js'
+import { countEvent } from '../lib/telemetry.js'
 
 /**
  * Endpoint MCP remoto (Streamable HTTP, sin estado). Autenticación con token de API:
@@ -25,6 +26,11 @@ export async function mcpRoutes(app: FastifyInstance) {
       // Modo sin estado: no hay stream de notificaciones del servidor ni sesiones que cerrar
       return reply.code(405).header('allow', 'POST').send({ jsonrpc: '2.0', error: { code: -32000, message: 'Usa POST' }, id: null })
     }
+
+    // Telemetría: cuántas veces se usa cada herramienta (solo el nombre, que es fijo)
+    for (const msg of [req.body].flat() as Array<{ method?: string; params?: { name?: unknown } }>)
+      if (msg?.method === 'tools/call' && typeof msg.params?.name === 'string' && /^[a-z_]{1,40}$/.test(msg.params.name))
+        countEvent(`mcp.${msg.params.name}`)
 
     const server = createCarteroMcpServer({ baseUrl: `http://127.0.0.1:${config.port}`, token, publicUrl: await publicUrl() })
     const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined, enableJsonResponse: true })

@@ -9,6 +9,7 @@ import { config } from '../config.js'
 import { assertRole } from '../lib/access.js'
 import { requireUser } from '../lib/auth.js'
 import { badRequest } from '../lib/errors.js'
+import { countEvent } from '../lib/telemetry.js'
 
 const tokenBody = z.object({
   grant_type: z.enum(['client_credentials', 'password_credentials', 'authorization_code', 'refresh_token']),
@@ -34,6 +35,7 @@ export async function toolRoutes(app: FastifyInstance) {
     const { text } = z.object({ text: z.string().min(1).max(1_000_000) }).parse(req.body)
     try {
       const col = importCurl(text)
+      countEvent('curl.paste')
       return col.item[0] as RequestItem
     } catch (e) {
       throw badRequest((e as Error).message)

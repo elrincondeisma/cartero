@@ -41,6 +41,7 @@ Solo tiene que ser variable de entorno lo que el servidor necesita **antes de ar
 | `POSTGRES_PASSWORD`, `CARTERO_PORT` | Contraseña de la base de datos y puerto publicado (docker-compose) |
 | `ADMIN_EMAILS` | Cuentas que pasan a admin de la instancia en cada arranque (separadas por comas). Sirve para recuperar el acceso |
 | `INLINE_WORKER` | `false` para ejecutar los monitores en un proceso aparte (`node dist/worker.js`) |
+| `CARTERO_TELEMETRY` | `off` apaga las estadísticas anónimas diarias, por encima de Administración. Mira [Telemetría](22-telemetria.md) |
 
 Todo lo demás se ajusta en **Administración**. Estas variables siguen existiendo, pero solo como **valor inicial** de una instancia nueva:
 

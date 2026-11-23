@@ -925,6 +925,17 @@ export const en: Record<string, string> = {
   'Al entrar te ofreceremos un recorrido guiado y datos de ejemplo con APIs reales. Para invitar a tu equipo: Ajustes → Miembros.': 'Once inside, we’ll offer you a guided tour and sample data with real APIs. To invite your team: Settings → Members.',
   'Aparece en los emails y en el título de la página.': 'Shown in emails and in the page title.',
   'Asistente de instalación': 'Setup wizard',
+  // --- Telemetría ---
+  'Estadísticas anónimas': 'Anonymous statistics',
+  'Ayudan a saber cuánta gente usa Cartero y en qué mejorarlo.': 'They help us know how many people use Cartero and what to improve.',
+  'Una vez al día, Cartero envía recuentos anónimos (versión, cuántos usuarios y colecciones, qué funciones se usan, errores) para saber cuánta gente lo usa y en qué mejorarlo. Nunca envía tus peticiones, URLs, colecciones, variables, secretos ni emails.': 'Once a day, Cartero sends anonymous counts (version, how many users and collections, which features are used, errors) so we know how many people use it and what to improve. It never sends your requests, URLs, collections, variables, secrets or emails.',
+  'Qué se envía': 'What is sent',
+  'Apagada con la variable de entorno CARTERO_TELEMETRY (o DO_NOT_TRACK).': 'Turned off with the CARTERO_TELEMETRY environment variable (or DO_NOT_TRACK).',
+  'Enviar estadísticas anónimas de uso': 'Send anonymous usage statistics',
+  'Último envío: {0}': 'Last sent: {0}',
+  'Todavía no se ha enviado ningún informe.': 'No report has been sent yet.',
+  'Ver lo que se envía': 'See what is sent',
+  'Este es el informe tal cual, con los datos de ahora mismo.': 'This is the exact report, with the current data.',
   // --- Actualizaciones ---
   Actualizaciones: 'Updates',
   'Las versiones publicadas de Cartero y cómo llegan a esta instalación.': 'Published versions of Cartero and how they reach this installation.',

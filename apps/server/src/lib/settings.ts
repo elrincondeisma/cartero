@@ -31,6 +31,8 @@ export interface InstanceSettings {
   blockPrivateNetworks: boolean
   /** Buscar versiones nuevas (habla con GitHub) y actualizarse sola de noche */
   updates: { check: boolean; auto: boolean }
+  /** Estadísticas anónimas de uso (nunca contenido); CARTERO_TELEMETRY=off manda sobre esto */
+  telemetry: { enabled: boolean }
   /** false mientras el primer admin no termina el asistente; undefined en instancias anteriores al asistente */
   setupCompleted?: boolean
 }
@@ -49,6 +51,7 @@ function defaults(): InstanceSettings {
     smtp: { url: config.smtp ? encrypt(config.smtp) : '', from: config.smtpFrom },
     blockPrivateNetworks: config.blockPrivateNetworks,
     updates: { check: true, auto: false },
+    telemetry: { enabled: true },
   }
 }
 
@@ -70,6 +73,7 @@ export async function getSettings(): Promise<InstanceSettings> {
     },
     smtp: { ...base.smtp, ...stored.smtp },
     updates: { ...base.updates, ...stored.updates },
+    telemetry: { ...base.telemetry, ...stored.telemetry },
   }
   value.publicUrl = value.publicUrl.replace(/\/$/, '')
   cache = { value, at: Date.now() }

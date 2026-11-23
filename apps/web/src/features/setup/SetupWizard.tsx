@@ -9,6 +9,7 @@ import { LanguageLinks } from '@/components/LanguageSwitch'
 import { Logo } from '@/components/Logo'
 import { Button, Spinner, cx } from '@/components/ui'
 import { lang, t } from '@/i18n'
+import { TelemetrySwitch } from '../admin/telemetry'
 import { AccessForm, type Actions, type AdminSettings, EmailForm, GeneralForm, ProviderCard, SecurityForm, useAdminSettings, useSaveSettings } from '../admin/forms'
 import { AuthField, PasswordField, StrengthMeter, SubmitButton } from '../auth/AuthShell'
 
@@ -477,7 +478,10 @@ function Done({ s, onBack }: { s: AdminSettings; onBack: () => void }) {
             </div>
           ))}
         </dl>
-        <div className="mt-6 flex items-start gap-3 rounded-xl bg-soft p-4 text-xs leading-relaxed text-muted">
+        <div className="mt-6 rounded-xl border border-app p-4">
+          <TelemetrySwitch s={s} />
+        </div>
+        <div className="mt-4 flex items-start gap-3 rounded-xl bg-soft p-4 text-xs leading-relaxed text-muted">
           <ShieldCheck className="mt-0.5 size-4 shrink-0 text-brand-600" />
           {t('Al entrar te ofreceremos un recorrido guiado y datos de ejemplo con APIs reales. Para invitar a tu equipo: Ajustes → Miembros.')}
         </div>

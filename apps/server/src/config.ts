@@ -56,6 +56,11 @@ export const config = {
   updaterDir: env.CARTERO_UPDATER_DIR ?? '/data/updater',
   /** Etiqueta de la imagen: «stable» se actualiza; una versión concreta queda fijada */
   channel: env.CARTERO_CHANNEL ?? 'stable',
+  /** Telemetría anónima: CARTERO_TELEMETRY=off o DO_NOT_TRACK=1 la apagan por encima del panel */
+  telemetryDisabledByEnv: /^(off|false|0|no)$/i.test(env.CARTERO_TELEMETRY ?? '') || /^(1|true)$/i.test(env.DO_NOT_TRACK ?? ''),
+  telemetryUrl: env.CARTERO_TELEMETRY_URL ?? 'https://cartero.elrincondeisma.com/api/telemetry',
+  /** Cómo está instalada (lo ponen el docker-compose y el despliegue de AWS) */
+  deployMode: env.CARTERO_DEPLOY,
   /** De dónde salen las versiones publicadas (se cambia solo en pruebas) */
   releasesUrl: env.CARTERO_RELEASES_URL ?? 'https://api.github.com/repos/elrincondeisma/cartero/releases?per_page=30',
 }

@@ -56,6 +56,20 @@ export const instanceSettings = pgTable('instance_settings', {
   updatedAt: updatedAt(),
 })
 
+/**
+ * Contadores diarios para la telemetría anónima (importaciones por formato, llamadas MCP, errores 5xx…).
+ * Solo claves técnicas fijas y números: nunca contenido. Se borran al enviarse.
+ */
+export const telemetryCounters = pgTable(
+  'telemetry_counters',
+  {
+    day: text('day').notNull(), // YYYY-MM-DD (UTC)
+    key: text('key').notNull(),
+    n: integer('n').notNull().default(0),
+  },
+  (t) => [primaryKey({ columns: [t.day, t.key] })],
+)
+
 export const sessions = pgTable('sessions', {
   id: text('id').primaryKey(), // sha256 del token
   userId: uuid('user_id')

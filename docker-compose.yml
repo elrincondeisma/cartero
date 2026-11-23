@@ -27,6 +27,9 @@ services:
       # Quién la reinicia al actualizar, y si la versión está fijada
       CARTERO_UPDATER: compose
       CARTERO_CHANNEL: ${CARTERO_VERSION:-stable}
+      CARTERO_DEPLOY: docker-compose
+      # Estadísticas anónimas (nunca contenido). Pon off para apagarlas: docs/manual/22-telemetry.md
+      CARTERO_TELEMETRY: ${CARTERO_TELEMETRY:-on}
     volumes:
       - cartero-data:/data
     depends_on:

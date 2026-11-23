@@ -16,6 +16,7 @@ import { PostmanClient, PostmanError } from '../lib/postman.js'
 import { broadcast } from '../lib/realtime.js'
 import { insertCollection } from '../lib/tree.js'
 import { recordRevision, replaceCollectionContents } from './collections.js'
+import { countEvent } from '../lib/telemetry.js'
 
 const keySchema = z.object({ apiKey: z.string().trim().min(10).max(200) })
 
@@ -289,6 +290,7 @@ export async function postmanRoutes(app: FastifyInstance) {
               } else {
                 const row = await insertCollection(ws, col, user.id)
                 await recordRevision(row.id, user.id, 'import', 'Importada desde Postman')
+                countEvent('import.postman-api')
                 await link(ws, 'collection', c.uid, row.id)
                 created++
                 send({

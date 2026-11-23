@@ -390,6 +390,7 @@ export class CarteroStack extends Stack {
         NODE_ENV: 'production',
         // Con :stable, la app se actualiza pidiendo a ECS un despliegue nuevo de su propio servicio
         CARTERO_CHANNEL: channel,
+        CARTERO_DEPLOY: 'aws-fargate',
         ...(channel === 'stable' ? { CARTERO_UPDATER: 'ecs' } : {}),
       },
       secrets,

@@ -165,7 +165,7 @@ describe('Fargate, todo nuevo y sin dominio (CloudFront)', () => {
   })
 
   it('con :stable la app puede redesplegar su propio servicio, y nada más', () => {
-    expect(taskEnv(t)).toMatchObject({ CARTERO_UPDATER: 'ecs', CARTERO_CHANNEL: 'stable' })
+    expect(taskEnv(t)).toMatchObject({ CARTERO_UPDATER: 'ecs', CARTERO_CHANNEL: 'stable', CARTERO_DEPLOY: 'aws-fargate' })
     const policies = JSON.stringify(t.findResources('AWS::IAM::Policy'))
     expect(policies).toContain('ecs:UpdateService')
     expect(policies).toContain('ecs:DescribeTasks')
@@ -289,6 +289,7 @@ describe('EC2 con todo dentro (sslip.io)', () => {
     expect(json).toContain('/opt/cartero/updater.sh')
     expect(json).toContain('docker:28-cli')
     expect(json).toContain('CARTERO_UPDATER: compose')
+    expect(json).toContain('CARTERO_DEPLOY: aws-ec2')
     expect(json).toContain('CARTERO_CHANNEL=$CHANNEL')
     // La contraseña de Postgres se genera en Secrets Manager y se conserva
     t.hasResource('AWS::SecretsManager::Secret', {
