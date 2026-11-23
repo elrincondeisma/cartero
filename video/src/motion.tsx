@@ -7,7 +7,8 @@
  * - `Stamp`: el logo (sello con llaves), con troquelado, llaves y separación animables.
  */
 import type React from 'react'
-import { AbsoluteFill, Easing, Img, interpolate, useCurrentFrame } from 'remotion'
+import { AbsoluteFill, Easing, Img, interpolate } from 'remotion'
+import { useFrame } from './time'
 import { C } from './kit'
 
 /** Fotogramas por golpe (120 BPM a 30 fps). Las escenas empiezan en compás. */
@@ -57,7 +58,7 @@ export const Mask: React.FC<{
   style?: React.CSSProperties
   align?: 'left' | 'center'
 }> = ({ text, at, stagger = 3, dur = 16, outAt, size = 84, weight = 800, color = C.text, hl = [], code = [], mono, style, align = 'left' }) => {
-  const f = useCurrentFrame()
+  const f = useFrame()
   const words = text.split(' ')
   return (
     <div
@@ -111,7 +112,7 @@ export const MaskBlock: React.FC<{ at: number; outAt?: number; dur?: number; chi
   children,
   style,
 }) => {
-  const f = useCurrentFrame()
+  const f = useFrame()
   const pin = prog(f, at, at + dur)
   const pout = outAt === undefined ? 0 : prog(f, outAt, outAt + 12, easeIn)
   return (
@@ -147,7 +148,7 @@ export function camAt(f: number, keys: CamKey[]): [number, number, number] {
 export const toScreen = (cam: [number, number, number], x: number, y: number): [number, number] => [960 + (x - cam[0]) * cam[2], 540 + (y - cam[1]) * cam[2]]
 
 export const Camera: React.FC<{ keys: CamKey[]; children: React.ReactNode; offset?: [number, number] }> = ({ keys, children, offset = [0, 0] }) => {
-  const f = useCurrentFrame()
+  const f = useFrame()
   const [x, y, z] = camAt(f, keys)
   return (
     <AbsoluteFill style={{ overflow: 'hidden' }}>

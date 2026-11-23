@@ -4,7 +4,8 @@
  * bajo máscara, la cámara sigue lo importante y las entradas caen en los golpes (cada 15 fps).
  */
 import type React from 'react'
-import { AbsoluteFill, interpolate, staticFile, useCurrentFrame, useVideoConfig } from 'remotion'
+import { AbsoluteFill, interpolate, staticFile, useVideoConfig } from 'remotion'
+import { useFrame } from './time'
 import { useLang, useT } from './i18n'
 import { Browser, C, Chip, Kicker, Prompt, Scene, Terminal, Type, inter, mono, typedAt, useIn } from './kit'
 import { BEAT, Camera, type CamKey, Mask, MaskBlock, Shot, Stamp, beat, bump, camAt, easeIn, easeInOut, easeOut, prog, shake, toScreen } from './motion'
@@ -23,7 +24,7 @@ const LeftShade: React.FC<{ opacity?: number }> = ({ opacity = 1 }) => (
 
 /** Cursor con clic (onda) en coordenadas de pantalla. */
 const Pointer: React.FC<{ x: number; y: number; clickAt: number; opacity?: number }> = ({ x, y, clickAt, opacity = 1 }) => {
-  const f = useCurrentFrame()
+  const f = useFrame()
   const ring = prog(f, clickAt, clickAt + 14)
   const press = bump(f, clickAt, -0.18, 8)
   return (
@@ -52,7 +53,7 @@ const Pointer: React.FC<{ x: number; y: number; clickAt: number; opacity?: numbe
 
 /** Anillo de énfasis en un punto de la pantalla (algo importante acaba de pasar ahí). */
 const Ping: React.FC<{ x: number; y: number; at: number; color: string; r?: number }> = ({ x, y, at, color, r = 70 }) => {
-  const f = useCurrentFrame()
+  const f = useFrame()
   const p = prog(f, at, at + 20)
   if (f < at || p >= 1) return null
   return (
@@ -75,7 +76,7 @@ const Ping: React.FC<{ x: number; y: number; at: number; color: string; r?: numb
 
 /* ───────────── 1 · Gancho (0–4 s): una palabra por golpe; la raya del tachado se vuelve el sello ───────────── */
 export const Hook: React.FC = () => {
-  const f = useCurrentFrame()
+  const f = useFrame()
   const t = useT()
   const words = t.hook1.split(' ')
   const strike = prog(f, beat(6), beat(6) + 9)
@@ -120,7 +121,7 @@ export const Hook: React.FC = () => {
 
 /* ───────────── 2 · El sello (4–8 s): se troquela en el golpe; la cámara se mete dentro ───────────── */
 export const Reveal: React.FC = () => {
-  const f = useCurrentFrame()
+  const f = useFrame()
   const t = useT()
   const punch = prog(f, 0, 8)
   const braces = prog(f, 3, 18)
@@ -172,7 +173,7 @@ export const Reveal: React.FC = () => {
 /* ───────────── 3 · Importar: el naranja se encoge hasta ser la ventana; los formatos entran volando ───────────── */
 const IMPORT_WIN = { x: 930, y: 205, w: 940, h: 42 + 940 / 1.641 }
 export const Import: React.FC = () => {
-  const f = useCurrentFrame()
+  const f = useFrame()
   const t = useT()
   const m = prog(f, 0, 18, easeInOut)
   const formats: [string, string][] = [
@@ -303,7 +304,7 @@ const REQ_KEYS: CamKey[] = [
   [178, 1475, 334, 3],
 ]
 export const Request: React.FC = () => {
-  const f = useCurrentFrame()
+  const f = useFrame()
   const t = useT()
   const shot = useShot()
   const cam = camAt(f, REQ_KEYS)
@@ -370,8 +371,8 @@ const CT_W = 2200
 const CT_KEYS: CamKey[] = [
   [0, 1197, 349, 3],
   [22, 400, 863, 0.5],
-  [44, 400, 863, 0.52],
-  [60, 1505, 992, 1.35],
+  [54, 400, 863, 0.52],
+  [70, 1505, 992, 1.35],
   [92, 1505, 992, 1.4],
   [100, 1531, 992, 1.4],
   [122, 440, 1191, 1.45],
@@ -379,7 +380,7 @@ const CT_KEYS: CamKey[] = [
   [178, 66, 1153, 9],
 ]
 export const Contracts: React.FC = () => {
-  const f = useCurrentFrame()
+  const f = useFrame()
   const t = useT()
   const shot = useShot()
   const cam = camAt(f, CT_KEYS)
@@ -396,11 +397,11 @@ export const Contracts: React.FC = () => {
         </Camera>
       </div>
       {broken && flash > 0 && <AbsoluteFill style={{ background: `rgba(239,68,68,${0.28 * flash})` }} />}
-      <Ping x={bx} y={by} at={beat(4) + 2} color={C.green} r={110} />
+      <Ping x={bx} y={by} at={72} color={C.green} r={110} />
       <Ping x={bx} y={by} at={beat(6) + 4} color="#ef4444" r={110} />
       {/* Chips que acompañan a la cámara */}
       <div style={{ position: 'absolute', left: bx - 280, top: by + 80, opacity: 1 - prog(f, beat(6) - 6, beat(6)) }}>
-        <Chip color={C.green} delay={beat(4) + 6} size={36}>
+        <Chip color={C.green} delay={74} size={36}>
           {t.contractChecked}
         </Chip>
       </div>
@@ -414,13 +415,13 @@ export const Contracts: React.FC = () => {
           {t.contractCaught}
         </Chip>
       </div>
-      <LeftShade opacity={prog(f, 12, 26) * (1 - prog(f, 44, 56))} />
+      <LeftShade opacity={prog(f, 12, 26) * (1 - prog(f, 54, 66))} />
       <div style={{ position: 'absolute', left: 110, top: 260, width: 620 }}>
-        <MaskBlock at={beat(1)} outAt={40}>
+        <MaskBlock at={beat(1)} outAt={52}>
           <Kicker delay={beat(1)}>{t.contractK}</Kicker>
         </MaskBlock>
-        <Mask text={t.contractH} size={84} at={beat(1) + 2} hl={t.contractHl} outAt={38} />
-        <MaskBlock at={beat(2)} outAt={42} style={{ marginTop: 24 }}>
+        <Mask text={t.contractH} size={84} at={beat(1) + 2} hl={t.contractHl} outAt={50} />
+        <MaskBlock at={beat(2)} outAt={54} style={{ marginTop: 24 }}>
           <div style={{ fontSize: 30, lineHeight: 1.45, color: C.muted }}>{t.contractSub}</div>
         </MaskBlock>
       </div>
@@ -435,17 +436,18 @@ const DESK_H = DESK_W / 1.5814
 const DESK_Z = 0.725
 const DESK_RECT = { x: 700, y: 540 - (DESK_H * DESK_Z) / 2, w: DESK_W * DESK_Z, h: DESK_H * DESK_Z }
 export const TestsRunner: React.FC = () => {
-  const f = useCurrentFrame()
+  const f = useFrame()
   const t = useT()
   const { fps } = useVideoConfig()
   const flip = prog(f, 0, 12, easeInOut)
   const m = prog(f, 12, 30, easeInOut)
-  const toDesk = prog(f, 154, 179, easeInOut)
+  const toDesk = prog(f, 164, 179, easeInOut)
   const lines = [`pm.test('${t.testName}', () => {`, '  pm.response.to.have.status(200)', '})']
   const starts = [32, 0, 0]
   for (let i = 1; i < lines.length; i++) starts[i] = typedAt(lines[i - 1], starts[i - 1], 52, fps) + 2
-  const n = Math.max(0, Math.min(10, Math.floor((f - beat(5)) / (BEAT / 2)) + 1))
-  const tenAt = beat(5) + 9 * (BEAT / 2)
+  // El contador arranca después de la pausa del test (golpe 6) y llega a 10/10 en medio golpe cada uno
+  const n = Math.max(0, Math.min(10, Math.floor((f - beat(6)) / (BEAT / 2)) + 1))
+  const tenAt = Math.ceil(beat(6) + 9 * (BEAT / 2))
   const cmd = 'cartero run blog.json -r junit'
   // La caja: círculo (la ✗/✓) → terminal → ventana de la app de escritorio
   const circle = { x: 960 - 160, y: 540 - 160, w: 320, h: 320 }
@@ -457,7 +459,7 @@ export const TestsRunner: React.FC = () => {
   }
   const green = flip > 0.5
   const iconOpacity = 1 - prog(f, 14, 24)
-  const content = prog(f, 26, 34) * (1 - prog(f, 150, 156))
+  const content = prog(f, 26, 34) * (1 - prog(f, 160, 164))
   return (
     <Scene>
       <div
@@ -500,12 +502,12 @@ export const TestsRunner: React.FC = () => {
         </div>
       </div>
       <div style={{ position: 'absolute', left: 1010, top: 210, width: 820 }}>
-        <MaskBlock at={beat(2)} outAt={148}>
+        <MaskBlock at={beat(2)} outAt={160}>
           <Kicker delay={beat(2)}>{t.runnerK}</Kicker>
         </MaskBlock>
-        <Mask text={t.runnerH1} size={86} at={beat(2) + 2} hl={t.runnerHl} outAt={148} />
-        <Mask text={t.runnerH2} size={86} at={beat(3)} outAt={150} />
-        <MaskBlock at={beat(5) - 6} outAt={154} style={{ marginTop: 30 }}>
+        <Mask text={t.runnerH1} size={86} at={beat(2) + 2} hl={t.runnerHl} outAt={160} />
+        <Mask text={t.runnerH2} size={86} at={beat(3)} outAt={161} />
+        <MaskBlock at={84} outAt={162} style={{ marginTop: 30 }}>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 22 }}>
             <span
               style={{
@@ -515,7 +517,7 @@ export const TestsRunner: React.FC = () => {
                 color: n === 10 ? C.green : C.text,
                 display: 'inline-block',
                 fontVariantNumeric: 'tabular-nums',
-                transform: `scale(${bump(f, tenAt, 0.14, 14) * (n < 10 ? bump(f, beat(5) + (n - 1) * (BEAT / 2), 0.04, 6) : 1)})`,
+                transform: `scale(${bump(f, tenAt, 0.14, 14) * (n < 10 ? bump(f, beat(6) + (n - 1) * (BEAT / 2), 0.04, 6) : 1)})`,
                 transformOrigin: 'left bottom',
                 textShadow: n === 10 ? `0 0 ${40 * (1 - prog(f, tenAt, tenAt + 20))}px ${C.green}` : 'none',
               }}
@@ -525,7 +527,7 @@ export const TestsRunner: React.FC = () => {
             <span style={{ fontSize: 36, color: C.muted, fontWeight: 600 }}>{t.testsPassed}</span>
           </div>
         </MaskBlock>
-        <MaskBlock at={124} outAt={152} style={{ marginTop: 20 }}>
+        <MaskBlock at={124} outAt={163} style={{ marginTop: 20 }}>
           <div style={{ fontSize: 26, color: C.muted, marginBottom: 12, fontWeight: 500 }}>{t.sameCi}</div>
           <Terminal width={700}>
             <Prompt />
@@ -545,7 +547,7 @@ const DESK_KEYS: CamKey[] = [
   [104, 320, 144, 2.75],
 ]
 export const Desktop: React.FC = () => {
-  const f = useCurrentFrame()
+  const f = useFrame()
   const t = useT()
   const shot = useShot()
   const cam = camAt(f, DESK_KEYS)
@@ -599,7 +601,7 @@ export const Desktop: React.FC = () => {
 const MON = { x: 960, y: 290, w: 830 }
 const DOCS = { x: 960, y: 140, w: 860 }
 export const MocksMonitors: React.FC = () => {
-  const f = useCurrentFrame()
+  const f = useFrame()
   const t = useT()
   const shrink = prog(f, 0, 10, easeIn)
   const burst = prog(f, 8, 30)
@@ -691,7 +693,7 @@ export const MocksMonitors: React.FC = () => {
 /* ───────────── 9 · Equipos: la cámara acompaña al cursor; los avatares se vuelven la burbuja del chat ───────────── */
 const AVATAR_Y = 800
 export const Teams: React.FC = () => {
-  const f = useCurrentFrame()
+  const f = useFrame()
   const t = useT()
   const front = useIn(beat(1), 14)
   const people: [string, string][] = [
@@ -785,7 +787,7 @@ export const Teams: React.FC = () => {
 
 /* ───────────── 10 · MCP: la burbuja nace de los avatares; al final todo se recoge en el centro ───────────── */
 export const Mcp: React.FC = () => {
-  const f = useCurrentFrame()
+  const f = useFrame()
   const t = useT()
   const { fps } = useVideoConfig()
   const ask = t.mcpAsk
@@ -857,7 +859,7 @@ export const Mcp: React.FC = () => {
 
 /* ───────────── 11 · Resumen: las tarjetas salen del centro a medio golpe y vuelven a juntarse en el sello ───────────── */
 export const Recap: React.FC = () => {
-  const f = useCurrentFrame()
+  const f = useFrame()
   const t = useT()
   const items = t.recap
   const gather = prog(f, 96, 116, easeIn)
@@ -919,7 +921,7 @@ export const Recap: React.FC = () => {
 
 /* ───────────── 12 · Llamada a la acción: el sello sube, «Cartero» se revela y el comando se escribe ───────────── */
 export const Cta: React.FC = () => {
-  const f = useCurrentFrame()
+  const f = useFrame()
   const { fps, durationInFrames } = useVideoConfig()
   const t = useT()
   const up = prog(f, 8, 28, easeInOut)

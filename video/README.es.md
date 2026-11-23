@@ -22,4 +22,6 @@ Las piezas de movimiento están en `src/motion.tsx`:
 - **`bump`**: el énfasis en el golpe.
 - **`Stamp`**: el logo animable.
 
-Ninguna escena se funde: cada una termina transformando un objeto en el primero de la siguiente. Las capturas de cada idioma están en `public/shots/en` y `public/shots/es`.
+Ninguna escena se funde: cada una termina transformando un objeto en el primero de la siguiente.
+
+Pausas de lectura: cada escena de `src/Promo.tsx` tiene `holds`. En cada pausa la escena se queda quieta mientras el fondo sigue, para que dé tiempo a leer. Las escenas leen su tiempo con `useFrame()` (`src/time.ts`). Las pausas suman compases enteros y la música se alarga con compases repetidos (`scripts/extend-music.sh`, que genera `public/audio/music-long.mp3`). Las capturas de cada idioma están en `public/shots/en` y `public/shots/es`.

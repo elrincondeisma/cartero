@@ -22,4 +22,6 @@ Motion pieces live in `src/motion.tsx`:
 
 No scene fades out: each one ends by turning an object into the first object of the next.
 
+Reading pauses: each scene in `src/Promo.tsx` has `holds`. During a pause the scene freezes while the background keeps moving, so there's time to read. Scenes read their time with `useFrame()` (`src/time.ts`). Pauses add up to whole bars, and the music is stretched with repeated bars (`scripts/extend-music.sh`, which writes `public/audio/music-long.mp3`).
+
 Scenes live in `src/scenes.tsx`, the copy for both languages in `src/i18n.ts`, the timeline in `src/Promo.tsx`. Screenshots per language are in `public/shots/en` and `public/shots/es`.

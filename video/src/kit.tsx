@@ -2,6 +2,7 @@ import { loadFont } from '@remotion/google-fonts/Inter'
 import { loadFont as loadMono } from '@remotion/google-fonts/JetBrainsMono'
 import type React from 'react'
 import { useLang } from './i18n'
+import { useFrame } from './time'
 import { AbsoluteFill, Easing, Img, interpolate, spring, staticFile, useCurrentFrame, useVideoConfig } from 'remotion'
 
 export const inter = loadFont('normal', { weights: ['400', '500', '600', '700', '800'], subsets: ['latin'] }).fontFamily
@@ -24,7 +25,7 @@ const clamp = { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' } as const
 
 /** Muelle 0→1 que arranca en `delay` (fotogramas relativos a la escena). */
 export function useIn(delay = 0, damping = 200, durationInFrames?: number) {
-  const f = useCurrentFrame()
+  const f = useFrame()
   const { fps } = useVideoConfig()
   return spring({ frame: f - delay, fps, config: { damping }, durationInFrames })
 }
@@ -94,7 +95,7 @@ export const Words: React.FC<{
   code?: string[]
   style?: React.CSSProperties
 }> = ({ text, delay = 0, stagger = 4, size = 84, weight = 800, color = C.text, hl = [], code = [], style }) => {
-  const f = useCurrentFrame()
+  const f = useFrame()
   const { fps } = useVideoConfig()
   return (
     <div style={{ fontSize: size, fontWeight: weight, lineHeight: 1.06, letterSpacing: '-0.035em', color, ...style }}>
@@ -226,7 +227,7 @@ export const Chip: React.FC<{ children: React.ReactNode; color?: string; delay?:
 
 /** Texto que se escribe solo, con cursor parpadeante mientras escribe. */
 export const Type: React.FC<{ text: string; delay?: number; cps?: number; caret?: boolean }> = ({ text, delay = 0, cps = 28, caret = true }) => {
-  const f = useCurrentFrame()
+  const f = useFrame()
   const { fps } = useVideoConfig()
   const n = Math.max(0, Math.min(text.length, Math.floor(((f - delay) / fps) * cps)))
   const typing = f >= delay && n < text.length
