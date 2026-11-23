@@ -1,5 +1,6 @@
 export * from './build.js'
 export * from './diff.js'
+export * from './exchange.js'
 export * from './infer.js'
 export * from './openapi.js'
 export * from './sample.js'

@@ -90,7 +90,7 @@ export const ui = {
       text: 'Cartero incluye un servidor MCP. Conecta Claude, Cursor o cualquier cliente compatible y pídele que pruebe tu API, explique fallos, cree peticiones con tests o importe una especificación OpenAPI.',
       prompts: ['«Ejecuta la colección Pagos y explícame qué falla»', '«Crea un POST /users con un test que compruebe el 201»', '«Importa esta OpenAPI y prueba todos los GET»'],
       safe: 'Con tus permisos. Sin borrar nada. Sin ver nunca tus secretos.',
-      tools: '18 herramientas',
+      tools: '24 herramientas',
     },
     palette: { title: 'Rápido de verdad', text: 'Ctrl+K encuentra cualquier petición, entorno o acción. Atajos para todo, tema claro y oscuro, y un recorrido guiado la primera vez.' },
     selfhost: {
@@ -219,7 +219,7 @@ export const ui = {
       text: 'Cartero ships an MCP server. Connect Claude, Cursor or any compatible client and ask it to test your API, explain failures, create requests with tests or import an OpenAPI spec.',
       prompts: ['“Run the Payments collection and tell me what’s failing”', '“Create a POST /users with a test that checks for 201”', '“Import this OpenAPI spec and test every GET”'],
       safe: 'With your permissions. Never deletes. Never sees your secrets.',
-      tools: '18 tools',
+      tools: '24 tools',
     },
     palette: { title: 'Seriously fast', text: 'Ctrl+K finds any request, environment or action. Shortcuts for everything, light and dark themes, and a guided tour on first launch.' },
     selfhost: {

@@ -23,7 +23,7 @@
 | **Mock servers** | Responden con los ejemplos guardados: rutas con parámetros, cabeceras `x-mock-response-*`, variables dinámicas (`{{$randomEmail}}`…), retardo simulado, mocks privados y log de llamadas |
 | **Monitores** | Ejecuciones programadas con cron y zona horaria; avisos por Slack, Discord, Telegram, email o webhook; historial con disponibilidad y tiempos |
 | **Documentación** | Página pública por colección con descripciones en Markdown, ejemplos y cURL. Opcionalmente con contraseña. Las credenciales se ocultan solas |
-| **IA (MCP)** | Servidor MCP integrado (`/mcp`) con 18 herramientas: Claude, Cursor y otros asistentes pueden explorar, enviar, ejecutar, crear peticiones e importar con tus permisos |
+| **IA (MCP)** | Servidor MCP integrado (`/mcp`) con 24 herramientas: Claude, Cursor y otros asistentes pueden explorar, enviar, ejecutar, crear peticiones, importar y gestionar contratos con tus permisos |
 | **Idiomas** | Interfaz, manual y datos de ejemplo en **español e inglés**, con selector de idioma guardado en tu cuenta |
 | **Ayuda** | Asistente de bienvenida, recorrido guiado, paleta de comandos (Ctrl+K), [manual completo](docs/manual/es/README.md) en `/ayuda` y datos de ejemplo con APIs reales que se quitan con un clic |
 | **Equipos** | Workspaces, invitaciones, roles (propietario, admin, editor, lector), presencia en tiempo real, comentarios, historial de cambios con restauración, fork y merge, tokens de API |

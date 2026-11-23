@@ -89,3 +89,7 @@ Así el frontend puede avanzar con solo el contrato, sin escribir ejemplos.
 - **Importar**: al importar un OpenAPI 3.0/3.1 (ver [Colecciones e importación](06-colecciones-e-importacion.md)), cada petición recibe su contrato a partir de los esquemas. Se resuelven `$ref` y el `nullable` de OpenAPI 3.0.
 
 En el árbol de la colección, las peticiones con contrato llevan un pequeño icono de documento con una marca.
+
+## Desde un asistente de IA
+
+El [servidor MCP](13-ia-mcp.md) tiene herramientas para todo lo anterior: `ver_contrato`, `generar_contrato`, `guardar_contrato`, `validar_contrato`, `historial_contrato` y `exportar_openapi`. Puedes pedirle, por ejemplo, «genera el contrato de todas las peticiones de *API* y dime cuáles no cumplen». Los cambios que rompen tampoco se guardan desde el asistente sin confirmarlos.

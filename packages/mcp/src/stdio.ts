@@ -9,7 +9,9 @@ import { createCarteroMcpServer } from './index.js'
 const baseUrl = process.env.CARTERO_SERVER
 const token = process.env.CARTERO_TOKEN
 if (!baseUrl || !token) {
-  console.error('Faltan CARTERO_SERVER y/o CARTERO_TOKEN (crea un token en Cartero → Ajustes → Tokens de API)')
+  console.error(
+    'Faltan CARTERO_SERVER y/o CARTERO_TOKEN (crea un token en Cartero → Ajustes → Tokens de API)',
+  )
   process.exit(2)
 }
 

@@ -8,6 +8,8 @@ Cartero incluye un servidor **MCP** (*Model Context Protocol*), el estándar con
 - «Crea una petición POST /users en la colección *API* con un test que compruebe el 201».
 - «Importa la especificación OpenAPI de https://… y prueba todos los GET».
 - «Genera el código en Python de la petición *Login*».
+- «Crea el contrato de *Ver usuario* a partir de su respuesta y marca `phone` como opcional».
+- «Comprueba si el backend sigue cumpliendo los contratos de la colección *API*».
 - «¿Qué temperatura hace en Barcelona?» (usando tu colección de clima).
 
 ## Conectar
@@ -64,6 +66,11 @@ CARTERO_SERVER=https://TU-CARTERO CARTERO_TOKEN=crt_… node packages/mcp/dist/s
 | `generar_codigo` | Código en más de 20 lenguajes |
 | `listar_ejecuciones` | Historial de ejecuciones |
 | `crear_mock`, `listar_mocks` | Mock servers |
+| `ver_contrato`, `guardar_contrato` | Leer, crear, cambiar o quitar el [contrato](19-contratos.md) de una petición. Si un cambio rompe, no se guarda hasta que el asistente lo confirma con `aceptarCambiosQueRompen` |
+| `generar_contrato` | Enviar la petición y deducir el contrato de la respuesta real (solo lo propone, salvo que se pida guardarlo) |
+| `validar_contrato` | Enviar la petición y comprobar lo enviado y lo recibido contra el contrato |
+| `historial_contrato` | Versiones del contrato y qué cambió en cada una |
+| `exportar_openapi` | La colección como OpenAPI 3.1, con sus contratos |
 
 También incluye el *prompt* **probar_api**, que revisa una colección completa y propone tests.
 

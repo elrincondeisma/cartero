@@ -89,3 +89,7 @@ This way the frontend can get going with just the contract, without writing exam
 - **Import**: when you import OpenAPI 3.0/3.1 (see [Collections and import](06-collections-and-import.md)), each request gets its contract from the schemas. `$ref` and OpenAPI 3.0's `nullable` are resolved.
 
 In the collection tree, requests with a contract show a small document icon with a tick.
+
+## From an AI assistant
+
+The [MCP server](13-ai-mcp.md) has tools for all of the above: `ver_contrato`, `generar_contrato`, `guardar_contrato`, `validar_contrato`, `historial_contrato` and `exportar_openapi`. You can ask it, for example, "generate the contract for every request in *API* and tell me which ones don't match". The assistant can't save breaking changes without confirming them either.

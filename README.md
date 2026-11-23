@@ -23,7 +23,7 @@
 | **Mock servers** | Respond with your saved examples: routes with parameters, `x-mock-response-*` headers, dynamic variables (`{{$randomEmail}}`…), simulated latency, private mocks and a call log |
 | **Monitors** | Scheduled runs with cron and time zone; alerts via Slack, Discord, Telegram, email or webhook; history with uptime and timings |
 | **Documentation** | A public page per collection with Markdown descriptions, examples and cURL. Optional password. Credentials are hidden automatically |
-| **AI (MCP)** | Built-in MCP server (`/mcp`) with 18 tools: Claude, Cursor and other assistants can browse, send, run, create requests and import, with your permissions |
+| **AI (MCP)** | Built-in MCP server (`/mcp`) with 24 tools: Claude, Cursor and other assistants can browse, send, run, create requests, import and manage contracts, with your permissions |
 | **Languages** | UI, user guide and sample data in **English and Spanish**, with a language switch saved to your account |
 | **Help** | Welcome wizard, guided tour, command palette (Ctrl+K), [full user guide](docs/manual/README.md) at `/ayuda` and sample data with real APIs that you can remove in one click |
 | **Teams** | Workspaces, invitations, roles (owner, admin, editor, viewer), real-time presence, comments, change history with restore, fork and merge, API tokens |

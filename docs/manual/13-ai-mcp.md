@@ -8,6 +8,8 @@ Cartero ships an **MCP** server (*Model Context Protocol*), the standard Claude,
 - "Create a POST /users request in the *API* collection with a test that checks for 201."
 - "Import the OpenAPI spec at https://… and test every GET."
 - "Generate the Python code for the *Login* request."
+- "Build the contract for *Ver usuario* from its response and make `phone` optional."
+- "Check whether the backend still follows the contracts in the *API* collection."
 - "What's the temperature in Barcelona?" (using your weather collection).
 
 ## Connect
@@ -64,6 +66,11 @@ CARTERO_SERVER=https://YOUR-CARTERO CARTERO_TOKEN=crt_… node packages/mcp/dist
 | `generar_codigo` | Code in 20+ languages |
 | `listar_ejecuciones` | Run history |
 | `crear_mock`, `listar_mocks` | Mock servers |
+| `ver_contrato`, `guardar_contrato` | Read, create, change or remove a request's [contract](19-contracts.md). A breaking change isn't saved until the assistant confirms it with `aceptarCambiosQueRompen` |
+| `generar_contrato` | Send the request and work out the contract from the real response (only proposes it, unless asked to save) |
+| `validar_contrato` | Send the request and check what was sent and what came back against the contract |
+| `historial_contrato` | The contract's versions and what changed in each one |
+| `exportar_openapi` | The collection as OpenAPI 3.1, with its contracts |
 
 It also includes the **probar_api** prompt, which reviews a whole collection and suggests tests.
 
