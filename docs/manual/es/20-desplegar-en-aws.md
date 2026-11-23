@@ -38,7 +38,7 @@ El asistente habla español o inglés, según el idioma del sistema. Con `pnpm d
 8. **Dominio.**
    - **Zona de Route 53:** eliges un nombre como `cartero.midominio.com`. Con Fargate, el asistente busca un certificado de ACM que lo cubra o crea uno validado por DNS. Con EC2, Caddy pide un certificado de Let's Encrypt.
    - **Sin dominio:** con Fargate, CloudFront se pone delante del balanceador y te da `https://xxxx.cloudfront.net`, con WebSocket, y el balanceador solo acepta a CloudFront. Con EC2 tienes `https://<ip>.sslip.io` con Let's Encrypt.
-9. **Administración.** El email de quien administra (`ADMIN_EMAILS`) y si cualquiera puede registrarse. La imagen queda fijada al digest de la versión que elijas.
+9. **Administración.** El email de quien administra (`ADMIN_EMAILS`) y si cualquiera puede registrarse. Cartero usa la imagen `stable`, que se actualiza desde la app. En el modo *Recurso a recurso* puedes fijar una versión en su lugar (`0.2.0`).
 10. **Resumen.** Qué se reutiliza, qué se crea, el coste mensual aproximado y qué se conserva si lo destruyes. No se crea nada hasta que confirmas.
 
 Al terminar, espera a que `/api/health` responda y te enseña la dirección y el enlace al asistente de instalación (`/setup`).
@@ -55,9 +55,11 @@ Precios bajo demanda en us-east-1 / eu-west-1, con poco tráfico:
 
 ## Actualizar, ver el estado y destruir
 
-Vuelve a lanzar `pnpm deploy:aws`. Si hay despliegues en esa cuenta y región, el asistente te ofrece:
+**Las versiones nuevas de Cartero** se instalan desde el propio Cartero: **Administración → Sistema → Actualizar**, o cada noche si lo activas. En Fargate, Cartero pide a ECS un despliegue nuevo de su propio servicio. En EC2, el contenedor `updater` de la máquina descarga la imagen nueva. Mira [Actualizar Cartero](21-actualizar.md).
 
-- **Actualizar a la última versión.** Despliega otra vez con el digest nuevo de la imagen y la misma configuración. En EC2 además reaplica la configuración en la máquina con SSM Run Command, sin reemplazarla.
+Para cambiar el despliegue en sí, vuelve a lanzar `pnpm deploy:aws`. Si hay despliegues en esa cuenta y región, el asistente te ofrece:
+
+- **Actualizar.** Despliega otra vez con la misma configuración y la versión que elijas (`stable` o una fija), y trae la imagen más reciente: en Fargate pide a ECS un despliegue nuevo, y en EC2 reaplica la configuración en la máquina con SSM Run Command, sin reemplazarla. Los despliegues de antes de que hubiera versiones, fijados por digest, pasan a `stable`.
 - **Ver el estado.** El stack de CloudFormation, sus salidas y si `/api/health` responde.
 - **Destruir.** Escribes el nombre del stack para confirmar. En EC2 con Postgres dentro, ofrece hacer antes una snapshot del disco.
 

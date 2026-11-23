@@ -11,6 +11,7 @@ import { Logo } from '@/components/Logo'
 import { PROVIDER_NAME, ProviderIcon } from '@/components/ProviderIcon'
 import { Badge, Button, Input, Menu, Select, Spinner, cx, timeAgo } from '@/components/ui'
 import { AccessForm, type AdminSettings, EmailForm, GeneralForm, ProviderCard, SecurityForm, useAdminSettings } from './forms'
+import { UpdatesPanel } from './updates'
 import { t } from '@/i18n'
 import { initials } from '../workspace/Layout'
 
@@ -414,11 +415,16 @@ function SystemTab() {
           ))}
         </dl>
       </Panel>
-      <Panel title={t('Asistente de instalación')} description={t('Repasa la configuración paso a paso, como la primera vez.')}>
-        <Button icon={<Wand2 />} onClick={() => nav('/setup')}>
-          {t('Abrir el asistente')}
-        </Button>
-      </Panel>
+      <div className="space-y-6">
+        <Panel title={t('Actualizaciones')} description={t('Las versiones publicadas de Cartero y cómo llegan a esta instalación.')}>
+          <WithSettings>{(s) => <UpdatesPanel s={s} />}</WithSettings>
+        </Panel>
+        <Panel title={t('Asistente de instalación')} description={t('Repasa la configuración paso a paso, como la primera vez.')}>
+          <Button icon={<Wand2 />} onClick={() => nav('/setup')}>
+            {t('Abrir el asistente')}
+          </Button>
+        </Panel>
+      </div>
     </div>
   )
 }

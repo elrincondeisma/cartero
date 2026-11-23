@@ -11,7 +11,7 @@ cp .env.example .env
 docker compose up -d
 ```
 
-Three containers start: **cartero** (web, API and monitor worker), **postgres** and **redis**. Open `http://localhost:3000` (or the `CARTERO_PORT` port).
+Four containers start: **cartero** (web, API and monitor worker), **postgres**, **redis** and **updater** (applies updates when you ask for them from Administration). Cartero uses the latest published version (the `stable` image). Open `http://localhost:3000` (or the `CARTERO_PORT` port).
 
 > **On AWS** there's a wizard that does all of this for you with CDK (ECS Fargate or EC2): see [Deploying to AWS](20-deploy-aws.md).
 
@@ -80,9 +80,13 @@ If nobody can sign in as admin, use the commands in [Administration → If nobod
 
 ## Updating
 
+Cartero tells admins when there's a new version and updates from **Administration → System** with one button, thanks to the `updater` container. The details, how to pin a version or remove the `updater`: [Updating Cartero](21-updating.md).
+
+By hand:
+
 ```bash
-git pull
-docker compose up -d --build
+docker compose pull
+docker compose up -d
 ```
 
 Database migrations run automatically on startup.

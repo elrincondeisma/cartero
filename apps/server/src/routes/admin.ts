@@ -11,6 +11,7 @@ import { config } from '../config.js'
 import { sendTestMail } from '../lib/notify.js'
 import { PROVIDERS, callbackUrl, getSettings, saveSettings, smtpConfig } from '../lib/settings.js'
 import { pingRedis } from '../lib/monitors.js'
+import { triggerUpdate, updateStatus } from '../lib/updates.js'
 
 const providerPatch = z.object({
   enabled: z.boolean().optional(),
@@ -37,6 +38,7 @@ const settingsPatch = z.object({
   /** url: undefined no cambia · '' la borra · texto la sustituye */
   smtp: z.object({ url: z.string().trim().max(1000).optional(), from: z.string().trim().max(200).optional() }).optional(),
   blockPrivateNetworks: z.boolean().optional(),
+  updates: z.object({ check: z.boolean().optional(), auto: z.boolean().optional() }).optional(),
   setupCompleted: z.boolean().optional(),
 })
 
@@ -61,6 +63,7 @@ export async function publicSettings() {
     providers,
     smtp: { configured: !!s.smtp.url, host: smtpHost, from: s.smtp.from },
     blockPrivateNetworks: s.blockPrivateNetworks,
+    updates: s.updates,
     setupCompleted: s.setupCompleted !== false,
   }
 }
@@ -123,6 +126,7 @@ export async function adminRoutes(app: FastifyInstance) {
       publicUrl: body.publicUrl,
       smtp,
       blockPrivateNetworks: body.blockPrivateNetworks,
+      updates: body.updates ? { ...current.updates, ...body.updates } : undefined,
       setupCompleted: body.setupCompleted,
       allowRegistration: body.allowRegistration,
       allowedDomains: body.allowedDomains ? [...new Set(body.allowedDomains)] : undefined,
@@ -148,6 +152,20 @@ export async function adminRoutes(app: FastifyInstance) {
     return { ok: true, to: body.to ?? me.email }
   })
 
+  // Versiones: la instalada, la última publicada y si se puede actualizar desde aquí
+  app.get('/api/admin/updates', async (req) => {
+    requireAdmin(req)
+    const { refresh } = z.object({ refresh: z.string().optional() }).parse(req.query)
+    return updateStatus({ refresh: refresh === '1' })
+  })
+
+  app.post('/api/admin/updates/apply', { config: { rateLimit: { max: 5, timeWindow: '1 minute' } } }, async (req) => {
+    const admin = requireAdmin(req)
+    await triggerUpdate()
+    req.log.info(`Actualización pedida por ${admin.email}`)
+    return updateStatus()
+  })
+
   // Estado del servidor: lo que no se puede cambiar desde el panel (variables de entorno)
   app.get('/api/admin/system', async (req) => {
     requireAdmin(req)
@@ -161,7 +179,7 @@ export async function adminRoutes(app: FastifyInstance) {
       redis = await pingRedis()
     } catch {}
     return {
-      version: '0.1.0',
+      version: config.version,
       node: process.version,
       database,
       redis,

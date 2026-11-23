@@ -58,7 +58,7 @@ export async function buildApp(opts: { logger?: boolean } = {}) {
       .send({ error: 'error', message: status >= 500 ? 'Error interno del servidor' : err.message })
   })
 
-  app.get('/api/health', async () => ({ ok: true, version: '0.1.0' }))
+  app.get('/api/health', async () => ({ ok: true, version: config.version }))
 
   await app.register(authRoutes)
   await app.register(oauthRoutes)

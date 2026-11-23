@@ -417,8 +417,8 @@ export async function findCertificates(s: Session, host: string): Promise<CertIn
 
 // ─── Imagen ────────────────────────────────────────────────────────────────────────────────────
 
-/** Digest de la etiqueta `latest` en GHCR (la imagen es pública: sin credenciales). */
-export async function latestImage(tag = 'latest'): Promise<string> {
+/** Comprueba que la etiqueta existe en GHCR (la imagen es pública: sin credenciales). */
+export async function imageTagExists(tag: string): Promise<boolean> {
   const repo = CARTERO_IMAGE.replace('ghcr.io/', '')
   const tok = (await (await fetch(`https://ghcr.io/token?scope=repository:${repo}:pull`)).json()) as {
     token: string
@@ -435,7 +435,34 @@ export async function latestImage(tag = 'latest'): Promise<string> {
       ].join(', '),
     },
   })
-  const digest = r.headers.get('docker-content-digest')
-  if (!r.ok || !digest) throw new Error(`No se pudo leer la imagen ${CARTERO_IMAGE}:${tag} (${r.status})`)
-  return `${CARTERO_IMAGE}@${digest}`
+  return r.ok
+}
+
+/** La versión más alta publicada en GitHub (sin borradores, prereleases ni la app de escritorio). */
+export function pickLatestVersion(releases: unknown): string | undefined {
+  if (!Array.isArray(releases)) return undefined
+  const versions = releases
+    .filter((r) => r && !r.draft && !r.prerelease && typeof r.tag_name === 'string')
+    .map((r) => /^v(\d+)\.(\d+)\.(\d+)$/.exec(r.tag_name))
+    .filter((m): m is RegExpExecArray => !!m)
+    .map((m) => [Number(m[1]), Number(m[2]), Number(m[3])])
+    .sort((a, b) => b[0] - a[0] || b[1] - a[1] || b[2] - a[2])
+  return versions[0]?.join('.')
+}
+
+export async function stableVersion(): Promise<string | undefined> {
+  const r = await fetch('https://api.github.com/repos/elrincondeisma/cartero/releases?per_page=30', {
+    headers: { accept: 'application/vnd.github+json', 'user-agent': 'cartero-aws' },
+    signal: AbortSignal.timeout(10_000),
+  }).catch(() => undefined)
+  return r?.ok ? pickLatestVersion(await r.json()) : undefined
+}
+
+/**
+ * La imagen a desplegar: `:stable` (se actualiza desde la app) o una versión fijada.
+ * Devuelve también la versión que hay detrás, solo para enseñarla.
+ */
+export async function resolveImage(tag: string): Promise<{ image: string; version?: string }> {
+  if (!(await imageTagExists(tag))) throw new Error(`No existe la imagen ${CARTERO_IMAGE}:${tag}`)
+  return { image: `${CARTERO_IMAGE}:${tag}`, version: tag === 'stable' ? await stableVersion() : tag }
 }

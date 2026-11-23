@@ -25,6 +25,7 @@ export interface AdminSettings {
   providers: Record<OAuthProvider, ProviderInfo>
   smtp: { configured: boolean; host: string; from: string }
   blockPrivateNetworks: boolean
+  updates: { check: boolean; auto: boolean }
   setupCompleted: boolean
 }
 

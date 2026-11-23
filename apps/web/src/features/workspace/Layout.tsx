@@ -43,6 +43,7 @@ import { Welcome } from '../onboarding/Welcome'
 import { CommandPalette, usePalette } from '../palette/CommandPalette'
 import { TabsArea } from './TabsArea'
 import { WorkspaceContext, type WorkspaceCtx, useWs } from './context'
+import { UpdateNotice } from '../admin/updates'
 import { LANGS, hasExplicitLang, lang, setLang, t } from "@/i18n";
 
 const SECTIONS: { id: Section; label: string; icon: React.ReactNode }[] = [
@@ -285,6 +286,7 @@ function TopBar() {
           {theme === 'dark' ? <Sun className="size-4" /> : <Moon className="size-4" />}
         </button>
       </Tooltip>
+      {me.role === 'admin' && <UpdateNotice />}
       <Menu
         trigger={
           <button className="flex size-7 items-center justify-center rounded-full bg-brand-600 text-[11px] font-semibold text-white" aria-label={t("Cuenta")}>

@@ -1,11 +1,10 @@
 import { App } from 'aws-cdk-lib'
 import { Match, Template } from 'aws-cdk-lib/assertions'
 import { describe, expect, it } from 'vitest'
-import { assertNoSecrets, type DeployConfig, validateConfig } from '../src/config.js'
+import { assertNoSecrets, type DeployConfig, imageChannel, validateConfig } from '../src/config.js'
 import { CarteroStack, TASK_BOOTSTRAP } from '../src/stack/cartero-stack.js'
 
-const IMAGE =
-  'ghcr.io/elrincondeisma/cartero@sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'
+const IMAGE = 'ghcr.io/elrincondeisma/cartero:stable'
 
 function base(over: Partial<DeployConfig> = {}): DeployConfig {
   return {
@@ -164,6 +163,27 @@ describe('Fargate, todo nuevo y sin dominio (CloudFront)', () => {
     )
     expectNoPlainSecrets(t)
   })
+
+  it('con :stable la app puede redesplegar su propio servicio, y nada más', () => {
+    expect(taskEnv(t)).toMatchObject({ CARTERO_UPDATER: 'ecs', CARTERO_CHANNEL: 'stable' })
+    const policies = JSON.stringify(t.findResources('AWS::IAM::Policy'))
+    expect(policies).toContain('ecs:UpdateService')
+    expect(policies).toContain('ecs:DescribeTasks')
+    // Los recursos son los del cluster del stack: service/<cluster>/* y task/<cluster>/*
+    const statements = Object.values(t.findResources('AWS::IAM::Policy')).flatMap(
+      (p: any) => p.Properties.PolicyDocument.Statement,
+    )
+    const ecsStatements = statements.filter((st: any) =>
+      [st.Action].flat().some((a: string) => a.startsWith('ecs:')),
+    )
+    expect(ecsStatements.length).toBe(2)
+    for (const st of ecsStatements) {
+      const res = JSON.stringify(st.Resource)
+      expect(res).toMatch(/:(service|task)\//)
+      expect(res).toContain('Cluster')
+      expect(res).not.toContain('"*"')
+    }
+  })
 })
 
 describe('Fargate reutilizando VPC, RDS, Redis, zona y certificado', () => {
@@ -187,8 +207,15 @@ describe('Fargate reutilizando VPC, RDS, Redis, zona y certificado', () => {
       },
       allowExistingSgIngress: true,
       cloudfrontPrefixListId: undefined,
+      image: 'ghcr.io/elrincondeisma/cartero:0.2.0',
     }),
   )
+
+  it('con una versión fijada no da permisos para actualizarse', () => {
+    expect(taskEnv(t).CARTERO_CHANNEL).toBe('0.2.0')
+    expect(taskEnv(t).CARTERO_UPDATER).toBeUndefined()
+    expect(JSON.stringify(t.findResources('AWS::IAM::Policy'))).not.toContain('ecs:UpdateService')
+  })
 
   it('las descripciones de los grupos de seguridad son aceptables para EC2', () =>
     expectAwsSafeSgDescriptions(t))
@@ -258,6 +285,11 @@ describe('EC2 con todo dentro (sslip.io)', () => {
     expect(json).toContain('docker-compose.yml')
     expect(json).toContain('reverse_proxy cartero:3000')
     expect(json).toContain('cartero-apply.service')
+    // El updater de la app: el mismo script que en Docker Compose, con el socket de Docker
+    expect(json).toContain('/opt/cartero/updater.sh')
+    expect(json).toContain('docker:28-cli')
+    expect(json).toContain('CARTERO_UPDATER: compose')
+    expect(json).toContain('CARTERO_CHANNEL=$CHANNEL')
     // La contraseña de Postgres se genera en Secrets Manager y se conserva
     t.hasResource('AWS::SecretsManager::Secret', {
       DeletionPolicy: 'Retain',
@@ -304,6 +336,13 @@ describe('EC2 con RDS existente y dominio propio', () => {
 })
 
 describe('configuración', () => {
+  it('reconoce stable, una versión fija y los digest de antes', () => {
+    expect(imageChannel('ghcr.io/elrincondeisma/cartero:stable')).toBe('stable')
+    expect(imageChannel('ghcr.io/elrincondeisma/cartero:0.2.0')).toBe('0.2.0')
+    expect(imageChannel('ghcr.io/elrincondeisma/cartero@sha256:0123')).toBe('pinned')
+    expect(validateConfig(base({ image: 'docker.io/otra:stable' }))).not.toEqual([])
+  })
+
   it('no se puede guardar con secretos', () => {
     expect(() => assertNoSecrets({ database: { password: 'x' } })).toThrow(/secretos/)
     expect(() => assertNoSecrets({ creds: { secretAccessKey: 'x' } })).toThrow()

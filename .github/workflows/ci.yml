@@ -4,6 +4,8 @@ on:
   push:
     branches: [main]
   pull_request:
+  # La publicación de versiones (release.yml) pasa los mismos tests antes de publicar
+  workflow_call:
 
 jobs:
   test:
@@ -56,5 +58,7 @@ jobs:
         with:
           push: true
           tags: ghcr.io/${{ github.repository }}:latest,ghcr.io/${{ github.repository }}:${{ github.sha }}
+          # Lo de main no es una versión publicada: la app no se ofrece a actualizarlo
+          build-args: CARTERO_VERSION=dev-${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max

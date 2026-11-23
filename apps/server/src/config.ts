@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto'
+import { readFileSync } from 'node:fs'
 
 const env = process.env
 
@@ -9,7 +10,19 @@ function secretKey(): Buffer {
   return createHash('sha256').update('cartero-dev-secret').digest()
 }
 
+/** Versión de la imagen (la graba el build); fuera de una release es «<package.json>-dev». */
+function version(): string {
+  if (env.CARTERO_VERSION) return env.CARTERO_VERSION
+  try {
+    const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'))
+    return `${pkg.version}-dev`
+  } catch {
+    return '0.0.0-dev'
+  }
+}
+
 export const config = {
+  version: version(),
   port: Number(env.PORT ?? 3000),
   host: env.HOST ?? '0.0.0.0',
   databaseUrl: env.DATABASE_URL ?? 'postgres://cartero:cartero@localhost:5433/cartero',
@@ -34,4 +47,15 @@ export const config = {
   smtpFrom: env.SMTP_FROM ?? 'Cartero <no-reply@localhost>',
   /** Si es 'false', el servidor no programa monitores (lo hace un worker aparte) */
   inlineWorker: env.INLINE_WORKER !== 'false',
+  /** Quién reinicia Cartero al actualizar: ECS (Fargate) o el contenedor updater de Docker Compose */
+  updater: (env.CARTERO_UPDATER === 'ecs' || env.CARTERO_UPDATER === 'compose' ? env.CARTERO_UPDATER : undefined) as
+    | 'ecs'
+    | 'compose'
+    | undefined,
+  /** Carpeta que comparte con el updater de Docker Compose */
+  updaterDir: env.CARTERO_UPDATER_DIR ?? '/data/updater',
+  /** Etiqueta de la imagen: «stable» se actualiza; una versión concreta queda fijada */
+  channel: env.CARTERO_CHANNEL ?? 'stable',
+  /** De dónde salen las versiones publicadas (se cambia solo en pruebas) */
+  releasesUrl: env.CARTERO_RELEASES_URL ?? 'https://api.github.com/repos/elrincondeisma/cartero/releases?per_page=30',
 }

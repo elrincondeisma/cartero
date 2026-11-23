@@ -11,7 +11,7 @@ cp .env.example .env
 docker compose up -d
 ```
 
-Arrancan tres contenedores: **cartero** (web, API y worker de monitores), **postgres** y **redis**. Abre `http://localhost:3000` (o el puerto de `CARTERO_PORT`).
+Arrancan cuatro contenedores: **cartero** (web, API y worker de monitores), **postgres**, **redis** y **updater** (aplica las actualizaciones cuando las pides desde Administración). Cartero usa la última versión publicada (la imagen `stable`). Abre `http://localhost:3000` (o el puerto de `CARTERO_PORT`).
 
 > **En AWS** hay un asistente que lo hace todo por ti con CDK (ECS Fargate o EC2): mira [Desplegar en AWS](20-desplegar-en-aws.md).
 
@@ -80,9 +80,13 @@ Si nadie puede entrar como admin, usa los comandos de [Administración → Si na
 
 ## Actualizar
 
+Cartero avisa a quien administra cuando hay una versión nueva y se actualiza desde **Administración → Sistema** con un botón, gracias al contenedor `updater`. Los detalles, cómo fijar una versión o quitar el `updater`: [Actualizar Cartero](21-actualizar.md).
+
+A mano:
+
 ```bash
-git pull
-docker compose up -d --build
+docker compose pull
+docker compose up -d
 ```
 
 Las migraciones de la base de datos se aplican solas al arrancar.

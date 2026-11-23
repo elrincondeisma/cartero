@@ -8,6 +8,16 @@ import { join } from 'node:path'
 
 export const CARTERO_IMAGE = 'ghcr.io/elrincondeisma/cartero'
 
+/** La imagen que se actualiza desde la app: apunta siempre a la última versión publicada. */
+export const STABLE_IMAGE = `${CARTERO_IMAGE}:stable`
+
+/** `stable`, una versión concreta (`0.2.0`) o `pinned` si va por digest (despliegues antiguos). */
+export function imageChannel(image: string): string {
+  if (image.includes('@')) return 'pinned'
+  const tag = image.slice(image.lastIndexOf(':') + 1)
+  return tag && !tag.includes('/') ? tag : 'pinned'
+}
+
 export interface SubnetRef {
   id: string
   az: string
@@ -134,7 +144,8 @@ export function savedConfigs(dir: string): DeployConfig[] {
 export function validateConfig(c: DeployConfig): string[] {
   const errors: string[] = []
   if (!/^[A-Za-z][A-Za-z0-9-]{0,127}$/.test(c.stackName)) errors.push('stackName: letras, números y guiones')
-  if (!c.image.startsWith(`${CARTERO_IMAGE}`)) errors.push('image: debe ser la imagen de Cartero')
+  if (!c.image.startsWith(`${CARTERO_IMAGE}:`) && !c.image.startsWith(`${CARTERO_IMAGE}@`))
+    errors.push('image: debe ser la imagen de Cartero')
   if (c.compute === 'fargate' && (c.database.mode === 'container' || c.cache.mode === 'container'))
     errors.push('En Fargate la base de datos y Redis no pueden ir en contenedores de la máquina')
   if (c.network.mode === 'existing') {

@@ -13,8 +13,8 @@ import { parseArgs } from 'node:util'
 import { fromIni, fromNodeProviderChain } from '@aws-sdk/credential-providers'
 import { createDbSecret, createRedisSecret, stackInfo } from './aws/discover.js'
 import type { Session } from './aws/session.js'
-import { type DeployConfig, loadConfig, savedConfigs, validateConfig } from './config.js'
-import { bootstrap, deploy, destroy, STATE_DIR, waitHealthy } from './deploy.js'
+import { type DeployConfig, imageChannel, loadConfig, savedConfigs, validateConfig } from './config.js'
+import { bootstrap, deploy, destroy, reapplyEc2, redeployFargate, STATE_DIR, waitHealthy } from './deploy.js'
 import { detectLang, m, setLang } from './i18n.js'
 import { ask, p, withSpinner } from './wizard/ask.js'
 import { buildConfig, type Pending } from './wizard/build.js'
@@ -127,7 +127,16 @@ async function scripted(cmd: string): Promise<void> {
   if (errors.length) throw new Error(errors.join('\n'))
   const s = envSession(c.region)
   if (cmd === 'deploy') {
+    const existed = !!(await stackInfo(s, c.stackName))
     const outputs = await deploy(s, c)
+    // Con :stable la plantilla no cambia al salir una versión: se trae a mano
+    if (existed && imageChannel(c.image) === 'stable') {
+      if (c.compute === 'fargate') await redeployFargate(s, c.stackName)
+      else if (outputs.InstanceId) {
+        const r = await reapplyEc2(s, outputs.InstanceId)
+        if (!r.ok) throw new Error(r.output)
+      }
+    }
     console.log(JSON.stringify(outputs, null, 2))
     if (outputs.Url && !(await waitHealthy(outputs.Url))) throw new Error(m.healthyTimeout)
     console.log(m.healthyOk)

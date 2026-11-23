@@ -1,6 +1,6 @@
 {
   "name": "@cartero/server",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "main": "./dist/index.js",
@@ -16,6 +16,7 @@
     "admin": "tsx src/scripts/admin.ts"
   },
   "dependencies": {
+    "@aws-sdk/client-ecs": "^3.1175.0",
     "@cartero/contracts": "workspace:*",
     "@cartero/core": "workspace:*",
     "@cartero/executor": "workspace:*",

@@ -2,9 +2,15 @@
  * Lo que monta la EC2 al arrancar. El user data es estático (no cambia entre despliegues, así la
  * máquina nunca se reemplaza ni se reinicia por un cambio): instala Docker, escribe estos ficheros
  * y lanza `apply.sh`, que lee la configuración de SSM y los secretos de Secrets Manager.
- * «Actualizar» cambia el parámetro de SSM y vuelve a lanzar `apply.sh` con SSM Run Command.
+ * «Actualizar» del asistente cambia el parámetro de SSM y vuelve a lanzar `apply.sh` con SSM Run Command.
+ * «Actualizar» de la app lo hace el contenedor `updater` (el mismo que en Docker Compose): descarga
+ * otra vez `:stable` y recrea solo Cartero.
  */
+import { readFileSync } from 'node:fs'
 import { aws_ec2 as ec2 } from 'aws-cdk-lib'
+
+/** El script del updater es el mismo que el del docker-compose.yml de la raíz del repo. */
+export const UPDATER = readFileSync(new URL('../../../../docker/updater.sh', import.meta.url), 'utf8')
 
 export const COMPOSE = `services:
   cartero:
@@ -19,8 +25,19 @@ export const COMPOSE = `services:
       ADMIN_EMAILS: \${ADMIN_EMAILS}
       ALLOW_REGISTRATION: \${ALLOW_REGISTRATION}
       FILES_DIR: /data/files
+      CARTERO_UPDATER: compose
+      CARTERO_CHANNEL: \${CARTERO_CHANNEL}
     volumes:
       - /data/cartero/files:/data/files
+      - /data/cartero/updater:/data/updater
+  updater:
+    image: docker:28-cli
+    restart: unless-stopped
+    command: ["sh", "/project/updater.sh"]
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /opt/cartero:/project:ro
+      - /data/cartero/updater:/shared/updater
   postgres:
     image: postgres:17-alpine
     profiles: [db]
@@ -96,8 +113,14 @@ else
 fi
 
 umask 077
+IMAGE=$(j .image)
+# stable se actualiza desde la app; una versión concreta (o un digest) queda fijada
+CHANNEL=pinned
+case "$IMAGE" in *@*) ;; *:*) CHANNEL=\${IMAGE##*:} ;; esac
+
 cat > .env <<ENV
-CARTERO_IMAGE=$(j .image)
+CARTERO_IMAGE=$IMAGE
+CARTERO_CHANNEL=$CHANNEL
 SITE_ADDRESS=$(j .site)
 PUBLIC_URL=$(j .publicUrl)
 ADMIN_EMAILS=$(j .adminEmails)
@@ -109,8 +132,8 @@ POSTGRES_PASSWORD=$POSTGRES_PASSWORD
 COMPOSE_PROFILES=$(IFS=,; echo "\${PROFILES[*]:-}")
 ENV
 
-mkdir -p /data/cartero/files /data/caddy
-chown 1000:1000 /data/cartero/files
+mkdir -p /data/cartero/files /data/cartero/updater /data/caddy
+chown 1000:1000 /data/cartero/files /data/cartero/updater
 docker compose pull --quiet
 docker compose up -d --remove-orphans
 echo "Cartero aplicado: $(j .image)"
@@ -153,6 +176,7 @@ export function ec2UserData(region: string, paramName: string): ec2.UserData {
     write('/opt/cartero/docker-compose.yml', COMPOSE),
     write('/opt/cartero/Caddyfile', CADDYFILE),
     write('/opt/cartero/apply.sh', applyScript(region, paramName), '755'),
+    write('/opt/cartero/updater.sh', UPDATER, '755'),
     write('/etc/systemd/system/cartero-apply.service', SYSTEMD),
     'systemctl daemon-reload',
     'systemctl enable --now cartero-apply.service',

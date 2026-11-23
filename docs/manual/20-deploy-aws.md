@@ -38,7 +38,7 @@ The wizard speaks English or Spanish, following your system language. Use `pnpm 
 8. **Domain.**
    - **Route 53 zone:** you pick a name such as `cartero.example.com`. With Fargate, the wizard looks for an ACM certificate that covers it, or creates one validated by DNS. With EC2, Caddy gets a Let's Encrypt certificate.
    - **No domain:** with Fargate, CloudFront sits in front of the load balancer and gives you `https://xxxx.cloudfront.net`, WebSocket included, and the load balancer only accepts CloudFront. With EC2, you get `https://<ip>.sslip.io` with Let's Encrypt.
-9. **Administration.** The admin email (`ADMIN_EMAILS`) and whether anyone can sign up. The image is pinned to the digest of the version you choose.
+9. **Administration.** The admin email (`ADMIN_EMAILS`) and whether anyone can sign up. Cartero uses the `stable` image, which updates from the app. In *Resource by resource* mode you can pin a version instead (`0.2.0`).
 10. **Summary.** What is reused, what is created, the approximate monthly cost and what is kept if you destroy it. Nothing is created until you confirm.
 
 When it finishes, it waits until `/api/health` answers and shows the address and the link to the setup wizard (`/setup`).
@@ -55,9 +55,11 @@ On-demand prices in us-east-1 / eu-west-1 with light traffic:
 
 ## Updating, status and destroying
 
-Run `pnpm deploy:aws` again. If there are deployments in that account and region, the wizard offers:
+**New versions of Cartero** are installed from Cartero itself: **Administration → System → Update**, or every night if you turn it on. On Fargate, Cartero asks ECS for a new deployment of its own service. On EC2, the `updater` container on the machine pulls the new image. See [Updating Cartero](21-updating.md).
 
-- **Update to the latest version.** It deploys again with the image's new digest and the same configuration. On EC2 it also reapplies the configuration on the machine with SSM Run Command, without replacing it.
+To change the deployment itself, run `pnpm deploy:aws` again. If there are deployments in that account and region, the wizard offers:
+
+- **Update.** It deploys again with the same configuration and the version you choose (`stable` or a fixed one), and brings in the latest image: on Fargate it asks ECS for a new deployment, and on EC2 it reapplies the configuration on the machine with SSM Run Command, without replacing it. Deployments made before versions existed, pinned by digest, move to `stable`.
 - **Status.** The CloudFormation stack, its outputs and whether `/api/health` answers.
 - **Destroy.** You type the stack name to confirm. On EC2 with Postgres on the machine, it offers to take a snapshot of the disk first.
 

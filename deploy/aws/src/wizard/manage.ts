@@ -1,10 +1,19 @@
 /** Despliegues guardados: actualizar a la última imagen, ver el estado o destruir. */
-import { latestImage, stackInfo } from '../aws/discover.js'
+import { resolveImage, stackInfo } from '../aws/discover.js'
 import type { Session } from '../aws/session.js'
-import type { DeployConfig } from '../config.js'
-import { deploy, destroy, reapplyEc2, STATE_DIR, snapshotEc2, waitHealthy } from '../deploy.js'
+import { type DeployConfig, imageChannel } from '../config.js'
+import {
+  deploy,
+  destroy,
+  reapplyEc2,
+  redeployFargate,
+  STATE_DIR,
+  snapshotEc2,
+  waitHealthy,
+} from '../deploy.js'
 import { m } from '../i18n.js'
 import { ask, p, withSpinner } from './ask.js'
+import { askTag } from './build.js'
 import { keptOnDestroy } from './summary.js'
 
 export async function status(s: Session, c: DeployConfig): Promise<void> {
@@ -26,17 +35,25 @@ export async function status(s: Session, c: DeployConfig): Promise<void> {
 }
 
 export async function update(s: Session, c: DeployConfig): Promise<void> {
-  const tag =
-    (await ask(p.text({ message: m.imageTag, defaultValue: 'latest', placeholder: 'latest' }))) || 'latest'
-  const image = await withSpinner(
+  const current = imageChannel(c.image)
+  // Los despliegues de antes fijaban la imagen por digest: pasan a stable
+  if (current === 'pinned') p.log.info(m.updateLegacy)
+  const tag = await askTag(current === 'pinned' ? 'stable' : current)
+  const { image } = await withSpinner(
     m.imageLooking,
-    () => latestImage(tag),
-    (i) => m.imageFound(i.split('@')[1]?.slice(0, 19) ?? ''),
+    () => resolveImage(tag),
+    (i) => m.imageFound(tag, i.version),
   )
-  if (image === c.image) p.log.info(m.updateSame)
+  if (image === c.image && tag !== 'stable') p.log.info(m.updateSame)
   if (!(await ask(p.confirm({ message: m.updateConfirm(c.stackName) })))) return
   const next = { ...c, image }
   const outputs = await deploy(s, next)
+  if (next.compute === 'fargate' && tag === 'stable')
+    await withSpinner(
+      m.updateRedeploying,
+      () => redeployFargate(s, next.stackName),
+      () => m.updateRedeployed,
+    )
   if (next.compute === 'ec2' && outputs.InstanceId) {
     const r = await withSpinner(
       m.updateApplying,

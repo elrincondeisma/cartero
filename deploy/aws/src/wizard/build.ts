@@ -8,12 +8,12 @@ import {
   cacheInVpc,
   cloudfrontPrefixList,
   findCertificates,
-  latestImage,
   listCaches,
   listPostgres,
   listVpcs,
   listZones,
   onePerAz,
+  resolveImage,
   twoAzs,
   type VpcInfo,
   vpcRoom,
@@ -339,13 +339,11 @@ export async function buildConfig(session: Session, identity: Identity, taken: s
   )
   const allowRegistration = await ask(p.confirm({ message: m.allowRegistration, initialValue: false }))
 
-  const tag = custom
-    ? (await ask(p.text({ message: m.imageTag, defaultValue: 'latest', placeholder: 'latest' }))) || 'latest'
-    : 'latest'
-  const image = await withSpinner(
+  const tag = custom ? await askTag() : 'stable'
+  const { image } = await withSpinner(
     m.imageLooking,
-    () => latestImage(tag),
-    (i) => m.imageFound(i.split('@')[1]?.slice(0, 19) ?? ''),
+    () => resolveImage(tag),
+    (i) => m.imageFound(tag, i.version),
   )
 
   const cloudfrontPrefixListId =
@@ -371,6 +369,19 @@ export async function buildConfig(session: Session, identity: Identity, taken: s
       cloudfrontPrefixListId,
     },
   }
+}
+
+/** `stable` o una versión X.Y.Z. */
+export async function askTag(initial = 'stable'): Promise<string> {
+  const v = await ask(
+    p.text({
+      message: m.imageTag,
+      defaultValue: initial,
+      placeholder: initial,
+      validate: (x) => (!x || /^(stable|\d+\.\d+\.\d+)$/.test(x.trim()) ? undefined : m.imageTagBad),
+    }),
+  )
+  return (v || initial).trim()
 }
 
 export const splitEmails = (v: string) =>

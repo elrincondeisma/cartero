@@ -29,6 +29,8 @@ export interface InstanceSettings {
   smtp: { url: string; from: string }
   /** Protección SSRF: impide peticiones a IPs privadas */
   blockPrivateNetworks: boolean
+  /** Buscar versiones nuevas (habla con GitHub) y actualizarse sola de noche */
+  updates: { check: boolean; auto: boolean }
   /** false mientras el primer admin no termina el asistente; undefined en instancias anteriores al asistente */
   setupCompleted?: boolean
 }
@@ -46,6 +48,7 @@ function defaults(): InstanceSettings {
     providers: { google: fromEnv('google'), github: fromEnv('github') },
     smtp: { url: config.smtp ? encrypt(config.smtp) : '', from: config.smtpFrom },
     blockPrivateNetworks: config.blockPrivateNetworks,
+    updates: { check: true, auto: false },
   }
 }
 
@@ -66,6 +69,7 @@ export async function getSettings(): Promise<InstanceSettings> {
       github: { ...base.providers.github, ...stored.providers?.github },
     },
     smtp: { ...base.smtp, ...stored.smtp },
+    updates: { ...base.updates, ...stored.updates },
   }
   value.publicUrl = value.publicUrl.replace(/\/$/, '')
   cache = { value, at: Date.now() }

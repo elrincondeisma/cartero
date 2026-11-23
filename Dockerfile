@@ -26,7 +26,12 @@ RUN pnpm --filter "./packages/*" --filter @cartero/server run build \
 FROM node:22-alpine
 RUN apk add --no-cache tini
 WORKDIR /app
-ENV NODE_ENV=production \
+# La versión la pone el build: X.Y.Z en las releases, dev-<sha> en main
+ARG CARTERO_VERSION=dev
+LABEL org.opencontainers.image.version=$CARTERO_VERSION \
+      org.opencontainers.image.source=https://github.com/elrincondeisma/cartero
+ENV CARTERO_VERSION=$CARTERO_VERSION \
+    NODE_ENV=production \
     PORT=3000 \
     WEB_DIST=/app/web \
     FILES_DIR=/data/files

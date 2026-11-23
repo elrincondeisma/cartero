@@ -37,6 +37,16 @@ pnpm --filter @cartero/web dev
 - The internal model is Postman Collection v2.1. Don't invent new fields if Postman's format already has an equivalent.
 - Every API route checks the role in the workspace (`assertRole` / `assertCollection`).
 
+## Publishing a version
+
+Installations update to published versions (the `stable` image), never to whatever is on `main`.
+
+1. Bump the version in `package.json` and `apps/server/package.json` (they must match), and commit.
+2. Create and push the tag: `git tag v0.3.0 && git push origin v0.3.0`.
+3. The `Release` workflow runs the tests, publishes the images `0.3.0`, `0.3` and `stable`, and creates the GitHub Release with the notes. From then on, installations see the new version in **Administration → System**.
+
+Migrations must be **backward compatible** with the previous version: add columns and tables, don't rename or drop them in the same version. If an update fails on Fargate, ECS goes back to the previous version, which will run on the new schema.
+
 ## Reporting security issues
 
 Don't open a public issue: contact the maintainers privately.

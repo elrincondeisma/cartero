@@ -18,6 +18,7 @@
 - [Keyboard shortcuts](14-shortcuts.md)
 - [Installation and administration](15-self-hosting.md)
 - [Deploying to AWS](20-deploy-aws.md)
+- [Updating Cartero](21-updating.md)
 - [Administration](17-admin-and-social-login.md)
 - [Desktop app](18-desktop-app.md)
 - [Contracts](19-contracts.md)

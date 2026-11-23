@@ -1,10 +1,12 @@
 # Despliegue de Cartero con un solo comando:
 #   cp .env.example .env   # y cambia CARTERO_SECRET_KEY y la contraseña de Postgres
 #   docker compose up -d
+#
+# Usa la última versión publicada (:stable). Se actualiza desde Administración → Sistema gracias al
+# servicio `updater`. Para construir desde el código: docker-compose.build.yml.
 services:
   cartero:
-    build: .
-    image: cartero:latest
+    image: ${CARTERO_IMAGE:-ghcr.io/elrincondeisma/cartero}:${CARTERO_VERSION:-stable}
     restart: unless-stopped
     ports:
       - "${CARTERO_PORT:-3000}:3000"
@@ -22,6 +24,9 @@ services:
       BLOCK_PRIVATE_NETWORKS: ${BLOCK_PRIVATE_NETWORKS:-false}
       SMTP_URL: ${SMTP_URL:-}
       SMTP_FROM: ${SMTP_FROM:-Cartero <no-reply@localhost>}
+      # Quién la reinicia al actualizar, y si la versión está fijada
+      CARTERO_UPDATER: compose
+      CARTERO_CHANNEL: ${CARTERO_VERSION:-stable}
     volumes:
       - cartero-data:/data
     depends_on:
@@ -29,6 +34,20 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+
+  # Recoge las peticiones de «Actualizar» de la app: descarga :stable y recrea solo `cartero`.
+  # Tiene el socket de Docker (equivale a root en la máquina) y ningún puerto. Si no lo quieres,
+  # borra este servicio y actualiza a mano: docker compose pull && docker compose up -d
+  updater:
+    image: docker:28-cli
+    restart: unless-stopped
+    command: ["sh", "/project/docker/updater.sh"]
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./:/project:ro
+      - cartero-data:/shared
+    environment:
+      SHARED: /shared/updater
 
   postgres:
     image: postgres:17-alpine

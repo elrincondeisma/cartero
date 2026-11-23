@@ -3,7 +3,14 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import type { RouteTable } from '@aws-sdk/client-ec2'
 import { describe, expect, it } from 'vitest'
-import { cacheInVpc, certCovers, isPublicSubnet, onePerAz, type VpcInfo } from '../src/aws/discover.js'
+import {
+  cacheInVpc,
+  certCovers,
+  isPublicSubnet,
+  onePerAz,
+  pickLatestVersion,
+  type VpcInfo,
+} from '../src/aws/discover.js'
 import { childEnv, keysSession, mergeProfiles, profileSession } from '../src/aws/session.js'
 import { type DeployConfig, saveConfig } from '../src/config.js'
 import { estimateCost, totalCost } from '../src/cost.js'
@@ -205,5 +212,20 @@ describe('idiomas', () => {
   it('separa los emails por comas o espacios', () => {
     expect(splitEmails('ana@x.com, luis@y.com;  ')).toEqual(['ana@x.com', 'luis@y.com'])
     expect(splitEmails('')).toEqual([])
+  })
+})
+
+describe('versiones', () => {
+  it('la última publicada ignora borradores, prereleases y la app de escritorio', () => {
+    expect(
+      pickLatestVersion([
+        { tag_name: 'desktop-v9.0.0' },
+        { tag_name: 'v0.10.0', prerelease: true },
+        { tag_name: 'v0.9.1' },
+        { tag_name: 'v0.10.1', draft: true },
+        { tag_name: 'v0.2.0' },
+      ]),
+    ).toBe('0.9.1')
+    expect(pickLatestVersion({ message: 'API rate limit' })).toBeUndefined()
   })
 })

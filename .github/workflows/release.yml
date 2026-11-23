@@ -1,0 +1,56 @@
+name: Release
+
+# Publicar una versión: sube la versión en package.json, haz commit y empuja el tag vX.Y.Z.
+# Las instalaciones con la imagen :stable la ven en Administración → Sistema.
+on:
+  push:
+    tags: ['v[0-9]+.[0-9]+.[0-9]+']
+
+jobs:
+  test:
+    uses: ./.github/workflows/ci.yml
+    # ci.yml también declara el job que publica `latest` (aquí no corre, pero pide estos permisos)
+    permissions:
+      contents: read
+      packages: write
+
+  publish:
+    runs-on: ubuntu-latest
+    needs: test
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: La versión del tag coincide con package.json
+        id: version
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          pkg=$(node -p "require('./apps/server/package.json').version")
+          if [ "$version" != "$pkg" ]; then
+            echo "::error::El tag es $GITHUB_REF_NAME pero apps/server/package.json dice $pkg"
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "minor=${version%.*}" >> "$GITHUB_OUTPUT"
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          push: true
+          build-args: CARTERO_VERSION=${{ steps.version.outputs.version }}
+          tags: |
+            ghcr.io/${{ github.repository }}:${{ steps.version.outputs.version }}
+            ghcr.io/${{ github.repository }}:${{ steps.version.outputs.minor }}
+            ghcr.io/${{ github.repository }}:stable
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      # La release va después de la imagen: cuando las instalaciones la ven, :stable ya apunta a ella
+      - name: GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" --title "Cartero ${{ steps.version.outputs.version }}" --generate-notes --verify-tag

@@ -29,7 +29,7 @@ import {
   Tags,
 } from 'aws-cdk-lib'
 import type { Construct } from 'constructs'
-import type { DeployConfig } from '../config.js'
+import { type DeployConfig, imageChannel } from '../config.js'
 import { ec2UserData } from './ec2-files.js'
 
 /** Usuario de la imagen (node): dueño de la carpeta de ficheros en EFS. */
@@ -341,6 +341,7 @@ export class CarteroStack extends Stack {
     })
     files.connections.allowDefaultPortFrom(p.appSg, 'Cartero')
 
+    const channel = imageChannel(c.image)
     const task = new ecs.FargateTaskDefinition(this, 'Task', {
       cpu: 512,
       memoryLimitMiB: 1024,
@@ -382,13 +383,35 @@ export class CarteroStack extends Stack {
       entryPoint: ['/sbin/tini', '--'],
       command: ['node', '--input-type=module', '-e', TASK_BOOTSTRAP],
       portMappings: [{ containerPort: 3000 }],
-      environment: { ...p.env, PUBLIC_URL: publicUrl, FILES_DIR: '/data/files', NODE_ENV: 'production' },
+      environment: {
+        ...p.env,
+        PUBLIC_URL: publicUrl,
+        FILES_DIR: '/data/files',
+        NODE_ENV: 'production',
+        // Con :stable, la app se actualiza pidiendo a ECS un despliegue nuevo de su propio servicio
+        CARTERO_CHANNEL: channel,
+        ...(channel === 'stable' ? { CARTERO_UPDATER: 'ecs' } : {}),
+      },
       secrets,
       logging: ecs.LogDrivers.awsLogs({ streamPrefix: 'cartero', logGroup }),
     })
     container.addMountPoints({ sourceVolume: 'files', containerPath: '/data/files', readOnly: false })
 
     const cluster = new ecs.Cluster(this, 'Cluster', { vpc: p.vpc })
+    if (channel === 'stable') {
+      // Solo sobre el cluster de este stack: encontrar su servicio y redesplegarlo
+      const arn = (kind: string) =>
+        Stack.of(this).formatArn({ service: 'ecs', resource: kind, resourceName: `${cluster.clusterName}/*` })
+      task.addToTaskRolePolicy(
+        new iam.PolicyStatement({
+          actions: ['ecs:DescribeServices', 'ecs:UpdateService'],
+          resources: [arn('service')],
+        }),
+      )
+      task.addToTaskRolePolicy(
+        new iam.PolicyStatement({ actions: ['ecs:DescribeTasks'], resources: [arn('task')] }),
+      )
+    }
     const certificate =
       c.domain.mode === 'route53'
         ? c.domain.certificateArn

@@ -1,0 +1,7 @@
+# Construir Cartero desde el código en vez de usar la imagen publicada:
+#   docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
+# La versión será «dev»: la app avisa de las versiones nuevas, pero no se actualiza sola.
+services:
+  cartero:
+    build: .
+    image: cartero:local

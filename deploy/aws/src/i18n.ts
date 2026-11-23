@@ -125,9 +125,11 @@ const es = {
   adminEmails: 'Email de quien administra (separa varios con comas; vacío para decidirlo en /setup)',
   adminEmailsBad: 'Algún email no es válido',
   allowRegistration: '¿Permitir que cualquiera se registre?',
-  imageTag: 'Versión de Cartero (etiqueta de la imagen)',
+  imageTag: 'Versión de Cartero: stable (se actualiza desde la app) o una versión fija como 0.2.0',
+  imageTagBad: 'Escribe stable o una versión X.Y.Z',
   imageLooking: 'Buscando la imagen de Cartero',
-  imageFound: (d: string) => `Imagen ${d}…`,
+  imageFound: (tag: string, v?: string) =>
+    v && v !== tag ? `Imagen ${tag} (Cartero ${v})` : `Imagen ${tag}`,
 
   sumTitle: 'Resumen',
   sumAccount: 'Cuenta',
@@ -197,6 +199,10 @@ const es = {
   statusUp: 'responde',
   statusDown: 'no responde',
   updateSame: 'Ya tienes esa versión; se volverá a aplicar la configuración.',
+  updateLegacy:
+    'Este despliegue fijaba la imagen por digest. Pasa a stable: a partir de ahora se actualiza también desde Administración → Sistema.',
+  updateRedeploying: 'Pidiendo a ECS que descargue la versión nueva',
+  updateRedeployed: 'ECS está desplegando la versión nueva',
   updateConfirm: (s: string) => `¿Actualizo ${s}?`,
   updateApplying: 'Aplicando en la máquina',
   updateApplied: 'Aplicado',
@@ -333,9 +339,10 @@ const en: Messages = {
   adminEmails: 'Administrator email (separate several with commas; leave empty to decide in /setup)',
   adminEmailsBad: 'Some email is not valid',
   allowRegistration: 'Let anyone sign up?',
-  imageTag: 'Cartero version (image tag)',
+  imageTag: 'Cartero version: stable (updates from the app) or a fixed version such as 0.2.0',
+  imageTagBad: 'Type stable or a version X.Y.Z',
   imageLooking: 'Looking up the Cartero image',
-  imageFound: (d) => `Image ${d}…`,
+  imageFound: (tag, v) => (v && v !== tag ? `Image ${tag} (Cartero ${v})` : `Image ${tag}`),
 
   sumTitle: 'Summary',
   sumAccount: 'Account',
@@ -404,6 +411,10 @@ const en: Messages = {
   statusUp: 'responding',
   statusDown: 'not responding',
   updateSame: 'You already have that version; the configuration will be applied again.',
+  updateLegacy:
+    'This deployment pinned the image by digest. It moves to stable: from now on it also updates from Administration → System.',
+  updateRedeploying: 'Asking ECS to pull the new version',
+  updateRedeployed: 'ECS is deploying the new version',
   updateConfirm: (s) => `Update ${s}?`,
   updateApplying: 'Applying on the machine',
   updateApplied: 'Applied',

@@ -5,6 +5,7 @@ import { sqlClient } from './db/index.js'
 import { runMigrations } from './db/migrate.js'
 import { closeMonitors, startMonitorWorker } from './lib/monitors.js'
 import { ensureAdmin } from './lib/settings.js'
+import { startAutoUpdates } from './lib/updates.js'
 
 mkdirSync(config.filesDir, { recursive: true })
 await runMigrations()
@@ -21,6 +22,7 @@ if (config.inlineWorker) {
 }
 
 await app.listen({ port: config.port, host: config.host })
+startAutoUpdates({ info: (m) => app.log.info(m), warn: (m) => app.log.warn(m) })
 
 const shutdown = async () => {
   await app.close()

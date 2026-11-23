@@ -19,6 +19,7 @@ import {
   DescribeVpcEndpointsCommand,
   EC2Client,
 } from '@aws-sdk/client-ec2'
+import { ECSClient, UpdateServiceCommand } from '@aws-sdk/client-ecs'
 import { GetCommandInvocationCommand, SendCommandCommand, SSMClient } from '@aws-sdk/client-ssm'
 import { childEnv, type Session } from './aws/session.js'
 import { configFile, type DeployConfig, saveConfig } from './config.js'
@@ -178,6 +179,24 @@ export async function waitHealthy(
     await new Promise((r) => setTimeout(r, 10_000))
   }
   return false
+}
+
+/**
+ * En Fargate con `:stable`, la plantilla no cambia al publicarse una versión: hay que pedir a ECS un
+ * despliegue nuevo para que vuelva a resolver la etiqueta.
+ */
+export async function redeployFargate(s: Session, stackName: string): Promise<void> {
+  const opts = { region: s.region, credentials: s.credentials }
+  const res = await new CloudFormationClient(opts).send(
+    new DescribeStackResourcesCommand({ StackName: stackName }),
+  )
+  const arn = res.StackResources?.find((r) => r.ResourceType === 'AWS::ECS::Service')?.PhysicalResourceId
+  if (!arn) throw new Error(`No encuentro el servicio de ECS de ${stackName}`)
+  // arn:aws:ecs:<región>:<cuenta>:service/<cluster>/<servicio>
+  const cluster = arn.split('/')[1]
+  await new ECSClient(opts).send(
+    new UpdateServiceCommand({ cluster, service: arn, forceNewDeployment: true }),
+  )
 }
 
 /** En la EC2, vuelve a lanzar apply.sh (lee la configuración nueva de SSM y reinicia los contenedores). */
