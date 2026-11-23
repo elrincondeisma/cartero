@@ -23,13 +23,13 @@
 | **Import / export** | Postman (v1, v2.0 and v2.1 collections, environments, globals, data dumps and export ZIPs), Insomnia (v4 JSON and v5 YAML), OpenAPI 3.0/3.1, Swagger 2.0 and cURL. Exports to Postman v2.1 (lossless round trip) |
 | **Runner** | Run collections or folders without limits, with iterations, CSV/JSON data, delay, "stop on first failure" and live results |
 | **CLI** | `cartero run`, a Newman equivalent for CI: console, JSON, JUnit and HTML reporters; runs files or collections from your server and uploads the result |
-| **Contracts** | The structure the frontend sends and the backend must return, per status code. Generated from a real response or written by hand; checked on every send, breaking changes flagged on save, mocks built from it, OpenAPI 3.1 export and import. See the [guide](docs/manual/19-contracts.md) |
+| **Contracts** | The structure the frontend sends and the backend must return, per status code. Generated from a real response or written by hand; checked on every send, breaking changes flagged on save, mocks built from it, OpenAPI 3.1 export and import. See the [guide](https://cartero.elrincondeisma.com/docs/contracts/) |
 | **Mock servers** | Respond with your saved examples: routes with parameters, `x-mock-response-*` headers, dynamic variables (`{{$randomEmail}}`…), simulated latency, private mocks and a call log |
 | **Monitors** | Scheduled runs with cron and time zone; alerts via Slack, Discord, Telegram, email or webhook; history with uptime and timings |
 | **Documentation** | A public page per collection with Markdown descriptions, examples and cURL. Optional password. Credentials are hidden automatically |
 | **AI (MCP)** | Built-in MCP server (`/mcp`) with 24 tools: Claude, Cursor and other assistants can browse, send, run, create requests, import and manage contracts, with your permissions |
 | **Languages** | UI, user guide and sample data in **English and Spanish**, with a language switch saved to your account |
-| **Help** | Welcome wizard, guided tour, command palette (Ctrl+K), [full user guide](docs/manual/README.md) at `/ayuda` and sample data with real APIs that you can remove in one click |
+| **Help** | Welcome wizard, guided tour, command palette (Ctrl+K), [full user guide](https://cartero.elrincondeisma.com/docs/) at `/ayuda` and sample data with real APIs that you can remove in one click |
 | **Teams** | Workspaces, invitations, roles (owner, admin, editor, viewer), real-time presence, comments, change history with restore, fork and merge, API tokens |
 | **Sign-in and admin** | Email and password, **Google** and **GitHub**. Step-by-step **setup wizard** on first start, and an admin panel for every setting: accounts and roles, sign-up, OAuth, email (SMTP) and SSRF protection |
 
@@ -69,11 +69,11 @@ cp .env.example .env        # change CARTERO_SECRET_KEY and POSTGRES_PASSWORD
 docker compose up -d
 ```
 
-Open `http://localhost:3000`. The **setup wizard** walks you through it step by step: create the admin account, set the public URL, decide who can sign up, and optionally turn on Google and GitHub sign-in and email. See [First start](docs/manual/15-self-hosting.md#first-start-the-setup-wizard).
+Open `http://localhost:3000`. The **setup wizard** walks you through it step by step: create the admin account, set the public URL, decide who can sign up, and optionally turn on Google and GitHub sign-in and email. See [First start](https://cartero.elrincondeisma.com/docs/self-hosting/#first-start-the-setup-wizard).
 
-**On AWS?** `pnpm deploy:aws` starts a step-by-step wizard that deploys Cartero with CDK, on ECS Fargate or on an EC2 instance, reusing your VPC, database, Redis and domain or creating them. See [Deploying to AWS](docs/manual/20-deploy-aws.md).
+**On AWS?** `pnpm deploy:aws` starts a step-by-step wizard that deploys Cartero with CDK, on ECS Fargate or on an EC2 instance, reusing your VPC, database, Redis and domain or creating them. See [Deploying to AWS](https://cartero.elrincondeisma.com/docs/deploy-aws/).
 
-Everything you choose can be changed later in **Administration** (account menu), along with user management. See the [admin guide](docs/manual/17-admin-and-social-login.md).
+Everything you choose can be changed later in **Administration** (account menu), along with user management. See the [admin guide](https://cartero.elrincondeisma.com/docs/admin-and-social-login/).
 
 ### Configuration
 
@@ -99,13 +99,13 @@ In **Settings → Connect AI (MCP)** you create a token and copy the configurati
 claude mcp add --transport http cartero https://cartero.example.com/mcp --header "Authorization: Bearer crt_xxx"
 ```
 
-More in the [user guide](docs/manual/13-ai-mcp.md).
+More in the [user guide](https://cartero.elrincondeisma.com/docs/ai-mcp/).
 
 <img src="apps/landing/src/assets/screens/en/mcp.png" alt="Settings page to connect an AI assistant over MCP">
 
 ## Desktop app
 
-A native app for macOS, Windows and Linux, written in Rust. It works on its own (your collections live on your computer and requests leave from your machine, so they reach `localhost` and your VPN) and can sync workspaces with a Cartero server. Download it from [Releases](https://github.com/elrincondeisma/cartero/releases) and read the [guide](docs/manual/18-desktop-app.md).
+A native app for macOS, Windows and Linux, written in Rust. It works on its own (your collections live on your computer and requests leave from your machine, so they reach `localhost` and your VPN) and can sync workspaces with a Cartero server. Download it from [Releases](https://github.com/elrincondeisma/cartero/releases) and read the [guide](https://cartero.elrincondeisma.com/docs/desktop-app/).
 
 | macOS (Apple Silicon and Intel) | Windows | Linux |
 |---|---|---|
@@ -140,7 +140,7 @@ packages/
   exporters/  Postman v2.1 and code snippets
   cli/        cartero run
   mcp/        MCP server (stdio and Streamable HTTP)
-docs/manual/  User guide in English; Spanish in docs/manual/es (also served at /ayuda)
+docs/manual/  User guide in English; Spanish in docs/manual/es (also served at /ayuda and at cartero.elrincondeisma.com/docs)
 video/        Promo video (Remotion)
 desktop/      Native desktop app in Rust (GPUI): see desktop/README.md
 ```

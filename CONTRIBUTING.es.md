@@ -27,7 +27,7 @@ pnpm --filter @cartero/web dev
 
 - Todo texto visible va en `t('Texto en español')` (o `tj()` si lleva elementos dentro, como `<code>`). La traducción va en `apps/web/src/i18n/en.ts`, con el texto español como clave.
 - `pnpm i18n:extract` envuelve en `t()` los textos nuevos que se te escapen, y `pnpm i18n:check` falla si falta alguna traducción (también corre en la CI).
-- El manual vive en `docs/manual/` (inglés, el idioma principal del repositorio) y `docs/manual/es/` (español). Cada capítulo lleva el mismo número en los dos idiomas y enlaza arriba a su traducción.
+- El manual vive en `docs/manual/` (inglés, el idioma principal del repositorio) y `docs/manual/es/` (español). Cada capítulo lleva el mismo número en los dos idiomas y enlaza arriba a su traducción. Los mismos ficheros se publican en [cartero.elrincondeisma.com/es/docs](https://cartero.elrincondeisma.com/es/docs/) (la landing los compila con Starlight); un capítulo nuevo tiene que añadirse a un grupo en `apps/landing/scripts/docs-groups.mjs`.
 - Los README y CONTRIBUTING van en inglés, con su versión en español en `*.es.md`. Si cambias uno, actualiza el otro.
 
 ## Convenciones

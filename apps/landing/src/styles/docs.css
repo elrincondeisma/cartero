@@ -1,0 +1,21 @@
+/* La documentación con los colores de Cartero (naranja de la marca sobre los grises de Starlight) */
+:root {
+  --sl-color-accent-low: #3a1a08;
+  --sl-color-accent: #ea580c;
+  --sl-color-accent-high: #fed7aa;
+  --sl-font: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --sl-font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+}
+:root[data-theme='light'] {
+  --sl-color-accent-low: #ffedd5;
+  --sl-color-accent: #c2410c;
+  --sl-color-accent-high: #7c2d12;
+}
+.site-title {
+  gap: 0.5rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.site-title {
+  color: var(--sl-color-white);
+}

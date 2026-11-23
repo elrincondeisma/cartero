@@ -23,13 +23,13 @@
 | **Importar / exportar** | Postman (colecciones v1, v2.0 y v2.1, entornos, globales, volcado de datos y ZIP de exportación), Insomnia (v4 JSON y v5 YAML), OpenAPI 3.0/3.1, Swagger 2.0 y cURL. Exporta a Postman v2.1 (ida y vuelta sin pérdidas) |
 | **Runner** | Ejecuta colecciones o carpetas sin límites, con iteraciones, datos CSV/JSON, retardo, «parar al primer fallo» y resultados en vivo |
 | **CLI** | `cartero run`, equivalente a Newman, para CI: reporters de consola, JSON, JUnit y HTML; ejecuta ficheros o colecciones de tu servidor y sube el resultado |
-| **Contratos** | La estructura que envía el frontend y la que debe devolver el backend, por código de estado. Se generan desde una respuesta real o se escriben a mano; se comprueban en cada envío, avisan de los cambios que rompen al guardar, alimentan el mock y se exportan e importan como OpenAPI 3.1. Mira la [guía](docs/manual/es/19-contratos.md) |
+| **Contratos** | La estructura que envía el frontend y la que debe devolver el backend, por código de estado. Se generan desde una respuesta real o se escriben a mano; se comprueban en cada envío, avisan de los cambios que rompen al guardar, alimentan el mock y se exportan e importan como OpenAPI 3.1. Mira la [guía](https://cartero.elrincondeisma.com/es/docs/contracts/) |
 | **Mock servers** | Responden con los ejemplos guardados: rutas con parámetros, cabeceras `x-mock-response-*`, variables dinámicas (`{{$randomEmail}}`…), retardo simulado, mocks privados y log de llamadas |
 | **Monitores** | Ejecuciones programadas con cron y zona horaria; avisos por Slack, Discord, Telegram, email o webhook; historial con disponibilidad y tiempos |
 | **Documentación** | Página pública por colección con descripciones en Markdown, ejemplos y cURL. Opcionalmente con contraseña. Las credenciales se ocultan solas |
 | **IA (MCP)** | Servidor MCP integrado (`/mcp`) con 24 herramientas: Claude, Cursor y otros asistentes pueden explorar, enviar, ejecutar, crear peticiones, importar y gestionar contratos con tus permisos |
 | **Idiomas** | Interfaz, manual y datos de ejemplo en **español e inglés**, con selector de idioma guardado en tu cuenta |
-| **Ayuda** | Asistente de bienvenida, recorrido guiado, paleta de comandos (Ctrl+K), [manual completo](docs/manual/es/README.md) en `/ayuda` y datos de ejemplo con APIs reales que se quitan con un clic |
+| **Ayuda** | Asistente de bienvenida, recorrido guiado, paleta de comandos (Ctrl+K), [manual completo](https://cartero.elrincondeisma.com/es/docs/) en `/ayuda` y datos de ejemplo con APIs reales que se quitan con un clic |
 | **Equipos** | Workspaces, invitaciones, roles (propietario, admin, editor, lector), presencia en tiempo real, comentarios, historial de cambios con restauración, fork y merge, tokens de API |
 | **Acceso y administración** | Email y contraseña, **Google** y **GitHub**. **Asistente de instalación** paso a paso al primer arranque, y un panel de administración con todos los ajustes: cuentas y roles, registro, OAuth, email (SMTP) y protección SSRF |
 
@@ -69,11 +69,11 @@ cp .env.example .env        # cambia CARTERO_SECRET_KEY y POSTGRES_PASSWORD
 docker compose up -d
 ```
 
-Abre `http://localhost:3000`. El **asistente de instalación** te guía paso a paso: crear la cuenta de administrador, poner la URL pública, decidir quién puede registrarse y, si quieres, activar el login con Google y GitHub y el email. Lo tienes en [Primer arranque](docs/manual/es/15-autoalojamiento.md#primer-arranque-el-asistente).
+Abre `http://localhost:3000`. El **asistente de instalación** te guía paso a paso: crear la cuenta de administrador, poner la URL pública, decidir quién puede registrarse y, si quieres, activar el login con Google y GitHub y el email. Lo tienes en [Primer arranque](https://cartero.elrincondeisma.com/es/docs/self-hosting/#primer-arranque-el-asistente).
 
-**¿En AWS?** `pnpm deploy:aws` lanza un asistente paso a paso que despliega Cartero con CDK, en ECS Fargate o en una EC2, reutilizando tu VPC, base de datos, Redis y dominio o creándolos. Mira [Desplegar en AWS](docs/manual/es/20-desplegar-en-aws.md).
+**¿En AWS?** `pnpm deploy:aws` lanza un asistente paso a paso que despliega Cartero con CDK, en ECS Fargate o en una EC2, reutilizando tu VPC, base de datos, Redis y dominio o creándolos. Mira [Desplegar en AWS](https://cartero.elrincondeisma.com/es/docs/deploy-aws/).
 
-Todo lo que elijas se puede cambiar después en **Administración** (menú de la cuenta), junto con la gestión de usuarios. Mira la [guía de administración](docs/manual/es/17-administracion-y-login-social.md).
+Todo lo que elijas se puede cambiar después en **Administración** (menú de la cuenta), junto con la gestión de usuarios. Mira la [guía de administración](https://cartero.elrincondeisma.com/es/docs/admin-and-social-login/).
 
 ### Configuración
 
@@ -99,13 +99,13 @@ En **Ajustes → Conectar IA (MCP)** creas un token y copias la configuración p
 claude mcp add --transport http cartero https://cartero.ejemplo.com/mcp --header "Authorization: Bearer crt_xxx"
 ```
 
-Más detalles en el [manual](docs/manual/es/13-ia-mcp.md).
+Más detalles en el [manual](https://cartero.elrincondeisma.com/es/docs/ai-mcp/).
 
 <img src="apps/landing/src/assets/screens/mcp.png" alt="Página de ajustes para conectar un asistente de IA por MCP">
 
 ## App de escritorio
 
-Una app nativa para macOS, Windows y Linux, escrita en Rust. Funciona sola (tus colecciones se guardan en tu ordenador y las peticiones salen de tu equipo, así que llegan a `localhost` y a tu VPN) y puede sincronizar workspaces con un servidor de Cartero. Descárgala en [Releases](https://github.com/elrincondeisma/cartero/releases) y lee la [guía](docs/manual/es/18-app-de-escritorio.md).
+Una app nativa para macOS, Windows y Linux, escrita en Rust. Funciona sola (tus colecciones se guardan en tu ordenador y las peticiones salen de tu equipo, así que llegan a `localhost` y a tu VPN) y puede sincronizar workspaces con un servidor de Cartero. Descárgala en [Releases](https://github.com/elrincondeisma/cartero/releases) y lee la [guía](https://cartero.elrincondeisma.com/es/docs/desktop-app/).
 
 | macOS (Apple Silicon e Intel) | Windows | Linux |
 |---|---|---|
@@ -140,7 +140,7 @@ packages/
   exporters/  Postman v2.1 y snippets de código
   cli/        cartero run
   mcp/        Servidor MCP (stdio y Streamable HTTP)
-docs/manual/  Manual de uso en inglés; en español, docs/manual/es (también en /ayuda)
+docs/manual/  Manual de uso en inglés; en español, docs/manual/es (también en /ayuda y en cartero.elrincondeisma.com/es/docs)
 video/        Vídeo promocional (Remotion)
 desktop/      App de escritorio nativa en Rust (GPUI): mira desktop/README.es.md
 ```

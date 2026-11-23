@@ -5,7 +5,7 @@ import { Link } from 'react-router'
 import { toast } from 'sonner'
 import { api } from '@/api/client'
 import { Button, Spinner, Switch, timeAgo } from '@/components/ui'
-import { t } from '@/i18n'
+import { lang, t } from '@/i18n'
 import { type AdminSettings, useSaveSettings } from './forms'
 
 export interface UpdateStatus {
@@ -23,7 +23,7 @@ export interface UpdateStatus {
 
 export const UPDATES_KEY = ['admin', 'updates']
 
-const DOCS = 'https://github.com/elrincondeisma/cartero/blob/main/docs/manual/21-updating.md'
+const DOCS = `https://cartero.elrincondeisma.com${lang === 'es' ? '/es' : ''}/docs/updating/`
 
 export function useUpdates(enabled = true) {
   return useQuery({

@@ -27,7 +27,7 @@ pnpm --filter @cartero/web dev
 
 - Every visible string goes through `t('Texto en español')` (or `tj()` if it contains elements such as `<code>`). The Spanish text is the key; the English translation goes in `apps/web/src/i18n/en.ts`.
 - `pnpm i18n:extract` wraps any new strings you missed in `t()`, and `pnpm i18n:check` fails if a translation is missing (it also runs in CI).
-- The user guide lives in `docs/manual/` (English, the repository's main language) and `docs/manual/es/` (Spanish). Each chapter has the same number in both languages and links to its translation at the top.
+- The user guide lives in `docs/manual/` (English, the repository's main language) and `docs/manual/es/` (Spanish). Each chapter has the same number in both languages and links to its translation at the top. The same files are published at [cartero.elrincondeisma.com/docs](https://cartero.elrincondeisma.com/docs/) (the landing builds them with Starlight); a new chapter must be added to a group in `apps/landing/scripts/docs-groups.mjs`. The same files are published at [cartero.elrincondeisma.com/docs](https://cartero.elrincondeisma.com/docs/) (the landing builds them with Starlight); a new chapter must be added to a group in `apps/landing/scripts/docs-groups.mjs`.
 - READMEs and CONTRIBUTING are in English, with a Spanish version in `*.es.md`. If you change one, update the other.
 
 ## Conventions

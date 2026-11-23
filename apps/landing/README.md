@@ -18,6 +18,7 @@ When you publish it, set:
 
 `dist/` can be served by any static host: GitHub Pages, Cloudflare Pages, Netlify or Nginx.
 
+- **Docs (`/docs`, `/es/docs`):** Starlight pages generated from `docs/manual` by `scripts/sync-docs.mjs` before `dev` and `build` (the output, `src/content/docs`, is not versioned). Sidebar groups: `scripts/docs-groups.mjs`.
 - **Copy:** in `src/i18n/ui.ts`. To add a language, add its block there, its route in `src/pages/<lang>/` and the language in `astro.config.mjs`.
 - **Hero video:** `public/video/cartero-{es,en}.mp4`, generated from `video/` with `pnpm render:all`.
 - **Screenshots:** they are real and are regenerated with the app running:

@@ -29,14 +29,15 @@ const S = lang === 'en'
   ? { scripts: scriptsEn, runner: runnerEn, mocks: mocksEn, monitors: monitorsEn, collab: collabEn, docs: docsEn, mcp: mcpEn, palette: paletteEn }
   : { scripts: scriptsEs, runner: runnerEs, mocks: mocksEs, monitors: monitorsEs, collab: collabEs, docs: docsEs, mcp: mcpEs, palette: paletteEs }
 const shots: Record<string, ImageMetadata> = S
-const manualUrl = `${REPO_URL}/tree/main/docs/manual${lang === 'es' ? '/es' : ''}`
+const docsBase = lang === 'es' ? '/es/docs' : '/docs'
+const manualUrl = `${docsBase}/`
 
 const install = `git clone ${REPO_URL}.git cartero && cd cartero
 cp .env.example .env    # CARTERO_SECRET_KEY=$(openssl rand -base64 32)
 docker compose up -d`
 
 const awsCmd = `pnpm install && pnpm deploy:aws`
-const awsGuide = `${REPO_URL}/blob/main/docs/manual/${lang === 'es' ? 'es/20-desplegar-en-aws.md' : '20-deploy-aws.md'}`
+const awsGuide = `${docsBase}/deploy-aws/`
 
 const mcpCmd = `claude mcp add --transport http cartero \\
   https://cartero.example.com/mcp \\

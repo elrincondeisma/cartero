@@ -18,6 +18,7 @@ Al publicarla, define:
 
 `dist/` se sirve en cualquier hosting estático: GitHub Pages, Cloudflare Pages, Netlify o un Nginx.
 
+- **Documentación (`/docs`, `/es/docs`):** páginas de Starlight generadas desde `docs/manual` con `scripts/sync-docs.mjs` antes de `dev` y `build` (la salida, `src/content/docs`, no se versiona). Grupos de la barra lateral: `scripts/docs-groups.mjs`.
 - **Textos:** en `src/i18n/ui.ts`. Para añadir un idioma, añade su bloque ahí, su ruta en `src/pages/<idioma>/` y el idioma en `astro.config.mjs`.
 - **Vídeo de la hero:** `public/video/cartero-{es,en}.mp4`, generado desde `video/` con `pnpm render:all`.
 - **Capturas:** son reales y se regeneran con la app en marcha:
