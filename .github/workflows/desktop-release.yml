@@ -110,6 +110,8 @@ jobs:
           path: dist
           merge-multiple: true
       - name: Copias con nombre fijo (enlaces directos /releases/latest/download/…)
+        # Este trabajo no descarga el código: no existe la carpeta desktop/ de los demás pasos
+        working-directory: ${{ github.workspace }}
         run: |
           cd dist
           cp Cartero-*-macos-universal.dmg Cartero-macos-universal.dmg
