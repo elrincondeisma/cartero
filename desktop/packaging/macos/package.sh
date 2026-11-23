@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Empaqueta Cartero para macOS: binario universal (Apple Silicon + Intel), Cartero.app y .dmg.
 # Firma ad hoc por defecto. Con MACOS_SIGN_IDENTITY (certificado «Developer ID Application» en el
-# llavero) firma de verdad, y con APPLE_ID, APPLE_TEAM_ID y APPLE_APP_PASSWORD además notariza.
+# llavero) firma de verdad. Notariza con una clave de API de App Store Connect (ASC_KEY_ID,
+# ASC_ISSUER_ID y ASC_KEY_PATH al .p8) o con APPLE_ID, APPLE_TEAM_ID y APPLE_APP_PASSWORD.
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 VERSION=$(grep -m1 '^version' Cargo.toml | cut -d'"' -f2)
@@ -35,9 +36,16 @@ cp -R "$APP" "$STAGE/" && ln -s /Applications "$STAGE/Applications"
 DMG="$OUT/Cartero-$VERSION-macos-universal.dmg"
 hdiutil create -volname "Cartero" -srcfolder "$STAGE" -ov -format UDZO "$DMG"
 
-if [ -n "${MACOS_SIGN_IDENTITY:-}" ] && [ -n "${APPLE_ID:-}" ]; then
+if [ -n "${MACOS_SIGN_IDENTITY:-}" ]; then
   codesign --force --sign "$MACOS_SIGN_IDENTITY" --timestamp "$DMG"
-  xcrun notarytool submit "$DMG" --apple-id "$APPLE_ID" --team-id "$APPLE_TEAM_ID" --password "$APPLE_APP_PASSWORD" --wait
-  xcrun stapler staple "$DMG"
+  if [ -n "${ASC_KEY_ID:-}" ]; then
+    xcrun notarytool submit "$DMG" --key "$ASC_KEY_PATH" --key-id "$ASC_KEY_ID" --issuer "$ASC_ISSUER_ID" --wait --timeout 30m
+  elif [ -n "${APPLE_ID:-}" ]; then
+    xcrun notarytool submit "$DMG" --apple-id "$APPLE_ID" --team-id "$APPLE_TEAM_ID" --password "$APPLE_APP_PASSWORD" --wait --timeout 30m
+  fi
+  if [ -n "${ASC_KEY_ID:-}${APPLE_ID:-}" ]; then
+    xcrun stapler staple "$DMG"
+    spctl --assess --type open --context context:primary-signature -v "$DMG"
+  fi
 fi
 echo "$DMG"

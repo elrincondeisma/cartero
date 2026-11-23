@@ -42,10 +42,18 @@ jobs:
       - name: Cartero.app y .dmg
         env:
           MACOS_SIGN_IDENTITY: ${{ secrets.MACOS_SIGN_IDENTITY }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY: ${{ secrets.ASC_KEY }}
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
-        run: packaging/macos/package.sh
+        run: |
+          if [ -n "$ASC_KEY" ]; then
+            export ASC_KEY_PATH="$RUNNER_TEMP/asc_key.p8"
+            printf '%s' "$ASC_KEY" > "$ASC_KEY_PATH"
+          fi
+          packaging/macos/package.sh
       - uses: actions/upload-artifact@v4
         with:
           name: cartero-macos
@@ -107,6 +115,6 @@ jobs:
           body: |
             Instaladores de la app de escritorio de Cartero.
 
-            - **macOS** (Apple Silicon e Intel): `Cartero-…-macos-universal.dmg`. Si no está firmada, la primera vez abre la app con clic derecho → Abrir.
+            - **macOS** (Apple Silicon e Intel): `Cartero-…-macos-universal.dmg`, firmado y notarizado por Apple: abre el .dmg y arrastra Cartero a Aplicaciones.
             - **Windows**: `Cartero-…-windows-x64-setup.exe`.
             - **Linux**: `.deb` (Debian, Ubuntu) o `.AppImage` (cualquier distribución).
