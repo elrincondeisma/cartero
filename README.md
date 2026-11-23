@@ -2,7 +2,9 @@
 
 # Cartero
 
-[![Cartero product video (1 minute)](apps/landing/public/video/poster-en.jpg)](https://github.com/elrincondeisma/cartero/raw/main/apps/landing/public/video/cartero-en.mp4)
+[![Cartero product video (1½ minutes)](apps/landing/public/video/poster-en.jpg)](https://github.com/elrincondeisma/cartero/raw/main/apps/landing/public/video/cartero-en.mp4)
+
+<img src="apps/landing/src/assets/screens/en/request-dark.png" alt="Cartero sending a request, dark theme">
 
 **An open-source, self-hosted web API client.** A Postman alternative that includes what Postman charges for, free and without limits: collection runner, mock servers, monitors, published documentation and team collaboration. Import your Postman collections without losing anything.
 
@@ -28,6 +30,34 @@
 | **Help** | Welcome wizard, guided tour, command palette (Ctrl+K), [full user guide](docs/manual/README.md) at `/ayuda` and sample data with real APIs that you can remove in one click |
 | **Teams** | Workspaces, invitations, roles (owner, admin, editor, viewer), real-time presence, comments, change history with restore, fork and merge, API tokens |
 | **Sign-in and admin** | Email and password, **Google** and **GitHub**. Step-by-step **setup wizard** on first start, and an admin panel for every setting: accounts and roles, sign-up, OAuth, email (SMTP) and SSRF protection |
+
+## Screenshots
+
+<table>
+  <tr>
+    <td width="50%" valign="top"><img src="apps/landing/src/assets/screens/en/contract.png" alt="Contract tab with the field tree of a response"><br><b>API contracts</b> · generated from a real response, edited as a field tree</td>
+    <td width="50%" valign="top"><img src="apps/landing/src/assets/screens/en/contract-fail.png" alt="Response that breaks the contract, with its failures"><br><b>Contract checks</b> · every send is checked: what was sent and what came back</td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top"><img src="apps/landing/src/assets/screens/en/scripts.png" alt="Post-response script editor with snippets"><br><b>Tests and scripts</b> · the <code>pm.*</code> API with autocomplete and snippets</td>
+    <td width="50%" valign="top"><img src="apps/landing/src/assets/screens/en/runner.png" alt="Runner results with tests per request"><br><b>Collection runner</b> · unlimited runs with live results</td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top"><img src="apps/landing/src/assets/screens/en/mocks.png" alt="Mock server with its incoming calls"><br><b>Mock servers</b> · from saved examples or contracts, with a call log</td>
+    <td width="50%" valign="top"><img src="apps/landing/src/assets/screens/en/monitors.png" alt="Monitor with uptime and run history"><br><b>Monitors</b> · scheduled runs with uptime and alerts</td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top"><img src="apps/landing/src/assets/screens/en/collab.png" alt="Request with the comments panel open"><br><b>Teams</b> · presence, comments and change history</td>
+    <td width="50%" valign="top"><img src="apps/landing/src/assets/screens/en/docs.png" alt="Published documentation of a collection"><br><b>Published docs</b> · one public page per collection</td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top"><img src="apps/landing/src/assets/screens/en/import.png" alt="Import dialog"><br><b>Import</b> · Postman, Insomnia, OpenAPI and cURL</td>
+    <td width="50%" valign="top"><img src="apps/landing/src/assets/screens/en/palette.png" alt="Command palette searching requests"><br><b>Command palette</b> · Ctrl+K finds any request or action</td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top"><img src="apps/landing/src/assets/screens/en/request-light.png" alt="Request in the light theme"><br><b>Light theme</b> · the whole app, in light and dark</td>
+  </tr>
+</table>
 
 ## Getting started
 
@@ -67,9 +97,13 @@ claude mcp add --transport http cartero https://cartero.example.com/mcp --header
 
 More in the [user guide](docs/manual/13-ai-mcp.md).
 
+<img src="apps/landing/src/assets/screens/en/mcp.png" alt="Settings page to connect an AI assistant over MCP">
+
 ## Desktop app
 
 A native app for macOS, Windows and Linux, written in Rust. It works on its own (your collections live on your computer and requests leave from your machine, so they reach `localhost` and your VPN) and can sync workspaces with a Cartero server. Download it from [Releases](https://github.com/elrincondeisma/cartero/releases) and read the [guide](docs/manual/18-desktop-app.md).
+
+<img src="apps/landing/src/assets/screens/en/desktop.png" alt="Cartero desktop app checking a contract against a localhost API, with a local mock running">
 
 ## CLI
 

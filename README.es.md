@@ -2,7 +2,9 @@
 
 # Cartero
 
-[![Vídeo de presentación de Cartero (1 minuto)](apps/landing/public/video/poster-es.jpg)](https://github.com/elrincondeisma/cartero/raw/main/apps/landing/public/video/cartero-es.mp4)
+[![Vídeo de presentación de Cartero (minuto y medio)](apps/landing/public/video/poster-es.jpg)](https://github.com/elrincondeisma/cartero/raw/main/apps/landing/public/video/cartero-es.mp4)
+
+<img src="apps/landing/src/assets/screens/request-dark.png" alt="Cartero enviando una petición, tema oscuro">
 
 **Cliente de APIs web y open source, autoalojado.** Una alternativa a Postman con lo que allí es de pago incluido gratis y sin límites: runner de colecciones, mock servers, monitores, documentación publicada y colaboración en equipo. Importa tus colecciones de Postman sin perder nada.
 
@@ -28,6 +30,34 @@
 | **Ayuda** | Asistente de bienvenida, recorrido guiado, paleta de comandos (Ctrl+K), [manual completo](docs/manual/es/README.md) en `/ayuda` y datos de ejemplo con APIs reales que se quitan con un clic |
 | **Equipos** | Workspaces, invitaciones, roles (propietario, admin, editor, lector), presencia en tiempo real, comentarios, historial de cambios con restauración, fork y merge, tokens de API |
 | **Acceso y administración** | Email y contraseña, **Google** y **GitHub**. **Asistente de instalación** paso a paso al primer arranque, y un panel de administración con todos los ajustes: cuentas y roles, registro, OAuth, email (SMTP) y protección SSRF |
+
+## Capturas
+
+<table>
+  <tr>
+    <td width="50%" valign="top"><img src="apps/landing/src/assets/screens/contract.png" alt="Pestaña Contrato con el árbol de campos de una respuesta"><br><b>Contratos de API</b> · generados desde una respuesta real y editados como árbol de campos</td>
+    <td width="50%" valign="top"><img src="apps/landing/src/assets/screens/contract-fail.png" alt="Respuesta que no cumple el contrato, con sus fallos"><br><b>Comprobación del contrato</b> · cada envío se comprueba: lo enviado y lo recibido</td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top"><img src="apps/landing/src/assets/screens/scripts.png" alt="Editor de scripts post-response con fragmentos"><br><b>Tests y scripts</b> · la API <code>pm.*</code> con autocompletado y fragmentos</td>
+    <td width="50%" valign="top"><img src="apps/landing/src/assets/screens/runner.png" alt="Resultados del runner con los tests de cada petición"><br><b>Runner de colecciones</b> · ejecuciones sin límites con resultados en vivo</td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top"><img src="apps/landing/src/assets/screens/mocks.png" alt="Mock server con sus llamadas recibidas"><br><b>Mock servers</b> · con tus ejemplos o tus contratos, y registro de llamadas</td>
+    <td width="50%" valign="top"><img src="apps/landing/src/assets/screens/monitors.png" alt="Monitor con disponibilidad e historial"><br><b>Monitores</b> · ejecuciones programadas con disponibilidad y avisos</td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top"><img src="apps/landing/src/assets/screens/collab.png" alt="Petición con el panel de comentarios abierto"><br><b>Equipos</b> · presencia, comentarios e historial de cambios</td>
+    <td width="50%" valign="top"><img src="apps/landing/src/assets/screens/docs.png" alt="Documentación publicada de una colección"><br><b>Documentación publicada</b> · una página pública por colección</td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top"><img src="apps/landing/src/assets/screens/import.png" alt="Diálogo de importación"><br><b>Importar</b> · Postman, Insomnia, OpenAPI y cURL</td>
+    <td width="50%" valign="top"><img src="apps/landing/src/assets/screens/palette.png" alt="Paleta de comandos buscando peticiones"><br><b>Paleta de comandos</b> · Ctrl+K encuentra cualquier petición o acción</td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top"><img src="apps/landing/src/assets/screens/request-light.png" alt="Petición con el tema claro"><br><b>Tema claro</b> · toda la app, en claro y oscuro</td>
+  </tr>
+</table>
 
 ## Puesta en marcha
 
@@ -67,9 +97,13 @@ claude mcp add --transport http cartero https://cartero.ejemplo.com/mcp --header
 
 Más detalles en el [manual](docs/manual/es/13-ia-mcp.md).
 
+<img src="apps/landing/src/assets/screens/mcp.png" alt="Página de ajustes para conectar un asistente de IA por MCP">
+
 ## App de escritorio
 
 Una app nativa para macOS, Windows y Linux, escrita en Rust. Funciona sola (tus colecciones se guardan en tu ordenador y las peticiones salen de tu equipo, así que llegan a `localhost` y a tu VPN) y puede sincronizar workspaces con un servidor de Cartero. Descárgala en [Releases](https://github.com/elrincondeisma/cartero/releases) y lee la [guía](docs/manual/es/18-app-de-escritorio.md).
+
+<img src="apps/landing/src/assets/screens/desktop.png" alt="App de escritorio de Cartero comprobando un contrato contra una API en localhost, con un mock local en marcha">
 
 ## CLI
 
