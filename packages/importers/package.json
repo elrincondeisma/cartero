@@ -17,6 +17,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@cartero/contracts": "workspace:*",
     "@cartero/core": "workspace:*",
     "fflate": "^0.8.3",
     "openapi-to-postmanv2": "^6.4.4",

@@ -19,4 +19,5 @@
 - [Instalación y administración](15-autoalojamiento.md)
 - [Administración](17-administracion-y-login-social.md)
 - [App de escritorio](18-app-de-escritorio.md)
+- [Contratos](19-contratos.md)
 - [Preguntas frecuentes](16-preguntas-frecuentes.md)

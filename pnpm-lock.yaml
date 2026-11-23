@@ -208,6 +208,9 @@ importers:
 
   apps/server:
     dependencies:
+      '@cartero/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       '@cartero/core':
         specifier: workspace:*
         version: link:../../packages/core
@@ -262,6 +265,9 @@ importers:
       postgres:
         specifier: ^4.1.1
         version: 4.1.1
+      yaml:
+        specifier: ^2.9.1
+        version: 2.9.1
       zod:
         specifier: ^4.6.7
         version: 4.6.7
@@ -281,6 +287,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@cartero/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       '@monaco-editor/react':
         specifier: ^4.7.0
         version: 4.7.0(monaco-editor@0.57.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
@@ -386,6 +395,18 @@ importers:
         specifier: ^5.5.2
         version: 5.5.2
 
+  packages/contracts:
+    dependencies:
+      '@cartero/core':
+        specifier: workspace:*
+        version: link:../core
+      ajv:
+        specifier: ^8.17.1
+        version: 8.20.0
+      ajv-formats:
+        specifier: ^3.0.1
+        version: 3.0.1(ajv@8.20.0)
+
   packages/core: {}
 
   packages/executor:
@@ -421,6 +442,9 @@ importers:
 
   packages/importers:
     dependencies:
+      '@cartero/contracts':
+        specifier: workspace:*
+        version: link:../contracts
       '@cartero/core':
         specifier: workspace:*
         version: link:../core

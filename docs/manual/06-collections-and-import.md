@@ -28,7 +28,7 @@ Click the import icon in the Collections sidebar (or Ctrl+K → *Import*). There
 | **Postman** environments and globals | Variables (secret ones stay secret) |
 | **Postman** data-export ZIP | Every collection and environment in your account at once |
 | **Insomnia** v4 (JSON) and v5 (YAML) | Folders, requests, auth, scripts; the base environment becomes collection variables and sub-environments become environments |
-| **OpenAPI** 3.0/3.1 and **Swagger** 2.0 (JSON or YAML) | One request per operation, grouped by *tags*, with examples |
+| **OpenAPI** 3.0/3.1 and **Swagger** 2.0 (JSON or YAML) | One request per operation, grouped by *tags*, with examples and a [contract](19-contracts.md) taken from the schemas |
 | **cURL** | One request |
 | Cartero workspace export | The whole workspace |
 

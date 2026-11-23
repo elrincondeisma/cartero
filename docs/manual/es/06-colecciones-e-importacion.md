@@ -28,7 +28,7 @@ Pulsa el icono de importar en la barra lateral de Colecciones (o Ctrl+K → *Imp
 | **Postman** entorno y globales | Variables (las secretas siguen siendo secretas) |
 | **Postman** ZIP de exportación de datos | Todas las colecciones y entornos de tu cuenta de una vez |
 | **Insomnia** v4 (JSON) y v5 (YAML) | Carpetas, peticiones, auth, scripts; el entorno base pasa a variables de colección y los sub-entornos a entornos |
-| **OpenAPI** 3.0/3.1 y **Swagger** 2.0 (JSON o YAML) | Una petición por operación, agrupadas por *tags*, con ejemplos |
+| **OpenAPI** 3.0/3.1 y **Swagger** 2.0 (JSON o YAML) | Una petición por operación, agrupadas por *tags*, con ejemplos y su [contrato](19-contratos.md) sacado de los esquemas |
 | **cURL** | Una petición |
 | Exportación de workspace de Cartero | Todo el workspace |
 

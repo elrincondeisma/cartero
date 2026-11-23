@@ -1,7 +1,9 @@
+import { hasContract } from '@cartero/contracts'
 import { useQueryClient } from '@tanstack/react-query'
 import {
   ChevronRight,
   Copy,
+  FileCheck2,
   Download,
   FilePlus,
   FileUp,
@@ -189,6 +191,16 @@ function CollectionNode({ collection, filter }: { collection: CollectionSummary;
       label: t("Exportar (Postman v2.1)"),
       icon: <Download />,
       onSelect: () => download(`/api/collections/${collection.id}/export`, `${collection.name}.postman_collection.json`),
+    },
+    {
+      label: t("Exportar OpenAPI 3.1 (YAML)"),
+      icon: <FileCheck2 />,
+      onSelect: () => download(`/api/collections/${collection.id}/openapi?format=yaml`, `${collection.name}.openapi.yaml`),
+    },
+    {
+      label: t("Exportar OpenAPI 3.1 (JSON)"),
+      icon: <FileCheck2 />,
+      onSelect: () => download(`/api/collections/${collection.id}/openapi?format=json`, `${collection.name}.openapi.json`),
     },
     ...(canEdit
       ? [
@@ -424,6 +436,11 @@ function ItemNode({
           <MethodBadge method={row.data.request?.method ?? 'GET'} className="w-10 shrink-0 text-right" />
         )}
         <span className="flex-1 truncate">{row.name}</span>
+        {!isFolder && hasContract(row.data.contract) && (
+          <FileCheck2 className="size-3 shrink-0 text-muted" aria-label={t("Tiene contrato")}>
+            <title>{t("Tiene contrato")}</title>
+          </FileCheck2>
+        )}
         {viewers.map((v) => (
           <span key={v.id} title={t("{0} está aquí", [v.name])} className="size-2 shrink-0 rounded-full" style={{ background: v.color }} />
         ))}

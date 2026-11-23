@@ -29,7 +29,7 @@ Puedes forzar un ejemplo con cabeceras en la petición:
 | `x-mock-match-request-body: true` | Exige que el body coincida |
 | `x-mock-match-request-headers: X-Tenant` | Exige que esas cabeceras coincidan |
 
-Si nada coincide, responde **404** con un mensaje explicativo.
+Si ningún ejemplo coincide pero la petición tiene [contrato](19-contratos.md), el mock genera una respuesta que lo cumple. Si tampoco hay contrato, responde **404** con un mensaje explicativo.
 
 ## Respuestas dinámicas
 

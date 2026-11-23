@@ -51,7 +51,16 @@ export async function download(url: string, fallbackName: string) {
   const disp = res.headers.get('content-disposition') ?? ''
   const m = disp.match(/filename="([^"]+)"/)
   const name = m ? decodeURIComponent(m[1]) : fallbackName
-  const blob = new Blob([JSON.stringify(await res.json(), null, 2)], { type: 'application/json' })
+  const type = res.headers.get('content-type') ?? 'application/json'
+  // JSON se reindenta para que el archivo sea legible; el resto (YAML…) se guarda tal cual
+  const text = await res.text()
+  let content = text
+  if (type.includes('json')) {
+    try {
+      content = JSON.stringify(JSON.parse(text), null, 2)
+    } catch {}
+  }
+  const blob = new Blob([content], { type })
   const a = document.createElement('a')
   a.href = URL.createObjectURL(blob)
   a.download = name

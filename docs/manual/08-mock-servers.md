@@ -29,7 +29,7 @@ You can force an example with request headers:
 | `x-mock-match-request-body: true` | Requires the body to match |
 | `x-mock-match-request-headers: X-Tenant` | Requires those headers to match |
 
-If nothing matches, it returns **404** with an explanatory message.
+If no example matches but the request has a [contract](19-contracts.md), the mock builds a response that follows it. If there's no contract either, it returns **404** with an explanatory message.
 
 ## Dynamic responses
 

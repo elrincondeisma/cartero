@@ -1,4 +1,5 @@
 import type { QueryParam, Request, RequestItem, ResponseExample } from '@cartero/core'
+import { type ContractChange, diffContracts, hasContract } from '@cartero/contracts'
 import { useQueryClient } from '@tanstack/react-query'
 import { ChevronRight, Code2, MessageSquare, RefreshCw, Save, Send } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -8,13 +9,15 @@ import { qk, useCollection } from '@/api/hooks'
 import type { ExecuteResult, ItemRow } from '@/api/types'
 import { prompt } from '@/components/dialogs'
 import { KeyValueEditor, type KVRow } from '@/components/KeyValueEditor'
-import { Button, IconButton, SubTabs, cx } from '@/components/ui'
+import { Button, Dialog, IconButton, SubTabs, cx } from '@/components/ui'
 import { VarInput } from '@/components/VarInput'
 import { METHODS, setQueryParams, setRawUrl, urlObject } from '@/lib/request'
 import { ancestors, rowToRequestItem } from '@/lib/tree'
 import { useKnownVariables } from '@/lib/vars'
 import { type Tab, useResults, useTabs } from '@/store/tabs'
 import { useUi } from '@/store/ui'
+import { ContractEditor } from '../contract/ContractEditor'
+import { ChangeList } from '../contract/ContractHistory'
 import { useWs } from '../workspace/context'
 import { AuthEditor } from './AuthEditor'
 import { BodyEditor } from './BodyEditor'
@@ -29,7 +32,7 @@ import { SnippetDialog } from './SnippetDialog'
 import { t } from "@/i18n";
 
 type ReqTab = Extract<Tab, { kind: 'request' }>
-type Sub = 'params' | 'auth' | 'headers' | 'body' | 'scripts' | 'examples' | 'docs' | 'settings'
+type Sub = 'params' | 'auth' | 'headers' | 'body' | 'scripts' | 'examples' | 'contract' | 'docs' | 'settings'
 
 /** Datos del ítem que se guardan en la fila (todo menos id y name). */
 export function itemData(item: RequestItem): ItemRow['data'] {
@@ -54,6 +57,7 @@ export function RequestTab({ tab }: { tab: ReqTab }) {
   const [saveOpen, setSaveOpen] = useState(false)
   const [snippetOpen, setSnippetOpen] = useState(false)
   const [panel, setPanel] = useState<false | 'comments' | 'history'>(false)
+  const [breaking, setBreaking] = useState<ContractChange[] | null>(null)
   const container = useRef<HTMLDivElement>(null)
 
   const setReq = (fn: (r: Request) => Request) => update({ draft: { ...draft, request: fn(req) }, dirty: true })
@@ -97,9 +101,14 @@ export function RequestTab({ tab }: { tab: ReqTab }) {
   }
 
   // --- Guardar ---
-  const save = async (force = false) => {
+  const save = async (force = false, acceptBreaking = false) => {
     if (!canEdit) return toast.error(t("Tienes acceso de solo lectura"))
     if (!tab.itemId) return setSaveOpen(true)
+    // Antes de guardar un contrato que rompe al frontend, se enseña qué rompe
+    if (!acceptBreaking && row?.data.contract) {
+      const changes = diffContracts(row.data.contract, draft.contract)
+      if (changes.some((c) => c.breaking)) return setBreaking(changes)
+    }
     try {
       const saved = await api.patch<ItemRow>(`/api/items/${tab.itemId}`, {
         name: draft.name,
@@ -300,6 +309,7 @@ export function RequestTab({ tab }: { tab: ReqTab }) {
                 { id: 'body', label: t("Body"), dot: !!req.body?.mode && req.body.mode !== 'none' },
                 { id: 'scripts', label: t("Scripts"), count: scriptCount(draft.event) },
                 { id: 'examples', label: t("Ejemplos"), count: draft.response?.length ?? 0 },
+                { id: 'contract', label: t("Contrato"), dot: hasContract(draft.contract) },
                 { id: 'docs', label: t("Descripción"), dot: !!req.description },
                 { id: 'settings', label: t("Ajustes"), dot: !!draft.protocolProfileBehavior },
               ]}
@@ -343,6 +353,18 @@ export function RequestTab({ tab }: { tab: ReqTab }) {
               {sub === 'body' && <BodyEditor body={req.body} onChange={(body) => setReq((r) => ({ ...r, body }))} known={known} />}
               {sub === 'scripts' && <ScriptsEditor events={draft.event} onChange={(event) => setItem({ event })} />}
               {sub === 'examples' && <ExamplesEditor examples={draft.response ?? []} onChange={(response) => setItem({ response })} />}
+              {sub === 'contract' && (
+                <ContractEditor
+                  key={tab.key}
+                  contract={draft.contract}
+                  onChange={(contract) => setItem({ contract })}
+                  request={req}
+                  lastResponse={result?.result?.execution?.response}
+                  readOnly={!canEdit}
+                  collectionId={tab.collectionId}
+                  itemId={tab.itemId}
+                />
+              )}
               {sub === 'docs' && (
                 <DescriptionEditor
                   value={typeof req.description === 'string' ? req.description : ((req.description as any)?.content ?? '')}
@@ -360,6 +382,9 @@ export function RequestTab({ tab }: { tab: ReqTab }) {
               loading={result?.loading}
               error={result?.error ?? result?.result?.error}
               onSaveExample={canEdit ? saveExample : undefined}
+              contract={draft.contract}
+              templateUrl={url.raw}
+              onOpenContract={() => setSub('contract')}
               onCancel={() => {
                 result?.abort?.abort()
                 setResult(tab.key, { loading: false })
@@ -369,6 +394,31 @@ export function RequestTab({ tab }: { tab: ReqTab }) {
         </div>
       </div>
       {panel && tab.collectionId && <CollabPanel collectionId={tab.collectionId} itemId={tab.itemId} onClose={() => setPanel(false)} initial={panel} />}
+      <Dialog
+        open={!!breaking}
+        onOpenChange={(v) => !v && setBreaking(null)}
+        title={t("Este cambio rompe el contrato")}
+        description={t("El frontend que use la versión guardada dejará de funcionar con estos cambios.")}
+        width="max-w-2xl"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setBreaking(null)}>
+              {t("Seguir editando")}
+            </Button>
+            <Button
+              variant="danger"
+              onClick={() => {
+                setBreaking(null)
+                save(false, true)
+              }}
+            >
+              {t("Guardar igualmente")}
+            </Button>
+          </>
+        }
+      >
+        {breaking && <ChangeList changes={breaking} />}
+      </Dialog>
       <SaveDialog open={saveOpen} onOpenChange={setSaveOpen} defaultName={draft.name} onSave={saveNew} />
       <SnippetDialog open={snippetOpen} onOpenChange={setSnippetOpen} request={req} collectionId={tab.collectionId} />
     </div>

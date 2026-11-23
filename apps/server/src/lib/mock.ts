@@ -1,15 +1,16 @@
-import { faker } from '@faker-js/faker'
+import { hasContract, sampleFromSchema } from '@cartero/contracts'
 import {
   type Collection,
+  isFolder,
   type KeyValue,
   type RequestItem,
   type ResponseExample,
-  type VariableScope,
-  isFolder,
   rawUrl,
   resolveVariables,
+  type VariableScope,
   walkItems,
 } from '@cartero/core'
+import { faker } from '@faker-js/faker'
 
 export interface MockRequest {
   method: string
@@ -23,6 +24,8 @@ export interface MockMatch {
   item: RequestItem
   example: ResponseExample
   score: number
+  /** La respuesta sale del contrato de la petición, no de un ejemplo guardado */
+  fromContract?: boolean
 }
 
 export interface MockResponse {
@@ -105,14 +108,20 @@ const DYNAMIC: Record<string, () => string> = {
 export const DYNAMIC_VARIABLES = Object.keys(DYNAMIC)
 
 export function resolveDynamic(text: string): string {
-  return text.replace(/\{\{\s*(\$[A-Za-z0-9]+)\s*\}\}/g, (m, name: string) => (DYNAMIC[name] ? DYNAMIC[name]() : m))
+  return text.replace(/\{\{\s*(\$[A-Za-z0-9]+)\s*\}\}/g, (m, name: string) =>
+    DYNAMIC[name] ? DYNAMIC[name]() : m,
+  )
 }
 
 /** Extrae los segmentos de ruta de una URL de ejemplo, ignorando protocolo, host o variable base. */
 export function examplePath(url: string): string[] {
   let u = url.split('#')[0].split('?')[0].trim()
   // Una variable al principio ({{baseUrl}}) hace de host, aunque su valor incluya una ruta
-  if (/^\{\{[^}]+\}\}/.test(u)) return u.replace(/^\{\{[^}]+\}\}/, '').split('/').filter(Boolean)
+  if (/^\{\{[^}]+\}\}/.test(u))
+    return u
+      .replace(/^\{\{[^}]+\}\}/, '')
+      .split('/')
+      .filter(Boolean)
   u = u.replace(/^[a-z][a-z0-9+.-]*:\/\//i, '')
   // Quitar el host (o la variable {{baseUrl}}) hasta la primera "/"
   const slash = u.indexOf('/')
@@ -140,8 +149,66 @@ function header(h: MockRequest['headers'], name: string): string | undefined {
  * Elige el ejemplo que mejor encaja con la petición, imitando a los mocks de Postman:
  * método, ruta (con :params y {{vars}} como comodines), query y cabeceras x-mock-*.
  */
-export function matchExample(collection: Collection, req: MockRequest, vars: VariableScope[] = []): MockMatch | undefined {
-  const reqSegs = req.path.split('/').filter(Boolean).map((s) => decodeURIComponent(s))
+/** Puntuación de una URL guardada frente a los segmentos pedidos; undefined si no encaja. */
+function scorePath(raw: string, reqSegs: string[], vars: VariableScope[]): number | undefined {
+  const exSegs = examplePath(raw).map((seg) => (seg.startsWith(':') ? seg : resolveVariables(seg, vars)))
+  if (exSegs.length !== reqSegs.length) return undefined
+  let score = 100
+  for (let i = 0; i < exSegs.length; i++) {
+    const e = exSegs[i]
+    if (e === reqSegs[i]) score += 10
+    else if (e.startsWith(':') || /^\{\{.+\}\}$/.test(e)) score += 1
+    else return undefined
+  }
+  return score
+}
+
+/** Código que responde el mock con un contrato: el pedido con x-mock-response-code o el primer 2xx. */
+function contractCode(codes: string[], wanted?: string): string | undefined {
+  if (wanted) return codes.find((c) => c === wanted || c.toUpperCase() === `${wanted[0]}XX`) ?? undefined
+  const sorted = [...codes].sort()
+  return sorted.find((c) => /^2/.test(c)) ?? sorted.find((c) => c !== 'default') ?? sorted[0]
+}
+
+/**
+ * Busca la petición con contrato que encaja con la llamada. Se usa cuando ningún ejemplo
+ * guardado coincide: el mock responde con datos que cumplen el contrato.
+ */
+export function matchContract(
+  collection: Collection,
+  req: MockRequest,
+  vars: VariableScope[] = [],
+): MockMatch | undefined {
+  const reqSegs = req.path
+    .split('/')
+    .filter(Boolean)
+    .map((s) => decodeURIComponent(s))
+  const wantCode = header(req.headers, 'x-mock-response-code')
+  let best: MockMatch | undefined
+  for (const { item } of walkItems(collection.item)) {
+    if (isFolder(item) || !hasContract(item.contract)) continue
+    if ((item.request.method ?? 'GET').toUpperCase() !== req.method.toUpperCase()) continue
+    const score = scorePath(rawUrl(item.request.url), reqSegs, vars)
+    if (score === undefined) continue
+    const code = contractCode(Object.keys(item.contract?.responses ?? {}), wantCode)
+    if (!code) continue
+    if (!best || score > best.score) {
+      const status = /^\d{3}$/.test(code) ? Number(code) : /^\dXX$/i.test(code) ? Number(code[0]) * 100 : 200
+      best = { item, example: { name: `Contrato ${code}`, code: status }, score, fromContract: true }
+    }
+  }
+  return best
+}
+
+export function matchExample(
+  collection: Collection,
+  req: MockRequest,
+  vars: VariableScope[] = [],
+): MockMatch | undefined {
+  const reqSegs = req.path
+    .split('/')
+    .filter(Boolean)
+    .map((s) => decodeURIComponent(s))
   const wantName = header(req.headers, 'x-mock-response-name')
   const wantId = header(req.headers, 'x-mock-response-id')
   const wantCode = header(req.headers, 'x-mock-response-code')
@@ -162,21 +229,10 @@ export function matchExample(collection: Collection, req: MockRequest, vars: Var
 
       const raw = rawUrl(original?.url ?? item.request.url)
       const url = resolveVariables(raw, vars)
-      const exSegs = examplePath(raw).map((seg) => (seg.startsWith(':') ? seg : resolveVariables(seg, vars)))
-      if (exSegs.length !== reqSegs.length) continue
-
-      let score = 100
+      const pathScore = scorePath(raw, reqSegs, vars)
+      if (pathScore === undefined) continue
+      let score = pathScore
       let ok = true
-      for (let i = 0; i < exSegs.length; i++) {
-        const e = exSegs[i]
-        if (e === reqSegs[i]) score += 10
-        else if (e.startsWith(':') || /^\{\{.+\}\}$/.test(e)) score += 1
-        else {
-          ok = false
-          break
-        }
-      }
-      if (!ok) continue
 
       const exQuery = exampleQuery(url)
       for (const [k, v] of Object.entries(exQuery)) {
@@ -218,21 +274,43 @@ function normalizeBody(b: string) {
   }
 }
 
-export function mockResponse(collection: Collection, req: MockRequest, vars: VariableScope[] = []): MockResponse {
+export function mockResponse(
+  collection: Collection,
+  req: MockRequest,
+  vars: VariableScope[] = [],
+): MockResponse {
   const match = matchExample(collection, req, vars)
   if (!match) {
+    const byContract = matchContract(collection, req, vars)
+    if (byContract) {
+      const code = Object.keys(byContract.item.contract?.responses ?? {}).find(
+        (c) => byContract.example.name === `Contrato ${c}`,
+      )
+      const spec = code ? byContract.item.contract?.responses[code] : undefined
+      const headers: KeyValue[] = [{ key: 'Content-Type', value: 'application/json' }]
+      for (const h of spec?.headers ?? []) {
+        if (h.name.toLowerCase() === 'content-type') continue
+        const v = sampleFromSchema(h.schema ?? { type: 'string' }, h.name)
+        headers.push({ key: h.name, value: typeof v === 'string' ? v : JSON.stringify(v) })
+      }
+      const body = spec?.body ? JSON.stringify(sampleFromSchema(spec.body), null, 2) : ''
+      return { status: byContract.example.code ?? 200, headers, body, match: byContract }
+    }
     return {
       status: 404,
       headers: [{ key: 'Content-Type', value: 'application/json' }],
       body: JSON.stringify({
         error: 'mockRequestNotFoundError',
-        message: `Ningún ejemplo guardado coincide con ${req.method.toUpperCase()} ${req.path}. Guarda un ejemplo en la petición para que el mock responda.`,
+        message: `Ningún ejemplo guardado coincide con ${req.method.toUpperCase()} ${req.path}. Guarda un ejemplo o un contrato en la petición para que el mock responda.`,
       }),
     }
   }
   const { example } = match
   const headers = (example.header ?? []).filter(
-    (h) => !['content-length', 'transfer-encoding', 'content-encoding', 'connection'].includes(h.key.toLowerCase()),
+    (h) =>
+      !['content-length', 'transfer-encoding', 'content-encoding', 'connection'].includes(
+        h.key.toLowerCase(),
+      ),
   )
   const body = resolveDynamic(resolveVariables(example.body ?? '', vars))
   return { status: example.code ?? 200, headers, body, match }

@@ -8,6 +8,7 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json tsconfig.base.js
 COPY apps/server/package.json apps/server/
 COPY apps/web/package.json apps/web/
 COPY packages/core/package.json packages/core/
+COPY packages/contracts/package.json packages/contracts/
 COPY packages/executor/package.json packages/executor/
 COPY packages/importers/package.json packages/importers/
 COPY packages/exporters/package.json packages/exporters/

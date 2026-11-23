@@ -1,4 +1,4 @@
-import type { Auth, Event, ProtocolProfileBehavior, Request, ResponseExample, Variable } from '@cartero/core'
+import type { Auth, Contract, Event, ProtocolProfileBehavior, Request, ResponseExample, Variable } from '@cartero/core'
 
 export type Role = 'owner' | 'admin' | 'editor' | 'viewer'
 
@@ -47,6 +47,7 @@ export interface ItemRow {
     description?: string
     auth?: Auth | null
     protocolProfileBehavior?: ProtocolProfileBehavior
+    contract?: Contract
   }
 }
 

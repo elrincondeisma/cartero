@@ -89,10 +89,13 @@ export function useMonitors(ws: string) {
   return useQuery({ queryKey: qk.monitors(ws), queryFn: () => api.get<MonitorRow[]>(`/api/workspaces/${ws}/monitors`) })
 }
 
-export function useRevisions(collectionId: string, itemId?: string) {
-  const qs = itemId ? `?itemId=${itemId}` : ''
+export function useRevisions(collectionId: string, itemId?: string, action?: string) {
+  const params = new URLSearchParams()
+  if (itemId) params.set('itemId', itemId)
+  if (action) params.set('action', action)
+  const qs = params.size ? `?${params}` : ''
   return useQuery({
-    queryKey: qk.revisions(collectionId, itemId),
+    queryKey: [...qk.revisions(collectionId, itemId), action ?? null],
     queryFn: () => api.get<Revision[]>(`/api/collections/${collectionId}/revisions${qs}`),
   })
 }

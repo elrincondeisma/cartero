@@ -53,7 +53,10 @@ export interface Body {
   formdata?: FormParam[]
   file?: { src?: string | null; content?: string }
   graphql?: { query?: string; variables?: string }
-  options?: { raw?: { language?: 'json' | 'xml' | 'text' | 'html' | 'javascript' | string } } & Record<string, any>
+  options?: { raw?: { language?: 'json' | 'xml' | 'text' | 'html' | 'javascript' | string } } & Record<
+    string,
+    any
+  >
   disabled?: boolean
 }
 
@@ -140,12 +143,40 @@ export interface ProtocolProfileBehavior {
   [k: string]: unknown
 }
 
+/** Esquema JSON (draft 2020-12, el de OpenAPI 3.1). Se deja abierto a propósito. */
+export type JSONSchema = { [k: string]: any }
+
+/** Un parámetro del contrato: de ruta, de query o una cabecera. */
+export interface ContractParam {
+  name: string
+  required?: boolean
+  schema?: JSONSchema
+  description?: string
+}
+
+export interface ContractResponse {
+  description?: string
+  body?: JSONSchema
+  headers?: ContractParam[]
+}
+
+/**
+ * Contrato entre frontend y backend de una petición: lo que envía el frontend y lo que debe
+ * devolver el backend en cada código de estado. Es una extensión de Cartero (Postman la ignora).
+ */
+export interface Contract {
+  request?: { body?: JSONSchema; query?: ContractParam[]; headers?: ContractParam[]; path?: ContractParam[] }
+  /** Clave: código de estado («200», «404»…) o «default». */
+  responses: Record<string, ContractResponse>
+}
+
 export interface RequestItem {
   id?: string
   name: string
   description?: string
   request: Request
   response?: ResponseExample[]
+  contract?: Contract
   event?: Event[]
   variable?: Variable[]
   protocolProfileBehavior?: ProtocolProfileBehavior

@@ -30,7 +30,9 @@ describe('Postman', () => {
     expect(r.collections[0].info.schema).toContain('v2.1.0')
     expect(req.auth?.type).toBe('basic')
     expect(Array.isArray(req.auth?.basic)).toBe(true)
-    expect(req.auth?.basic).toEqual(expect.arrayContaining([expect.objectContaining({ key: 'username', value: 'u' })]))
+    expect(req.auth?.basic).toEqual(
+      expect.arrayContaining([expect.objectContaining({ key: 'username', value: 'u' })]),
+    )
   })
 
   it('convierte v1 con carpetas', async () => {
@@ -81,6 +83,15 @@ describe('OpenAPI', () => {
     expect(names).toEqual(expect.arrayContaining(['List pets', 'Create pet', 'Get pet']))
     expect(c.variable?.find((v) => v.key === 'baseUrl')?.value).toBe('https://petstore.example.com/v1')
   })
+
+  it('cuelga los contratos sin los valores de relleno del conversor', async () => {
+    const r = await importAny(fx('openapi.yaml'))
+    const pets = r.collections[0].item.find((i) => i.name === 'pets') as FolderItem
+    const get = pets.item.find((i) => i.name === 'Get pet') as any
+    expect(get.contract).toBeTruthy()
+    expect(JSON.stringify(get.contract)).not.toContain('<string>')
+    expect(JSON.stringify(get.contract)).not.toContain('<long>')
+  })
 })
 
 describe('Insomnia', () => {
@@ -92,11 +103,25 @@ describe('Insomnia', () => {
     const auth = c.item[0] as FolderItem
     const login = auth.item[0] as RequestItem
     expect(rawUrl(login.request.url)).toBe('{{base_url}}/login')
-    expect(login.request.auth).toMatchObject({ type: 'bearer', bearer: [{ key: 'token', value: '{{auth.token}}' }] })
+    expect(login.request.auth).toMatchObject({
+      type: 'bearer',
+      bearer: [{ key: 'token', value: '{{auth.token}}' }],
+    })
     expect(login.request.body).toMatchObject({ mode: 'raw', options: { raw: { language: 'json' } } })
     const form = c.item[1] as RequestItem
-    expect(form.request.body?.urlencoded).toEqual([{ key: 'a', value: '1' }, { key: 'b', value: '2', disabled: true }])
-    expect(r.environments).toEqual([{ name: 'Dev', values: [{ key: 'base_url', value: 'http://localhost:3000' }, { key: 'auth.token', value: 't' }] }])
+    expect(form.request.body?.urlencoded).toEqual([
+      { key: 'a', value: '1' },
+      { key: 'b', value: '2', disabled: true },
+    ])
+    expect(r.environments).toEqual([
+      {
+        name: 'Dev',
+        values: [
+          { key: 'base_url', value: 'http://localhost:3000' },
+          { key: 'auth.token', value: 't' },
+        ],
+      },
+    ])
   })
 })
 

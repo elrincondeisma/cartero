@@ -1,10 +1,12 @@
 import { randomUUID } from 'node:crypto'
-import type { Collection, Item } from '@cartero/core'
+import { collectionToOpenApi, diffContracts, summarizeChanges } from '@cartero/contracts'
+import type { Collection, Item, RequestItem } from '@cartero/core'
 import { exportPostmanCollection, exportPostmanEnvironment } from '@cartero/exporters'
 import { importAny } from '@cartero/importers'
 import { and, asc, desc, eq, inArray, isNull, sql } from 'drizzle-orm'
 import type { FastifyInstance } from 'fastify'
 import { generateKeyBetween } from 'fractional-indexing'
+import { stringify as toYaml } from 'yaml'
 import { z } from 'zod'
 import { db, schema } from '../db/index.js'
 import { assertCollection, assertRole, itemCollection } from '../lib/access.js'
@@ -280,6 +282,25 @@ export async function collectionRoutes(app: FastifyInstance) {
     return out
   })
 
+  /** Exporta la colección como OpenAPI 3.1, con los contratos de sus peticiones. */
+  app.get('/api/collections/:id/openapi', async (req, reply) => {
+    const user = requireUser(req)
+    const { id } = req.params as { id: string }
+    await assertCollection(id, user.id)
+    const { format } = req.query as { format?: string }
+    const { collection } = await loadCollection(id)
+    const { spec, warnings } = collectionToOpenApi(collection)
+    if (warnings.length) reply.header('x-cartero-warnings', encodeURIComponent(warnings.join(' | ')))
+    const name = encodeURIComponent(collection.info.name)
+    if (format === 'yaml') {
+      reply.header('content-type', 'application/yaml; charset=utf-8')
+      reply.header('content-disposition', `attachment; filename="${name}.openapi.yaml"`)
+      return toYaml(spec)
+    }
+    reply.header('content-disposition', `attachment; filename="${name}.openapi.json"`)
+    return spec
+  })
+
   /** Fork: copia la colección a otro (o el mismo) workspace recordando el origen. */
   app.post('/api/collections/:id/fork', async (req) => {
     const user = requireUser(req)
@@ -411,14 +432,23 @@ export async function collectionRoutes(app: FastifyInstance) {
       .where(eq(schema.items.id, id))
       .returning()
     await touchCollection(collectionId)
+    const beforeItem = rowToItem(before)
+    const afterItem = rowToItem(after)
+    // Si cambia el contrato, la revisión lo dice y resume qué rompe
+    const oldContract = (beforeItem as RequestItem).contract
+    const newContract = (afterItem as RequestItem).contract
+    const contractChanged = JSON.stringify(oldContract ?? null) !== JSON.stringify(newContract ?? null)
+    const changes = contractChanged ? diffContracts(oldContract, newContract) : []
     await recordRevision(
       collectionId,
       user.id,
-      'update',
-      `«${after.name}» modificado`,
+      contractChanged ? 'contract' : 'update',
+      contractChanged
+        ? `Contrato de «${after.name}»: ${!oldContract ? 'creado' : !newContract ? 'eliminado' : summarizeChanges(changes)}`
+        : `«${after.name}» modificado`,
       id,
-      rowToItem(before),
-      rowToItem(after),
+      beforeItem,
+      afterItem,
     )
     changed(ws, collectionId, 'update', user.id, id)
     return after
@@ -512,7 +542,7 @@ export async function collectionRoutes(app: FastifyInstance) {
     const user = requireUser(req)
     const { id } = req.params as { id: string }
     await assertCollection(id, user.id)
-    const { itemId } = req.query as { itemId?: string }
+    const { itemId, action } = req.query as { itemId?: string; action?: string }
     return db
       .select({
         id: schema.revisions.id,
@@ -526,7 +556,11 @@ export async function collectionRoutes(app: FastifyInstance) {
       .from(schema.revisions)
       .leftJoin(schema.users, eq(schema.users.id, schema.revisions.userId))
       .where(
-        and(eq(schema.revisions.collectionId, id), itemId ? eq(schema.revisions.itemId, itemId) : undefined),
+        and(
+          eq(schema.revisions.collectionId, id),
+          itemId ? eq(schema.revisions.itemId, itemId) : undefined,
+          action ? eq(schema.revisions.action, action) : undefined,
+        ),
       )
       .orderBy(desc(schema.revisions.createdAt))
       .limit(200)

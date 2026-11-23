@@ -19,4 +19,5 @@
 - [Installation and administration](15-self-hosting.md)
 - [Administration](17-admin-and-social-login.md)
 - [Desktop app](18-desktop-app.md)
+- [Contracts](19-contracts.md)
 - [FAQ](16-faq.md)

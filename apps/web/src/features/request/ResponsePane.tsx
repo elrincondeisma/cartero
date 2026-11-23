@@ -1,13 +1,16 @@
-import { AlertTriangle, CheckCircle2, Copy, Download, Save, XCircle } from 'lucide-react'
+import type { Contract } from '@cartero/core'
+import { type ContractIssue, hasContract } from '@cartero/contracts'
+import { AlertTriangle, CheckCircle2, Copy, Download, FileCheck2, Save, XCircle } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import type { ConsoleEntry, Execution, ExecResponse } from '@/api/types'
 import { CodeEditor } from '@/components/CodeEditor'
 import { Badge, Button, Empty, IconButton, Spinner, SubTabs, Tooltip, cx, formatBytes, formatMs, statusTone } from '@/components/ui'
 import { languageForContentType, prettyBody } from '@/lib/request'
+import { type ContractCheck, checkExecution } from '../contract/check'
 import { locale, t, tj } from "@/i18n";
 
-type View = 'body' | 'headers' | 'cookies' | 'tests' | 'console' | 'timeline'
+type View = 'body' | 'headers' | 'cookies' | 'tests' | 'contract' | 'console' | 'timeline'
 
 export function ResponsePane({
   execution,
@@ -16,6 +19,9 @@ export function ResponsePane({
   error,
   onSaveExample,
   onCancel,
+  contract,
+  templateUrl,
+  onOpenContract,
 }: {
   execution?: Execution | null
   console?: ConsoleEntry[]
@@ -23,11 +29,20 @@ export function ResponsePane({
   error?: string
   onSaveExample?: () => void
   onCancel?: () => void
+  /** Contrato de la petición, para comprobar lo enviado y lo recibido */
+  contract?: Contract
+  /** URL de la petición sin resolver (con :id), para sacar los parámetros de ruta */
+  templateUrl?: string
+  onOpenContract?: () => void
 }) {
   const [view, setView] = useState<View>('body')
   const res = execution?.response
   const tests = execution?.tests ?? []
   const passed = tests.filter((tItem) => tItem.passed).length
+  const check = useMemo(
+    () => (execution && hasContract(contract) ? checkExecution(contract!, templateUrl ?? '', execution) : null),
+    [execution, contract, templateUrl],
+  )
 
   if (loading)
     return (
@@ -58,12 +73,25 @@ export function ResponsePane({
           { id: 'headers', label: t("Cabeceras"), count: res?.headers.length },
           { id: 'cookies', label: t("Cookies"), count: res?.cookies.length },
           { id: 'tests', label: tests.length ? t("Tests ({0}/{1})", [passed, tests.length]) : t("Tests") },
+          ...(check ? [{ id: 'contract' as const, label: t("Contrato"), count: check.errors || undefined }] : []),
           { id: 'console', label: t("Consola"), count: logs?.length },
           { id: 'timeline', label: t("Detalles") },
         ]}
         right={
           res && (
             <div className="flex items-center gap-3 text-xs">
+              {check && (
+                <button onClick={() => setView('contract')} className="rounded-md focus-visible:outline-2">
+                  <Badge tone={check.errors ? 'red' : check.warnings ? 'amber' : 'green'}>
+                    <FileCheck2 className="size-3" />
+                    {check.errors
+                      ? check.errors === 1
+                        ? t("Contrato: 1 fallo")
+                        : t("Contrato: {0} fallos", [check.errors])
+                      : t("Cumple el contrato")}
+                  </Badge>
+                </button>
+              )}
               <Badge tone={statusTone(res.code)} className="font-mono text-xs">
                 {res.code} {res.status}
               </Badge>
@@ -145,9 +173,53 @@ export function ResponsePane({
             )}
           </div>
         )}
+        {view === 'contract' && check && <ContractView check={check} onOpenContract={onOpenContract} />}
         {view === 'console' && <ConsoleView logs={logs ?? []} />}
         {view === 'timeline' && execution && <Timeline execution={execution} />}
       </div>
+    </div>
+  )
+}
+
+function IssueList({ title, issues }: { title: string; issues: ContractIssue[] }) {
+  if (!issues.length) return null
+  return (
+    <section>
+      <h4 className="mb-1 text-xs font-medium text-muted">{title}</h4>
+      <div className="space-y-0.5">
+        {issues.map((i, n) => (
+          <div key={n} className="flex items-start gap-2 rounded-md px-2 py-1.5 hover:bg-soft">
+            {i.level === 'error' ? (
+              <XCircle className="mt-0.5 size-4 shrink-0 text-red-600" />
+            ) : (
+              <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-600" />
+            )}
+            <code className="mt-px shrink-0 font-mono text-xs">{i.path}</code>
+            <span className="min-w-0">{t(i.message, i.params)}</span>
+          </div>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function ContractView({ check, onOpenContract }: { check: ContractCheck; onOpenContract?: () => void }) {
+  const clean = !check.request.length && !check.response.length
+  return (
+    <div className="h-full space-y-4 overflow-auto p-3">
+      {clean && (
+        <div className="flex items-center gap-2 px-2 py-1.5 text-green-700 dark:text-green-400">
+          <CheckCircle2 className="size-4" />
+          {t("La petición y la respuesta cumplen el contrato.")}
+        </div>
+      )}
+      <IssueList title={t("Lo que se ha enviado")} issues={check.request} />
+      <IssueList title={t("Lo que ha llegado")} issues={check.response} />
+      {onOpenContract && (
+        <Button size="sm" variant="outline" icon={<FileCheck2 className="size-3.5" />} onClick={onOpenContract}>
+          {t("Abrir el contrato")}
+        </Button>
+      )}
     </div>
   )
 }
