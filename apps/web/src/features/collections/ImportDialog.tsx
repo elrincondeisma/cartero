@@ -1,11 +1,12 @@
 import { useQueryClient } from '@tanstack/react-query'
-import { FileUp, Link2, TextCursorInput } from 'lucide-react'
+import { ArrowRight, FileUp, Link2, TextCursorInput } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { api } from '@/api/client'
 import { qk } from '@/api/hooks'
 import { Button, Dialog, Input, SubTabs, Textarea, cx } from '@/components/ui'
 import { useWs } from '../workspace/context'
+import { PostmanImportDialog, PostmanMark } from './PostmanImport'
 import { t } from "@/i18n";
 
 interface ImportResult {
@@ -37,6 +38,7 @@ export function ImportDialog({ open, onOpenChange }: { open: boolean; onOpenChan
   const [files, setFiles] = useState<File[]>([])
   const [loading, setLoading] = useState(false)
   const [drag, setDrag] = useState(false)
+  const [postman, setPostman] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const qc = useQueryClient()
 
@@ -93,6 +95,15 @@ export function ImportDialog({ open, onOpenChange }: { open: boolean; onOpenChan
   const canSubmit = mode === 'file' ? files.length > 0 : mode === 'text' ? text.trim().length > 0 : /^https?:\/\//.test(url)
 
   return (
+    <>
+    <PostmanImportDialog
+      open={postman}
+      onOpenChange={setPostman}
+      onUseFiles={() => {
+        setPostman(false)
+        onOpenChange(true)
+      }}
+    />
     <Dialog
       open={open}
       onOpenChange={onOpenChange}
@@ -108,8 +119,23 @@ export function ImportDialog({ open, onOpenChange }: { open: boolean; onOpenChan
         </>
       }
     >
+      <button
+        type="button"
+        onClick={() => {
+          onOpenChange(false)
+          setPostman(true)
+        }}
+        className="group -mt-1 mb-4 flex w-full items-center gap-3 rounded-lg border border-[#FF6C37]/40 bg-[#FF6C37]/[0.06] px-3.5 py-3 text-left transition-colors hover:border-[#FF6C37]/70 hover:bg-[#FF6C37]/10"
+      >
+        <PostmanMark className="size-8 shrink-0" />
+        <span className="min-w-0 flex-1">
+          <span className="block font-medium">{t("Conectar con tu cuenta de Postman")}</span>
+          <span className="block text-xs text-muted">{t("Trae tus workspaces enteros con su API, sin exportar ficheros.")}</span>
+        </span>
+        <ArrowRight className="size-4 text-muted transition-transform group-hover:translate-x-0.5" />
+      </button>
       <SubTabs
-        className="-mx-5 -mt-4 mb-4"
+        className="-mx-5 mb-4"
         value={mode}
         onChange={setMode}
         tabs={[
@@ -178,5 +204,6 @@ export function ImportDialog({ open, onOpenChange }: { open: boolean; onOpenChan
         </div>
       )}
     </Dialog>
+    </>
   )
 }

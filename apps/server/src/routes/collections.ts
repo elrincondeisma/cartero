@@ -31,7 +31,7 @@ const itemBody = z.object({
   index: z.number().int().min(0).optional(),
 })
 
-async function recordRevision(
+export async function recordRevision(
   collectionId: string,
   userId: string,
   action: string,
@@ -90,6 +90,40 @@ async function descendantIds(collectionId: string, rootId: string): Promise<stri
   }
   walk(rootId)
   return out
+}
+
+/**
+ * Sustituye el árbol y los datos de una colección por los de otra, conservando su id (y con él
+ * monitores, mocks y enlaces). Los ítems viejos quedan como borrados para la sincronización.
+ */
+export async function replaceCollectionContents(
+  ws: string,
+  collectionId: string,
+  collection: Collection,
+  userId: string,
+  opts: { rename?: boolean } = {},
+) {
+  const oldIds = (
+    await db
+      .select({ id: schema.items.id })
+      .from(schema.items)
+      .where(eq(schema.items.collectionId, collectionId))
+  ).map((r) => r.id)
+  await recordDeletions(ws, 'item', oldIds)
+  await db.transaction(async (tx) => {
+    await tx.delete(schema.items).where(eq(schema.items.collectionId, collectionId))
+    const rows = flattenItems(collectionId, collection.item, userId)
+    for (let i = 0; i < rows.length; i += 500) await tx.insert(schema.items).values(rows.slice(i, i + 500))
+    await tx
+      .update(schema.collections)
+      .set({
+        ...(opts.rename ? { name: collection.info.name || 'Colección' } : {}),
+        data: collectionData(collection),
+        updatedAt: new Date(),
+        version: sql`${schema.collections.version} + 1`,
+      })
+      .where(eq(schema.collections.id, collectionId))
+  })
 }
 
 /** Guarda el resultado de una importación en un workspace. */
@@ -284,26 +318,7 @@ export async function collectionRoutes(app: FastifyInstance) {
     const targetWs = await assertCollection(fork.forkedFrom, user.id, 'editor')
     const { collection: before } = await loadCollection(fork.forkedFrom)
     const { collection } = await loadCollection(id)
-    const oldIds = (
-      await db
-        .select({ id: schema.items.id })
-        .from(schema.items)
-        .where(eq(schema.items.collectionId, fork.forkedFrom))
-    ).map((r) => r.id)
-    await recordDeletions(targetWs, 'item', oldIds)
-    await db.transaction(async (tx) => {
-      await tx.delete(schema.items).where(eq(schema.items.collectionId, fork.forkedFrom!))
-      const rows = flattenItems(fork.forkedFrom!, collection.item, user.id)
-      for (let i = 0; i < rows.length; i += 500) await tx.insert(schema.items).values(rows.slice(i, i + 500))
-      await tx
-        .update(schema.collections)
-        .set({
-          data: collectionData(collection),
-          updatedAt: new Date(),
-          version: sql`${schema.collections.version} + 1`,
-        })
-        .where(eq(schema.collections.id, fork.forkedFrom!))
-    })
+    await replaceCollectionContents(targetWs, fork.forkedFrom, collection, user.id)
     await recordRevision(
       fork.forkedFrom,
       user.id,

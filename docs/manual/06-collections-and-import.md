@@ -34,11 +34,21 @@ Click the import icon in the Collections sidebar (or Ctrl+K → *Import*). There
 
 ## Migrating from Postman, step by step
 
-1. In Postman: **Settings → Data → Export data**, select collections and environments. You'll get an email with a ZIP.
-2. In Cartero: **Import → Files** and drop the ZIP as-is.
-3. Check the environments in the **Environments** section and activate the one you use.
+The fastest way is to **connect your Postman account**: Cartero reads your workspaces through the Postman API, with nothing to export.
 
-If you'd rather go step by step, export each collection from Postman (··· → *Export* → *Collection v2.1*) and import it.
+1. In Postman, open [your API keys](https://go.postman.co/settings/me/api-keys), click **Generate API Key** and copy it.
+2. In Cartero: **Import → Connect your Postman account** and paste the key.
+3. Tick the workspaces you want. For each one you can untick collections or environments, keep or skip the global variables, and choose where it goes: a **new workspace** with the same name or one you already have.
+4. Click **Import** and watch the progress. At the end you'll see what was created, what was updated and anything that failed (one item failing doesn't stop the rest).
+
+Good to know:
+
+- **Importing again updates instead of duplicating.** Cartero remembers what came from Postman: next time, those collections and environments are replaced in place (same id, so monitors, mocks and links keep working) and are marked *updates* before you start.
+- **Your key isn't stored.** It's only used during the import and forgotten when you close the window. You can delete it in Postman afterwards.
+- **Not everything leaves Postman.** The *current* values of variables and Vault secrets never reach Postman's cloud, so only initial values arrive; secret variables that arrive empty are flagged so you can fill them in. Mocks, monitors and API specs aren't imported: create them in Cartero from the collections.
+- Each import uses a few calls from your Postman API quota (shown in the wizard): one per collection and environment, plus a few to list workspaces.
+
+**Without an API key:** in Postman go to **Settings → Data → Export data**, select collections and environments, and drop the ZIP you get by email into **Import → Files**. Or export each collection on its own (··· → *Export* → *Collection v2.1*) and import it.
 
 ## Export
 

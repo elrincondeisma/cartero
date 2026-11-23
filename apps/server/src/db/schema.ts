@@ -357,3 +357,25 @@ export const deletions = pgTable(
     index('deletions_ws_idx').on(t.workspaceId, t.deletedAt),
   ],
 )
+
+/**
+ * Qué se importó desde otra herramienta (por ahora, la API de Postman) y dónde quedó. Sirve para
+ * que una segunda importación actualice lo ya importado en lugar de duplicarlo.
+ */
+export const importLinks = pgTable(
+  'import_links',
+  {
+    workspaceId: uuid('workspace_id')
+      .notNull()
+      .references(() => workspaces.id, { onDelete: 'cascade' }),
+    provider: text('provider').$type<'postman'>().notNull(),
+    entity: text('entity').$type<'collection' | 'environment'>().notNull(),
+    externalId: text('external_id').notNull(),
+    localId: uuid('local_id').notNull(),
+    importedAt: timestamp('imported_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.workspaceId, t.provider, t.entity, t.externalId] }),
+    index('import_links_local_idx').on(t.localId),
+  ],
+)

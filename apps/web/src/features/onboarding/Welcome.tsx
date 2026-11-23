@@ -7,6 +7,7 @@ import { api } from '@/api/client'
 import { qk } from '@/api/hooks'
 import { Dialog, cx } from '@/components/ui'
 import { ImportDialog } from '../collections/ImportDialog'
+import { PostmanImportDialog } from '../collections/PostmanImport'
 import { useWs } from '../workspace/context'
 import { useTour } from './Tour'
 import { lang, t } from "@/i18n";
@@ -46,6 +47,7 @@ export function Welcome() {
   const { me } = useWs()
   const [open, setOpen] = useState(false)
   const [importOpen, setImportOpen] = useState(false)
+  const [postmanOpen, setPostmanOpen] = useState(false)
   const qc = useQueryClient()
   const nav = useNavigate()
   const startTour = useTour((s) => s.start)
@@ -83,8 +85,8 @@ export function Welcome() {
     {
       icon: <FileUp className="size-5" />,
       title: t("Importar desde Postman"),
-      text: t("Colecciones, entornos o el ZIP de exportación completo. También Insomnia, OpenAPI y cURL."),
-      onClick: () => setImportOpen(true),
+      text: t("Conecta tu cuenta y trae tus workspaces enteros. También puedes subir ficheros de Postman, Insomnia, OpenAPI o cURL."),
+      onClick: () => setPostmanOpen(true),
     },
     {
       icon: <Sparkles className="size-5" />,
@@ -143,6 +145,17 @@ export function Welcome() {
           </div>
         )}
       </Dialog>
+      <PostmanImportDialog
+        open={postmanOpen}
+        onOpenChange={(o) => {
+          setPostmanOpen(o)
+          if (!o) close(true)
+        }}
+        onUseFiles={() => {
+          setPostmanOpen(false)
+          setImportOpen(true)
+        }}
+      />
       <ImportDialog
         open={importOpen}
         onOpenChange={(o) => {
