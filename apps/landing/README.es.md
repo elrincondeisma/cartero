@@ -2,7 +2,7 @@
 
 # Landing de Cartero
 
-Web estática en Astro, en español (`/`) e inglés (`/en/`).
+Web estática en Astro, en inglés (`/`) y español (`/es/`).
 
 ```bash
 pnpm --filter @cartero/landing dev       # http://localhost:4321
@@ -13,7 +13,7 @@ Al publicarla, define:
 
 | Variable | Para qué |
 |---|---|
-| `SITE_URL` | Dominio final (canonical, hreflang, sitemap y Open Graph). Por defecto `https://cartero.dev` |
+| `SITE_URL` | Dominio final (canonical, hreflang, sitemap y Open Graph). Por defecto `https://cartero.elrincondeisma.com` |
 | `PUBLIC_REPO_URL` | URL del repositorio en GitHub |
 
 `dist/` se sirve en cualquier hosting estático: GitHub Pages, Cloudflare Pages, Netlify o un Nginx.

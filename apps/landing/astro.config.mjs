@@ -3,13 +3,13 @@ import tailwindcss from '@tailwindcss/vite'
 import { defineConfig } from 'astro/config'
 
 export default defineConfig({
-  site: process.env.SITE_URL ?? 'https://cartero.dev',
+  site: process.env.SITE_URL ?? 'https://cartero.elrincondeisma.com',
   i18n: {
     locales: ['es', 'en'],
-    defaultLocale: 'es',
+    defaultLocale: 'en',
     routing: { prefixDefaultLocale: false },
   },
-  integrations: [sitemap({ i18n: { defaultLocale: 'es', locales: { es: 'es-ES', en: 'en-US' } } })],
+  integrations: [sitemap({ i18n: { defaultLocale: 'en', locales: { es: 'es-ES', en: 'en-US' } } })],
   vite: {
     plugins: [tailwindcss()],
     // Vista previa accesible por Tailscale

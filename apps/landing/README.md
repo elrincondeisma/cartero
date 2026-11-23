@@ -2,7 +2,7 @@
 
 # Cartero landing page
 
-Static Astro site, in Spanish (`/`) and English (`/en/`).
+Static Astro site, in English (`/`) and Spanish (`/es/`).
 
 ```bash
 pnpm --filter @cartero/landing dev       # http://localhost:4321
@@ -13,7 +13,7 @@ When you publish it, set:
 
 | Variable | Purpose |
 |---|---|
-| `SITE_URL` | Final domain (canonical, hreflang, sitemap and Open Graph). Defaults to `https://cartero.dev` |
+| `SITE_URL` | Final domain (canonical, hreflang, sitemap and Open Graph). Defaults to `https://cartero.elrincondeisma.com` |
 | `PUBLIC_REPO_URL` | GitHub repository URL |
 
 `dist/` can be served by any static host: GitHub Pages, Cloudflare Pages, Netlify or Nginx.
