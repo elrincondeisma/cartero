@@ -29,23 +29,70 @@ pub struct Hop {
     pub sent_headers: Vec<(String, String)>,
 }
 
-async fn resolve(host: &str) -> Result<IpAddr, HttpError> {
-    if let Ok(ip) = host.parse() {
-        return Ok(ip);
+/// Tiempo máximo de cada fase antes de la respuesta, para que un fallo diga dónde se atascó.
+const DNS_TIMEOUT: Duration = Duration::from_secs(15);
+const CONNECT_TIMEOUT: Duration = Duration::from_secs(10);
+/// Si hay más direcciones, cada intento se corta antes para probar la siguiente.
+const CONNECT_ATTEMPT: Duration = Duration::from_secs(3);
+const TLS_TIMEOUT: Duration = Duration::from_secs(20);
+
+/// Resuelve con el resolutor del sistema (getaddrinfo): respeta VPN, /etc/hosts, DNS por
+/// interfaz, mDNS (.local) e iCloud Private Relay, igual que el navegador.
+async fn resolve(host: &str, port: u16) -> Result<Vec<SocketAddr>, HttpError> {
+    if let Ok(ip) = host.parse::<IpAddr>() {
+        return Ok(vec![SocketAddr::new(ip, port)]);
     }
-    if host.eq_ignore_ascii_case("localhost") {
-        return Ok(IpAddr::from([127, 0, 0, 1]));
+    let dns = |detail: String| HttpError::Dns { host: host.into(), detail };
+    let found = tokio::time::timeout(DNS_TIMEOUT, tokio::net::lookup_host((host, port)))
+        .await
+        .map_err(|_| dns(format!("el DNS no ha respondido en {} s", DNS_TIMEOUT.as_secs())))?
+        .map_err(|e| dns(e.to_string()))?;
+    let addrs = order(found.collect());
+    if addrs.is_empty() { Err(dns("sin direcciones".into())) } else { Ok(addrs) }
+}
+
+/// Alterna IPv6 e IPv4 respetando el orden del sistema (RFC 8305): si una familia no tiene
+/// salida, la siguiente dirección es de la otra.
+fn order(addrs: Vec<SocketAddr>) -> Vec<SocketAddr> {
+    let mut seen = std::collections::HashSet::new();
+    let addrs: Vec<SocketAddr> = addrs.into_iter().filter(|a| seen.insert(*a)).collect();
+    let first_v6 = addrs.first().is_some_and(|a| a.is_ipv6());
+    let (mut a, mut b): (Vec<_>, Vec<_>) = addrs.into_iter().partition(|x| x.is_ipv6() == first_v6);
+    let mut out = Vec::with_capacity(a.len() + b.len());
+    a.reverse();
+    b.reverse();
+    while !a.is_empty() || !b.is_empty() {
+        out.extend(a.pop());
+        out.extend(b.pop());
     }
-    let resolver =
-        hickory_resolver::TokioResolver::builder_tokio().map_err(|e| HttpError::Dns { host: host.into(), detail: e.to_string() })?.build();
-    let found = resolver.lookup_ip(host).await.map_err(|e| HttpError::Dns { host: host.into(), detail: e.to_string() })?;
-    // Preferimos IPv4: más predecible en redes domésticas y VPN
-    let ips: Vec<IpAddr> = found.iter().collect();
-    ips.iter()
-        .find(|i| i.is_ipv4())
-        .or(ips.first())
-        .copied()
-        .ok_or_else(|| HttpError::Dns { host: host.into(), detail: "sin direcciones".into() })
+    out
+}
+
+/// Conecta con la primera dirección que responda.
+async fn connect(addrs: &[SocketAddr]) -> Result<(TcpStream, SocketAddr), HttpError> {
+    let deadline = Instant::now() + CONNECT_TIMEOUT;
+    let mut last = None;
+    for (i, &addr) in addrs.iter().enumerate() {
+        let left = deadline.saturating_duration_since(Instant::now());
+        if left.is_zero() {
+            break;
+        }
+        let wait = if i + 1 < addrs.len() { left.min(CONNECT_ATTEMPT) } else { left };
+        match tokio::time::timeout(wait, TcpStream::connect(addr)).await {
+            Ok(Ok(tcp)) => return Ok((tcp, addr)),
+            Ok(Err(e)) => last = Some(HttpError::Connect { addr, detail: e.to_string() }),
+            Err(_) => last = Some(HttpError::Connect { addr, detail: format!("sin respuesta en {} s", wait.as_secs_f32().round()) }),
+        }
+    }
+    Err(last.unwrap_or(HttpError::Connect { addr: addrs[0], detail: "sin respuesta".into() }))
+}
+
+/// Certificados de confianza del sistema (llavero de macOS, almacén de Windows, /etc/ssl),
+/// para redes con inspección TLS o CA internas. Se leen una vez.
+fn system_roots() -> &'static [CertificateDer<'static>] {
+    static ROOTS: std::sync::LazyLock<Vec<CertificateDer<'static>>> =
+        std::sync::LazyLock::new(|| rustls_native_certs::load_native_certs().certs);
+    &ROOTS
 }
 
 /// Acepta cualquier certificado (Ajustes → «Verificar certificados SSL» desactivado).
@@ -92,6 +139,7 @@ fn tls_config(host: &str, opts: &Options) -> Result<rustls::ClientConfig, HttpEr
         .map_err(|e| err(e.to_string()))?;
     let builder = if opts.verify_tls {
         let mut roots = rustls::RootCertStore { roots: webpki_roots::TLS_SERVER_ROOTS.to_vec() };
+        roots.add_parsable_certificates(system_roots().iter().cloned());
         if let Some(pem) = &opts.ca_pem {
             for cert in CertificateDer::pem_slice_iter(pem) {
                 let cert = cert.map_err(|e| err(format!("certificado de CA no válido: {e}")))?;
@@ -173,13 +221,12 @@ pub async fn hop(method: &str, url: &Url, headers: &[(String, String)], body: By
         Some(p) => (p.host_str().unwrap_or_default().trim_matches(['[', ']']).to_string(), p.port_or_known_default().unwrap_or(8080)),
         None => (host.clone(), port),
     };
-    let ip = resolve(&connect_host).await?;
+    let addrs = resolve(&connect_host, connect_port).await?;
     t.dns = start.elapsed();
 
     // 2. TCP
-    let addr = SocketAddr::new(ip, connect_port);
     let tcp_start = Instant::now();
-    let mut tcp = TcpStream::connect(addr).await.map_err(|e| HttpError::Connect { addr, detail: e.to_string() })?;
+    let (mut tcp, addr) = connect(&addrs).await?;
     tcp.set_nodelay(true).ok();
     let proxy_auth = proxy.as_ref().and_then(proxy_auth);
     if https && proxy.is_some() {
@@ -204,9 +251,12 @@ pub async fn hop(method: &str, url: &Url, headers: &[(String, String)], body: By
         let tls_start = Instant::now();
         let config = tls_config(&host, opts)?;
         let server_name = ServerName::try_from(host.clone()).map_err(|e| HttpError::Tls { host: host.clone(), detail: e.to_string() })?;
-        let stream = tokio_rustls::TlsConnector::from(Arc::new(config))
-            .connect(server_name, tcp)
+        let stream = tokio::time::timeout(TLS_TIMEOUT, tokio_rustls::TlsConnector::from(Arc::new(config)).connect(server_name, tcp))
             .await
+            .map_err(|_| HttpError::Tls {
+                host: host.clone(),
+                detail: format!("el servidor no ha respondido en {} s", TLS_TIMEOUT.as_secs()),
+            })?
             .map_err(|e| HttpError::Tls { host: host.clone(), detail: e.to_string() })?;
         t.tls = tls_start.elapsed();
         let conn = stream.get_ref().1;
@@ -308,4 +358,34 @@ where
         download: dl.elapsed(),
         tls: None,
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn alterna_ipv6_e_ipv4() {
+        let a = |s: &str| s.parse::<SocketAddr>().unwrap();
+        let got = order(vec![a("[::1]:80"), a("[::2]:80"), a("1.1.1.1:80"), a("[::1]:80"), a("2.2.2.2:80")]);
+        assert_eq!(got, vec![a("[::1]:80"), a("1.1.1.1:80"), a("[::2]:80"), a("2.2.2.2:80")]);
+    }
+
+    #[tokio::test]
+    async fn salta_una_ip_que_no_responde() {
+        let server = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let good = server.local_addr().unwrap();
+        // 10.255.255.1 no existe: el intento se corta y pasa a la siguiente dirección
+        let dead: SocketAddr = "10.255.255.1:9".parse().unwrap();
+        let start = Instant::now();
+        let (_, addr) = connect(&[dead, good]).await.unwrap();
+        assert_eq!(addr, good);
+        assert!(start.elapsed() < CONNECT_ATTEMPT + Duration::from_secs(1));
+    }
+
+    #[tokio::test]
+    async fn resuelve_con_el_sistema() {
+        let addrs = resolve("localhost", 8080).await.unwrap();
+        assert!(addrs.iter().all(|a| a.port() == 8080 && a.ip().is_loopback()));
+    }
 }
