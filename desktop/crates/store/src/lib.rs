@@ -67,6 +67,15 @@ pub struct EnvironmentMeta {
     pub name: String,
 }
 
+/// Una versión del contrato de una petición: cómo estaba antes de guardar y cómo quedó.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ContractVersion {
+    pub id: String,
+    pub before: Option<Value>,
+    pub after: Option<Value>,
+    pub created_at: String,
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct HistoryEntry {
     pub id: String,
@@ -438,16 +447,44 @@ impl Store {
     }
 
     /// Guarda nombre y datos de un ítem (petición o carpeta, sin tocar sus hijos).
+    /// Si cambia el contrato, guarda la versión anterior y la nueva en `contract_versions`.
     pub fn save_item(&self, item: &Item) -> Result<()> {
+        let data = item_data(item);
+        let old: Option<String> = self.db().query_row("SELECT data FROM items WHERE id = ?1", [item.id()], |r| r.get(0)).optional()?;
+        let before = old.and_then(|t| serde_json::from_str::<Value>(&t).ok()).and_then(|d| d.get("contract").cloned());
+        let after = data.get("contract").cloned();
+        if before != after {
+            self.db().execute(
+                "INSERT INTO contract_versions (id, item_id, before, after, created_at) VALUES (?1, ?2, ?3, ?4, ?5)",
+                params![uuid::Uuid::new_v4().to_string(), item.id(), before.map(|v| v.to_string()), after.map(|v| v.to_string()), now()],
+            )?;
+        }
         let n = self.db().execute(
             "UPDATE items SET name = ?2, data = ?3, dirty = 1, updated_at = ?4 WHERE id = ?1",
-            params![item.id(), item.name, item_data(item).to_string(), now()],
+            params![item.id(), item.name, data.to_string(), now()],
         )?;
         if n == 0 {
             return Err(StoreError::NotFound(format!("ítem {}", item.id())));
         }
         let c = self.item_collection(item.id())?;
         self.touch(&c)
+    }
+
+    /// Versiones guardadas del contrato de una petición, de la más reciente a la más antigua.
+    pub fn contract_versions(&self, item_id: &str) -> Result<Vec<ContractVersion>> {
+        let db = self.db();
+        let mut st = db
+            .prepare("SELECT id, before, after, created_at FROM contract_versions WHERE item_id = ?1 ORDER BY created_at DESC LIMIT 100")?;
+        let parse = |t: Option<String>| t.and_then(|t| serde_json::from_str::<Value>(&t).ok());
+        let rows = st
+            .query_map([item_id], |r| {
+                Ok((r.get::<_, String>(0)?, r.get::<_, Option<String>>(1)?, r.get::<_, Option<String>>(2)?, r.get::<_, String>(3)?))
+            })?
+            .collect::<rusqlite::Result<Vec<_>>>()?;
+        Ok(rows
+            .into_iter()
+            .map(|(id, before, after, created_at)| ContractVersion { id, before: parse(before), after: parse(after), created_at })
+            .collect())
     }
 
     pub fn rename_item(&self, id: &str, name: &str) -> Result<()> {
@@ -507,6 +544,7 @@ impl Store {
             } else {
                 db.execute("DELETE FROM items WHERE id = ?1", [i])?;
             }
+            db.execute("DELETE FROM contract_versions WHERE item_id = ?1", [i])?;
         }
         drop(db);
         self.touch(&collection)

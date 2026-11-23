@@ -13,6 +13,7 @@ use serde_json::Value;
 
 use crate::state::{AppState, StateEvent};
 use crate::ui::auth::{AuthChanged, AuthEditor};
+use crate::ui::contract::{ContractEditor, ContractEvent, LastResponse};
 use crate::ui::kv::{FlagKind, KvChanged, KvEditor, KvItem, KvOptions};
 use crate::ui::prelude::*;
 use crate::ui::response::ResponseView;
@@ -27,6 +28,7 @@ enum Section {
     Headers,
     Body,
     Scripts,
+    Contract,
     Docs,
 }
 
@@ -67,6 +69,7 @@ pub struct RequestTab {
     pre: Entity<EditorState>,
     post: Entity<EditorState>,
     docs: Entity<EditorState>,
+    contract: Entity<ContractEditor>,
     pub response: Entity<ResponseView>,
     sending: Option<tokio::task::AbortHandle>,
     focus: FocusHandle,
@@ -191,6 +194,11 @@ impl RequestTab {
         let pre = editor("javascript", script_of(&item.event, "prerequest").unwrap_or_default(), window, cx);
         let post = editor("javascript", script_of(&item.event, "test").unwrap_or_default(), window, cx);
         let docs = editor("text", cartero_model::description_text(&req.description), window, cx);
+        let item_id = saved.then(|| item.id().to_string());
+        let contract = cx.new(|cx| ContractEditor::new(app.clone(), window, cx));
+        let initial_contract = item.extra.get("contract").cloned();
+        let cid = item_id.clone();
+        contract.update(cx, |c, cx| c.load(initial_contract, cid, window, cx));
         let response = cx.new(|cx| ResponseView::new(window, cx));
         let limit = app.read(cx).settings.highlight_limit_kb;
         response.update(cx, |r, _| r.set_highlight_limit(limit));
@@ -198,7 +206,7 @@ impl RequestTab {
         let mut this = Self {
             app: app.clone(),
             collection_id,
-            item_id: saved.then(|| item.id().to_string()),
+            item_id,
             name: item.name.clone(),
             method: req.method.to_uppercase(),
             base: item,
@@ -221,6 +229,7 @@ impl RequestTab {
             pre,
             post,
             docs,
+            contract,
             response,
             sending: None,
             focus: cx.focus_handle(),
@@ -254,6 +263,23 @@ impl RequestTab {
         }
         let auth = self.auth.clone();
         self._subs.push(cx.subscribe_in(&auth, window, |this, _, _: &AuthChanged, _, cx| this.mark_dirty(cx)));
+        let contract = self.contract.clone();
+        self._subs.push(cx.subscribe_in(&contract, window, |this, editor, ev: &ContractEvent, window, cx| match ev {
+            ContractEvent::Changed => this.mark_dirty(cx),
+            ContractEvent::Generate | ContractEvent::StartBlank | ContractEvent::FillFromRequest => {
+                let part = crate::contracts::request_part(&this.build_item(cx));
+                editor.update(cx, |e, cx| match ev {
+                    ContractEvent::Generate => e.generate(part, window, cx),
+                    ContractEvent::StartBlank => e.start_blank(part, window, cx),
+                    _ => e.fill_from_request(part, window, cx),
+                });
+            }
+        }));
+        let response = self.response.clone();
+        self._subs.push(cx.subscribe_in(&response, window, |this, _, _: &crate::ui::response::OpenContract, _, cx| {
+            this.section = Section::Contract;
+            cx.notify();
+        }));
         let app = self.app.clone();
         self._subs.push(cx.subscribe_in(&app, window, |this, _, ev: &StateEvent, window, cx| match ev {
             StateEvent::Collections => this.refresh_inherited(cx),
@@ -450,6 +476,9 @@ impl RequestTab {
         self.post.update(cx, |s, cx| s.set_value(post, window, cx));
         let docs = cartero_model::description_text(&req.description);
         self.docs.update(cx, |s, cx| s.set_value(docs, window, cx));
+        let contract = item.extra.get("contract").cloned();
+        let id = self.item_id.clone();
+        self.contract.update(cx, |c, cx| c.load(contract, id, window, cx));
         self.name = item.name.clone();
         self.base = item;
         self.syncing = false;
@@ -546,6 +575,14 @@ impl RequestTab {
         item.request = Some(req);
         set_script(&mut item.event, "prerequest", self.pre.read(cx).value().as_ref());
         set_script(&mut item.event, "test", self.post.read(cx).value().as_ref());
+        match self.contract.read(cx).contract() {
+            Some(c) => {
+                item.extra.insert("contract".into(), c);
+            }
+            None => {
+                item.extra.remove("contract");
+            }
+        }
         item
     }
 
@@ -575,7 +612,12 @@ impl RequestTab {
         let task = crate::runtime::spawn(async move {
             let mut ctx = ctx;
             let outcome = cartero_runner::execute(&mut ctx, &item, &ExecOptions::default()).await;
-            (outcome, ctx.vars, item)
+            // El contrato se comprueba aquí, fuera del hilo de la interfaz
+            let check = crate::contracts::of_item(&item).and_then(|c| {
+                let url = item.request.as_ref().map(|r| r.url.raw()).unwrap_or_default();
+                crate::contracts::check(&c, &url, &outcome.prepared, outcome.response.as_ref())
+            });
+            (outcome, check, ctx.vars, item)
         });
         self.sending = Some(task.abort_handle());
         self.response.update(cx, |r, cx| r.set_sending(true, cx));
@@ -586,7 +628,10 @@ impl RequestTab {
             let _ = this.update_in(cx, |this, window, cx| {
                 this.sending = None;
                 match result {
-                    Ok((outcome, after, item)) => this.on_outcome(outcome, &before, &after, item, &workspace, window, cx),
+                    Ok((outcome, check, after, item)) => {
+                        this.response.update(cx, |r, _| r.set_contract_check(check));
+                        this.on_outcome(outcome, &before, &after, item, &workspace, window, cx)
+                    }
                     Err(_) => this.response.update(cx, |r, cx| r.set_sending(false, cx)),
                 }
                 cx.emit(TabEvent::Changed);
@@ -634,12 +679,33 @@ impl RequestTab {
             app.save_cookies();
             app.reload_history(cx);
         });
+        let last = outcome.response.as_ref().map(|r| LastResponse { code: r.status, reason: r.reason.clone(), body: r.text() });
+        self.contract.update(cx, |c, cx| {
+            c.last = last;
+            cx.notify();
+        });
         self.response.update(cx, |r, cx| r.set_outcome(Some(outcome), window, cx));
     }
 
     // ───────────────────────────── Guardar ─────────────────────────────
 
     pub fn save(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        // Antes de guardar un contrato que rompe al frontend, se enseña qué rompe
+        if self.item_id.is_some()
+            && let Some(before) = crate::contracts::of_item(&self.base)
+        {
+            let after = self.build_item(cx).extra.get("contract").cloned();
+            let diff = crate::contracts::diff(Some(&before), after.as_ref());
+            if !diff.breaking().is_empty() {
+                let this = cx.entity();
+                crate::ui::dialogs::breaking_changes(&diff, window, cx, move |window, cx| this.update(cx, |t, cx| t.save_now(window, cx)));
+                return;
+            }
+        }
+        self.save_now(window, cx);
+    }
+
+    fn save_now(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         let item = self.build_item(cx);
         match &self.item_id {
             Some(_) => {
@@ -671,6 +737,8 @@ impl RequestTab {
     }
 
     fn after_save(&mut self, item: Item, window: &mut Window, cx: &mut Context<Self>) {
+        let id = self.item_id.clone();
+        self.contract.update(cx, |c, cx| c.set_item_id(id, cx));
         self.base = item;
         self.dirty = false;
         let id = self.item_id.clone().unwrap_or_default();
@@ -872,6 +940,7 @@ impl RequestTab {
                 .into_any_element(),
             Section::Body => self.render_body(cx),
             Section::Scripts => self.render_scripts(cx),
+            Section::Contract => div().size_full().child(self.contract.clone()).into_any_element(),
             Section::Docs => div()
                 .v_flex()
                 .size_full()
@@ -1087,12 +1156,14 @@ impl Render for RequestTab {
         let counts = (self.params.read(cx).count(cx), self.headers.read(cx).count(cx));
         let has_body = self.body_mode != "none";
         let has_scripts = !self.pre.read(cx).value().trim().is_empty() || !self.post.read(cx).value().trim().is_empty();
+        let has_contract = self.contract.read(cx).has_contract();
         let sections = [
             (Section::Params, tr("Parámetros"), counts.0, false),
             (Section::Auth, tr("Autorización"), 0, false),
             (Section::Headers, tr("Cabeceras"), counts.1, false),
             (Section::Body, tr("Cuerpo"), 0, has_body),
             (Section::Scripts, tr("Scripts"), 0, has_scripts),
+            (Section::Contract, tr("Contrato"), 0, has_contract),
             (Section::Docs, tr("Descripción"), 0, false),
         ];
         let selected = sections.iter().position(|s| s.0 == self.section).unwrap_or(0);
@@ -1118,7 +1189,9 @@ impl Render for RequestTab {
                     .id("request-section")
                     .flex_1()
                     .min_h_0()
-                    .when(!matches!(self.section, Section::Body | Section::Scripts | Section::Docs), |d| d.overflow_y_scroll())
+                    .when(!matches!(self.section, Section::Body | Section::Scripts | Section::Contract | Section::Docs), |d| {
+                        d.overflow_y_scroll()
+                    })
                     .child(self.render_section(cx)),
             );
         div().track_focus(&self.focus).size_full().child(

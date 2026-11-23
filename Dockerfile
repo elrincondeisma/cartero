@@ -9,6 +9,7 @@ COPY apps/server/package.json apps/server/
 COPY apps/web/package.json apps/web/
 COPY packages/core/package.json packages/core/
 COPY packages/contracts/package.json packages/contracts/
+COPY packages/mock/package.json packages/mock/
 COPY packages/executor/package.json packages/executor/
 COPY packages/importers/package.json packages/importers/
 COPY packages/exporters/package.json packages/exporters/

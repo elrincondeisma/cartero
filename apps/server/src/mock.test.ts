@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Collection } from '@cartero/core'
-import { matchExample, mockResponse, resolveDynamic } from './lib/mock.js'
+import { matchExample, mockResponse, resolveDynamic } from '@cartero/mock'
 
 const col: Collection = {
   info: { name: 'm' },

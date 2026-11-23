@@ -1,7 +1,10 @@
 import type { Collection, Contract } from '@cartero/core'
+import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import {
   attachContracts,
+  openApiToCollection,
+  parseSpec,
   collectionToOpenApi,
   diffContracts,
   formatIssue,
@@ -196,38 +199,38 @@ describe('diffContracts', () => {
   })
 })
 
-describe('OpenAPI', () => {
-  const collection: Collection = {
-    info: { name: 'Usuarios', version: '2.0.0' },
-    item: [
-      {
-        name: 'Usuarios',
-        item: [
-          {
-            name: 'Ver usuario',
-            request: { method: 'GET', url: 'https://api.example.com/users/:id' },
-            contract: {
-              request: { path: [{ name: 'id', required: true, schema: { type: 'integer' } }] },
-              responses: {
-                '200': { body: inferSchema(user, { examples: false }) },
-                '404': { description: 'No existe' },
-              },
+const collection: Collection = {
+  info: { name: 'Usuarios', version: '2.0.0' },
+  item: [
+    {
+      name: 'Usuarios',
+      item: [
+        {
+          name: 'Ver usuario',
+          request: { method: 'GET', url: 'https://api.example.com/users/:id' },
+          contract: {
+            request: { path: [{ name: 'id', required: true, schema: { type: 'integer' } }] },
+            responses: {
+              '200': { body: inferSchema(user, { examples: false }) },
+              '404': { description: 'No existe' },
             },
           },
-          {
-            name: 'Crear usuario',
-            request: {
-              method: 'POST',
-              url: '{{baseUrl}}/users',
-              body: { mode: 'raw', raw: '{"name":"Ana"}' },
-            },
-            response: [{ name: 'Creado', code: 201, body: '{"id":1}' }],
+        },
+        {
+          name: 'Crear usuario',
+          request: {
+            method: 'POST',
+            url: '{{baseUrl}}/users',
+            body: { mode: 'raw', raw: '{"name":"Ana"}' },
           },
-        ],
-      },
-    ],
-  }
+          response: [{ name: 'Creado', code: 201, body: '{"id":1}' }],
+        },
+      ],
+    },
+  ],
+}
 
+describe('OpenAPI', () => {
   it('convierte rutas de Cartero', () => {
     expect(openApiPath('{{baseUrl}}/users/:id/posts/{{postId}}?x=1')).toBe('/users/{id}/posts/{postId}')
     expect(openApiPath('https://api.example.com/')).toBe('/')
@@ -290,5 +293,40 @@ describe('OpenAPI', () => {
       'string',
       'null',
     ])
+  })
+})
+
+describe('openApiToCollection', () => {
+  it('importa la spec de ejemplo con carpetas, parámetros, cuerpo y contratos', () => {
+    const spec = parseSpec(
+      readFileSync(new URL('../../importers/fixtures/openapi.yaml', import.meta.url), 'utf8'),
+    )
+    const { collection, warnings } = openApiToCollection(spec)
+    expect(collection.info.name).toBe('Petstore')
+    expect(collection.variable?.[0]).toEqual({ key: 'baseUrl', value: 'https://petstore.example.com/v1' })
+    const pets = collection.item[0] as any
+    expect(pets.name).toBe('pets')
+    const [list, create, get] = pets.item
+    expect(list.request.url.raw).toBe('{{baseUrl}}/pets')
+    expect(list.request.url.query[0]).toMatchObject({ key: 'limit', value: '10', disabled: true })
+    expect(list.response[0]).toMatchObject({ code: 200, body: expect.stringContaining('Rex') })
+    expect(JSON.parse(create.request.body.raw)).toEqual({ name: 'Rex' })
+    expect(get.request.url).toMatchObject({ raw: '{{baseUrl}}/pets/:petId', path: ['pets', ':petId'] })
+    expect(get.contract.request.path[0]).toMatchObject({ name: 'petId', required: true })
+    expect(warnings.join(' ')).toMatch(/contrato/)
+  })
+
+  it('ida y vuelta: lo exportado se vuelve a importar con los mismos contratos', () => {
+    const { spec } = collectionToOpenApi(collection)
+    const back = openApiToCollection(JSON.parse(JSON.stringify(spec))).collection
+    const get = (back.item[0] as any).item.find((i: any) => i.name === 'Ver usuario')
+    expect(get.request.url.raw).toBe('{{baseUrl}}/users/:id')
+    expect(get.contract.responses['200'].body.properties.email.format).toBe('email')
+    expect(get.contract.request.path[0].schema).toEqual({ type: 'integer' })
+  })
+
+  it('rechaza Swagger 2.0 y lo que no es OpenAPI', () => {
+    expect(() => openApiToCollection({ swagger: '2.0' })).toThrow(/Swagger/)
+    expect(() => openApiToCollection({ hola: 1 })).toThrow(/openapi/)
   })
 })

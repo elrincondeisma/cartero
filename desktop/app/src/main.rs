@@ -4,7 +4,9 @@
 
 mod assets;
 mod connect;
+mod contracts;
 mod i18n;
+mod mock;
 mod oauth2;
 mod runtime;
 mod sample;

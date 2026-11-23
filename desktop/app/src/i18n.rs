@@ -41,6 +41,19 @@ pub fn tr(es: &'static str) -> SharedString {
     text
 }
 
+/// Traducción de un texto que no es literal (mensajes del motor de contratos, avisos…).
+pub fn tr_dyn(es: &str) -> String {
+    translate(es, is_english())
+}
+
+/// `es` en inglés si `english` y hay traducción; si no, tal cual.
+pub fn translate(es: &str, english: bool) -> String {
+    match EN.get(es).filter(|_| english) {
+        Some(en) => en.clone(),
+        None => es.to_string(),
+    }
+}
+
 /// Con sustituciones: `trf("Hace {n} min", &[("n", "5")])`.
 pub fn trf(es: &'static str, args: &[(&str, &str)]) -> SharedString {
     let mut s = tr(es).to_string();

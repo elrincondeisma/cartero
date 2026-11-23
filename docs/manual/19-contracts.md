@@ -90,6 +90,17 @@ This way the frontend can get going with just the contract, without writing exam
 
 In the collection tree, requests with a contract show a small document icon with a tick.
 
+## In the desktop app
+
+The [desktop app](18-desktop-app.md) has all of the above, with the same engine:
+- the editor;
+- the checks on send, `localhost` included;
+- breaking changes;
+- the history, which is kept on your machine there;
+- OpenAPI import and export.
+
+Instead of a mock on the server, it starts a **local mock** on your machine.
+
 ## From an AI assistant
 
 The [MCP server](13-ai-mcp.md) has tools for all of the above: `ver_contrato`, `generar_contrato`, `guardar_contrato`, `validar_contrato`, `historial_contrato` and `exportar_openapi`. You can ask it, for example, "generate the contract for every request in *API* and tell me which ones don't match". The assistant can't save breaking changes without confirming them either.

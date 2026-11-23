@@ -10,7 +10,8 @@ import {
   type VariableScope,
   walkItems,
 } from '@cartero/core'
-import { faker } from '@faker-js/faker'
+// Solo el locale inglés: el paquete completo trae todos y pesa varios MB (importa para la app de escritorio)
+import { faker } from '@faker-js/faker/locale/en'
 
 export interface MockRequest {
   method: string

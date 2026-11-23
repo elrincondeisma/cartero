@@ -101,6 +101,17 @@ const MIGRATIONS: &[&str] = &[
     ALTER TABLE globals ADD COLUMN remote_version INTEGER;
     ALTER TABLE conflicts ADD COLUMN force INTEGER NOT NULL DEFAULT 0;
     "#,
+    // 3: versiones del contrato de cada petición (historial local)
+    r#"
+    CREATE TABLE contract_versions (
+        id TEXT PRIMARY KEY,
+        item_id TEXT NOT NULL,
+        before TEXT,
+        after TEXT,
+        created_at TEXT NOT NULL
+    );
+    CREATE INDEX contract_versions_item ON contract_versions (item_id, created_at);
+    "#,
 ];
 
 pub fn migrate(conn: &Connection) -> rusqlite::Result<()> {

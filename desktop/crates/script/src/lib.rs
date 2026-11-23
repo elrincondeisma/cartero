@@ -12,6 +12,8 @@ use rquickjs::{Context, Ctx, Function, Runtime};
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 
+pub mod engine;
+
 const PRELUDE: &str = include_str!("../assets/prelude.js");
 
 /// Fuente de cada librería disponible con `require`, empaquetada con esbuild (ver desktop/js).

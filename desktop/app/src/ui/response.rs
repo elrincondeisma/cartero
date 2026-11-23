@@ -19,8 +19,12 @@ pub enum Section {
     Cookies,
     Timings,
     Tests,
+    Contract,
     Console,
 }
+
+/// Se pide abrir la pestaña «Contrato» de la petición.
+pub struct OpenContract;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum BodyMode {
@@ -40,7 +44,11 @@ pub struct ResponseView {
     language: &'static str,
     highlight_limit: usize,
     sending: bool,
+    /// Resultado de comprobar la última ejecución contra el contrato de la petición
+    contract: Option<crate::contracts::Check>,
 }
+
+impl EventEmitter<OpenContract> for ResponseView {}
 
 fn language_for(content_type: &str, body: &str) -> &'static str {
     let ct = content_type.to_lowercase();
@@ -107,12 +115,21 @@ impl ResponseView {
             language: "text",
             highlight_limit: 2 * 1024 * 1024,
             sending: false,
+            contract: None,
         }
     }
 
     pub fn set_sending(&mut self, sending: bool, cx: &mut Context<Self>) {
         self.sending = sending;
         cx.notify();
+    }
+
+    /// Se llama antes de `set_outcome`, con el resultado de comprobar el contrato.
+    pub fn set_contract_check(&mut self, check: Option<crate::contracts::Check>) {
+        if check.is_none() && self.section == Section::Contract {
+            self.section = Section::Body;
+        }
+        self.contract = check;
     }
 
     pub fn set_highlight_limit(&mut self, kb: u64) {
@@ -238,6 +255,94 @@ impl ResponseView {
                 let color = if passed == o.tests.len() { crate::theme::status_color(200, cx) } else { cx.theme().danger };
                 d.child(stat(tr("Tests"), format!("{passed}/{}", o.tests.len()), Some(color)))
             })
+            .when_some(self.contract.as_ref(), |d, c| {
+                // Corto, que la barra de estado ya va llena: el detalle está en la pestaña «Contrato»
+                let (color, text, tip) = if c.errors > 0 {
+                    let n = c.errors.to_string();
+                    (
+                        cx.theme().danger,
+                        if c.errors == 1 { tr("1 fallo") } else { trf("{n} fallos", &[("n", &n)]) },
+                        if c.errors == 1 { tr("Contrato: 1 fallo") } else { trf("Contrato: {n} fallos", &[("n", &n)]) },
+                    )
+                } else if c.warnings > 0 {
+                    (cx.theme().warning, tr("Cumple"), tr("Cumple el contrato"))
+                } else {
+                    (crate::theme::status_color(200, cx), tr("Cumple"), tr("Cumple el contrato"))
+                };
+                d.child(
+                    div()
+                        .id("contract-badge")
+                        .h_flex()
+                        .gap_1()
+                        .px_2()
+                        .py_0p5()
+                        .rounded(px(4.))
+                        .cursor_pointer()
+                        .text_xs()
+                        .font_semibold()
+                        .text_color(color)
+                        .bg(color.opacity(0.1))
+                        .child(Icon::new(IconName::FileCheck).size_3())
+                        .child(text)
+                        .tooltip(move |window, cx| gpui_kit::component::tooltip::Tooltip::new(tip.clone()).build(window, cx))
+                        .on_click(cx.listener(|this, _, _, cx| {
+                            this.section = Section::Contract;
+                            cx.notify();
+                        })),
+                )
+            })
+    }
+
+    fn render_contract(&self, cx: &mut Context<Self>) -> AnyElement {
+        let Some(c) = &self.contract else { return div().into_any_element() };
+        let ok = crate::theme::status_color(200, cx);
+        let bad = cx.theme().danger;
+        let warn = cx.theme().warning;
+        let muted = cx.theme().muted_foreground;
+        let list = |title: SharedString, issues: &[crate::contracts::Issue]| {
+            div().v_flex().gap_0p5().when(!issues.is_empty(), |d| {
+                d.child(div().text_xs().font_semibold().text_color(muted).pb_1().child(title)).children(issues.iter().map(|i| {
+                    let (icon, color) = if i.is_error() { (IconName::CircleX, bad) } else { (IconName::TriangleAlert, warn) };
+                    div()
+                        .h_flex()
+                        .items_start()
+                        .gap_2()
+                        .py_0p5()
+                        .text_sm()
+                        .child(div().text_color(color).child(Icon::new(icon)))
+                        .child(div().flex_shrink_0().font_family("monospace").text_xs().pt_0p5().child(i.path.clone()))
+                        .child(div().flex_1().min_w_0().child(i.text()))
+                }))
+            })
+        };
+        div()
+            .v_flex()
+            .p_3()
+            .gap_4()
+            .when(c.is_clean(), |d| {
+                d.child(
+                    div()
+                        .h_flex()
+                        .gap_2()
+                        .text_sm()
+                        .text_color(ok)
+                        .child(Icon::new(IconName::CircleCheck))
+                        .child(tr("La petición y la respuesta cumplen el contrato.")),
+                )
+            })
+            .child(list(tr("Lo que se ha enviado"), &c.request))
+            .child(list(tr("Lo que ha llegado"), &c.response))
+            .child(
+                div().h_flex().child(
+                    Button::new("open-contract")
+                        .outline()
+                        .small()
+                        .icon(IconName::FileCheck)
+                        .label(tr("Abrir el contrato"))
+                        .on_click(cx.listener(|_, _, _, cx| cx.emit(OpenContract))),
+                ),
+            )
+            .into_any_element()
     }
 
     fn render_body(&self, cx: &mut Context<Self>) -> AnyElement {
@@ -536,14 +641,18 @@ impl Render for ResponseView {
             o.tests.len(),
             o.console.len(),
         );
-        let sections = [
+        let mut sections = vec![
             (Section::Body, tr("Cuerpo"), None),
             (Section::Headers, tr("Cabeceras"), Some(counts.0)),
             (Section::Cookies, tr("Cookies"), Some(counts.1)),
             (Section::Timings, tr("Tiempos"), None),
             (Section::Tests, tr("Tests"), Some(counts.2)),
-            (Section::Console, tr("Consola"), Some(counts.3)),
         ];
+        if let Some(c) = &self.contract {
+            sections.push((Section::Contract, tr("Contrato"), Some(c.errors)));
+        }
+        sections.push((Section::Console, tr("Consola"), Some(counts.3)));
+        let ids: Vec<Section> = sections.iter().map(|s| s.0).collect();
         let selected = sections.iter().position(|(s, _, _)| *s == self.section).unwrap_or(0);
         let tabs = TabBar::new("response-tabs")
             .underline()
@@ -556,7 +665,7 @@ impl Render for ResponseView {
                 Tab::new().label(text)
             }))
             .on_click(cx.listener(move |this, ix: &usize, _, cx| {
-                this.section = sections[*ix].0;
+                this.section = ids[*ix];
                 cx.notify();
             }));
         let content = match self.section {
@@ -565,12 +674,21 @@ impl Render for ResponseView {
             Section::Cookies => self.render_cookies(cx),
             Section::Timings => self.render_timings(cx),
             Section::Tests => self.render_tests(cx),
+            Section::Contract => self.render_contract(cx),
             Section::Console => self.render_console(cx),
         };
         div()
             .v_flex()
             .size_full()
-            .child(div().h_flex().justify_between().pr_3().child(tabs).child(self.render_status(cx)))
+            .child(
+                div()
+                    .h_flex()
+                    .justify_between()
+                    .gap_3()
+                    .pr_3()
+                    .child(div().min_w_0().overflow_hidden().child(tabs))
+                    .child(div().flex_shrink_0().child(self.render_status(cx))),
+            )
             .child(
                 div()
                     .id("response-content")

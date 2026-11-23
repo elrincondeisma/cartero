@@ -226,9 +226,9 @@ importers:
       '@cartero/mcp':
         specifier: workspace:*
         version: link:../../packages/mcp
-      '@faker-js/faker':
-        specifier: ^10.6.0
-        version: 10.6.0
+      '@cartero/mock':
+        specifier: workspace:*
+        version: link:../../packages/mock
       '@fastify/cookie':
         specifier: ^11.1.5
         version: 11.1.5
@@ -406,6 +406,9 @@ importers:
       ajv-formats:
         specifier: ^3.0.1
         version: 3.0.1(ajv@8.20.0)
+      yaml:
+        specifier: ^2.9.1
+        version: 2.9.1
 
   packages/core: {}
 
@@ -482,6 +485,18 @@ importers:
       zod:
         specifier: ^4.6.7
         version: 4.6.7
+
+  packages/mock:
+    dependencies:
+      '@cartero/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      '@cartero/core':
+        specifier: workspace:*
+        version: link:../core
+      '@faker-js/faker':
+        specifier: ^10.6.0
+        version: 10.6.0
 
 packages:
 

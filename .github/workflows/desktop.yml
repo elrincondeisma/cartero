@@ -3,7 +3,7 @@ name: Desktop
 on:
   push:
     branches: [main]
-    paths: ['desktop/**', 'packages/importers/fixtures/**', '.github/workflows/desktop.yml']
+    paths: ['desktop/**', 'packages/importers/fixtures/**', 'packages/contracts/**', 'packages/mock/**', '.github/workflows/desktop.yml']
   pull_request:
     paths: ['desktop/**', '.github/workflows/desktop.yml']
 

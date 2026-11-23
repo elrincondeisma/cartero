@@ -85,6 +85,44 @@ pub fn confirm(
     });
 }
 
+/// Antes de guardar un contrato con cambios que rompen: los enumera y pide confirmación.
+pub fn breaking_changes(diff: &crate::contracts::Diff, window: &mut Window, cx: &mut App, on_ok: impl Fn(&mut Window, &mut App) + 'static) {
+    let mut changes: Vec<(bool, String)> = diff.changes.iter().map(|c| (c.breaking, c.text())).collect();
+    changes.sort_by_key(|(b, _)| !*b);
+    let on_ok = Rc::new(on_ok);
+    window.open_dialog(cx, move |dialog, _, cx| {
+        let on_ok = on_ok.clone();
+        dialog
+            .title(tr("Este cambio rompe el contrato"))
+            .w(px(620.))
+            .child(
+                div()
+                    .v_flex()
+                    .gap_2()
+                    .child(
+                        div()
+                            .text_sm()
+                            .text_color(cx.theme().muted_foreground)
+                            .child(tr("El frontend que use la versión guardada dejará de funcionar con estos cambios.")),
+                    )
+                    .children(changes.iter().map(|(b, t)| crate::ui::contract::change_row(*b, t.clone(), cx))),
+            )
+            .footer(
+                DialogFooter::new()
+                    .child(
+                        Button::new("dialog-cancel")
+                            .outline()
+                            .label(tr("Seguir editando"))
+                            .on_click(|_, window, cx| window.close_dialog(cx)),
+                    )
+                    .child(Button::new("dialog-ok").danger().label(tr("Guardar igualmente")).on_click(move |_, window, cx| {
+                        window.close_dialog(cx);
+                        on_ok(window, cx)
+                    })),
+            )
+    });
+}
+
 /// Guardar una petición nueva: elegir colección (y carpeta) y nombre.
 pub fn save_request_as(tab: Entity<RequestTab>, window: &mut Window, cx: &mut App) {
     let app = tab.read(cx).app.clone();
@@ -313,7 +351,13 @@ pub fn import(app: Entity<AppState>, window: &mut Window, cx: &mut App) {
 
 /// Importa al workspace activo. Devuelve un resumen.
 pub fn import_text(app: &Entity<AppState>, text: &str, cx: &mut App) -> Result<String, String> {
-    let result = cartero_model::import::import_any(text).map_err(|e| e.to_string())?;
+    // OpenAPI (JSON o YAML): con el motor compartido, que trae también los contratos
+    let result = if crate::contracts::is_openapi(text) {
+        let (collection, warnings) = crate::contracts::from_openapi(text)?;
+        cartero_model::import::ImportResult { collections: vec![collection], warnings, ..Default::default() }
+    } else {
+        cartero_model::import::import_any(text).map_err(|e| e.to_string())?
+    };
     let state = app.read(cx);
     let ws = state.workspace.id.clone();
     let store = state.store.clone();

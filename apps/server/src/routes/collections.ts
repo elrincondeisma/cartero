@@ -33,6 +33,38 @@ const itemBody = z.object({
   index: z.number().int().min(0).optional(),
 })
 
+/**
+ * Si cambia el contrato de una petición, registra una revisión `contract` con el resumen de
+ * lo que cambió («1 cambio que rompe…»). Devuelve false si el contrato no ha cambiado.
+ */
+export async function recordContractRevision(
+  collectionId: string,
+  userId: string,
+  itemId: string,
+  name: string,
+  before: Item | null,
+  after: Item,
+): Promise<boolean> {
+  const oldContract = (before as RequestItem | null)?.contract
+  const newContract = (after as RequestItem).contract
+  if (JSON.stringify(oldContract ?? null) === JSON.stringify(newContract ?? null)) return false
+  const summary = !oldContract
+    ? 'creado'
+    : !newContract
+      ? 'eliminado'
+      : summarizeChanges(diffContracts(oldContract, newContract))
+  await recordRevision(
+    collectionId,
+    userId,
+    'contract',
+    `Contrato de «${name}»: ${summary}`,
+    itemId,
+    before,
+    after,
+  )
+  return true
+}
+
 export async function recordRevision(
   collectionId: string,
   userId: string,
@@ -435,21 +467,24 @@ export async function collectionRoutes(app: FastifyInstance) {
     const beforeItem = rowToItem(before)
     const afterItem = rowToItem(after)
     // Si cambia el contrato, la revisión lo dice y resume qué rompe
-    const oldContract = (beforeItem as RequestItem).contract
-    const newContract = (afterItem as RequestItem).contract
-    const contractChanged = JSON.stringify(oldContract ?? null) !== JSON.stringify(newContract ?? null)
-    const changes = contractChanged ? diffContracts(oldContract, newContract) : []
-    await recordRevision(
+    const contractChanged = await recordContractRevision(
       collectionId,
       user.id,
-      contractChanged ? 'contract' : 'update',
-      contractChanged
-        ? `Contrato de «${after.name}»: ${!oldContract ? 'creado' : !newContract ? 'eliminado' : summarizeChanges(changes)}`
-        : `«${after.name}» modificado`,
       id,
+      after.name,
       beforeItem,
       afterItem,
     )
+    if (!contractChanged)
+      await recordRevision(
+        collectionId,
+        user.id,
+        'update',
+        `«${after.name}» modificado`,
+        id,
+        beforeItem,
+        afterItem,
+      )
     changed(ws, collectionId, 'update', user.id, id)
     return after
   })

@@ -189,6 +189,11 @@ impl Sidebar {
         cx.notify();
     }
 
+    fn has_contract(&self, collection: &str, item: &str, cx: &App) -> bool {
+        let app = self.app.read(cx);
+        app.trees.get(collection).and_then(|c| cartero_model::tree::find(&c.item, item)).and_then(crate::contracts::of_item).is_some()
+    }
+
     fn method_of(&self, collection: &str, item: &str, cx: &App) -> Option<String> {
         let app = self.app.read(cx);
         let c = app.trees.get(collection)?;
@@ -345,6 +350,55 @@ impl Sidebar {
         .detach();
     }
 
+    fn export_openapi(&mut self, collection: String, yaml: bool, window: &mut Window, cx: &mut Context<Self>) {
+        let Ok(c) = self.app.read(cx).store.collection(&collection) else { return };
+        let (text, warnings) = match crate::contracts::to_openapi(&c, yaml) {
+            Ok(r) => r,
+            Err(e) => {
+                window.push_notification(Notification::error(e).title(tr("No se pudo exportar")), cx);
+                return;
+            }
+        };
+        let dir = dirs::download_dir().unwrap_or_else(std::env::temp_dir);
+        let file = format!("{}.openapi.{}", c.info.name.replace(['/', '\\'], "-"), if yaml { "yaml" } else { "json" });
+        let rx = cx.prompt_for_new_path(&dir, Some(&file));
+        cx.spawn_in(window, async move |_, cx| {
+            if let Ok(Ok(Some(path))) = rx.await {
+                let ok = std::fs::write(&path, text).is_ok();
+                let _ = cx.update(|window, cx| {
+                    if ok {
+                        let mut msg = tr("Colección exportada como OpenAPI 3.1").to_string();
+                        if !warnings.is_empty() {
+                            msg = format!("{msg}\n{}", warnings.join("\n"));
+                        }
+                        window.push_notification(Notification::success(msg), cx);
+                    } else {
+                        window.push_notification(Notification::error(tr("No se pudo guardar el fichero")), cx);
+                    }
+                });
+            }
+        })
+        .detach();
+    }
+
+    fn start_mock(&mut self, collection: String, window: &mut Window, cx: &mut Context<Self>) {
+        let result = self.app.update(cx, |app, cx| app.start_mock(&collection, cx));
+        match result {
+            Ok(url) => {
+                cx.write_to_clipboard(ClipboardItem::new_string(url.clone()));
+                window.push_notification(
+                    Notification::success(trf(
+                        "Responde en {url} (URL copiada). Usa los ejemplos guardados y, si no hay, el contrato.",
+                        &[("url", &url)],
+                    ))
+                    .title(tr("Mock local en marcha")),
+                    cx,
+                );
+            }
+            Err(e) => window.push_notification(Notification::error(e).title(tr("No se pudo iniciar el mock")), cx),
+        }
+    }
+
     fn copy_curl(&mut self, collection: String, item: String, window: &mut Window, cx: &mut Context<Self>) {
         let app = self.app.read(cx);
         let Some(c) = app.trees.get(&collection) else { return };
@@ -479,13 +533,32 @@ impl Sidebar {
                                 .when(matches!(node, Some(Node::Collection(_))), |d| d.font_semibold())
                                 .child(label.clone()),
                         );
+                    // Mock local en marcha: su puerto junto al nombre
+                    if let Some(Node::Collection(cid)) = &node
+                        && let Some(port) = entity.read(cx).app.read(cx).mocks.get(cid).map(|m| m.port)
+                    {
+                        row = row.child(
+                            div()
+                                .h_flex()
+                                .gap_1()
+                                .pr_1()
+                                .text_xs()
+                                .text_color(crate::theme::status_color(200, cx))
+                                .child(Icon::new(IconName::Radio).size_3())
+                                .child(format!(":{port}")),
+                        );
+                    }
                 }
                 Some(Node::Request(c, i)) => {
                     let method = entity.read(cx).method_of(c, i, cx).unwrap_or_else(|| "GET".into());
+                    let has_contract = entity.read(cx).has_contract(c, i, cx);
                     row = row
                         .child(div().w(px(16.)))
                         .child(method_label(&method, cx))
-                        .child(div().flex_1().min_w_0().truncate().child(label.clone()));
+                        .child(div().flex_1().min_w_0().truncate().child(label.clone()))
+                        .when(has_contract, |d| {
+                            d.child(div().pr_1().text_color(cx.theme().muted_foreground).child(Icon::new(IconName::FileCheck).size_3()))
+                        });
                 }
                 None => {}
             }
@@ -523,7 +596,7 @@ impl Sidebar {
                 let e = e.clone();
                 PopupMenuItem::new(label).icon(icon).on_click(move |_, window, cx| e.update(cx, |this, cx| f(this, window, cx)))
             };
-            let _ = (window, cx);
+            let _ = window;
             let c = node.collection().to_string();
             let mut menu = menu;
             match node.clone() {
@@ -558,6 +631,52 @@ impl Sidebar {
                             IconName::Download,
                             Box::new(move |s, w, cx| s.export(c5.clone(), w, cx)),
                         ))
+                        .item(item(
+                            tr("Exportar OpenAPI 3.1 (YAML)"),
+                            IconName::FileCheck,
+                            Box::new({
+                                let c = cid.clone();
+                                move |s, w, cx| s.export_openapi(c.clone(), true, w, cx)
+                            }),
+                        ))
+                        .item(item(
+                            tr("Exportar OpenAPI 3.1 (JSON)"),
+                            IconName::FileCheck,
+                            Box::new({
+                                let c = cid.clone();
+                                move |s, w, cx| s.export_openapi(c.clone(), false, w, cx)
+                            }),
+                        ))
+                        .separator();
+                    let running = e.read(cx).app.read(cx).mocks.get(&cid).map(|m| m.url());
+                    menu = match running {
+                        None => menu.item(item(
+                            tr("Iniciar mock local"),
+                            IconName::Radio,
+                            Box::new({
+                                let c = cid.clone();
+                                move |s, w, cx| s.start_mock(c.clone(), w, cx)
+                            }),
+                        )),
+                        Some(url) => menu
+                            .item(item(
+                                trf("Copiar URL del mock ({url})", &[("url", &url)]),
+                                IconName::Copy,
+                                Box::new(move |_, w, cx| {
+                                    cx.write_to_clipboard(ClipboardItem::new_string(url.clone()));
+                                    w.push_notification(Notification::success(tr("URL copiada")), cx);
+                                }),
+                            ))
+                            .item(item(
+                                tr("Detener mock local"),
+                                IconName::Square,
+                                Box::new({
+                                    let c = cid.clone();
+                                    move |s, _, cx| s.app.update(cx, |app, cx| app.stop_mock(&c, cx))
+                                }),
+                            )),
+                    };
+                    menu = menu
                         .separator()
                         .item(item(
                             tr("Renombrar"),

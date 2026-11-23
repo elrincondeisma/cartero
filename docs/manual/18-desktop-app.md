@@ -38,6 +38,28 @@ It works like the web app ([Requests](02-requests.md)):
 
 Cookies sent by servers are stored per workspace and sent automatically; manage them with the cookie button in the title bar.
 
+Requests leave **from your machine**, so they reach an API on the internet just as well as `localhost`, your local network or your VPN.
+
+## Contracts
+
+Each request's **Contract** tab works just like in the web app ([Contracts](19-contracts.md)). The checks use the same engine, so the results are identical.
+
+- **Create the contract**: generate it from the last response or start from scratch. Edit it with the field tree, the parameter and header tables, or as JSON Schema.
+- **On send**: next to the status code you'll see **Matches** or **N failures**. The response's **Contract** tab splits what was sent from what came back.
+- **On save**: if the change would break whoever already uses the contract, a dialog lists the changes before saving.
+- **History**: every version is kept on your machine, even if you're not connected to a server. If you sync, the server also records each contract change in its history.
+
+## Local mock
+
+Right-click a collection → **Start local mock**. The app starts a server on your machine (`http://127.0.0.1:4010`, or the next free port) and copies its URL.
+
+- It answers like the web app's [mock servers](08-mock-servers.md): with your saved examples and, when none matches, with data generated from the contract.
+- It accepts the `x-mock-response-*` headers.
+- It uses the variables from the active environment.
+- It allows requests from the browser (CORS), so your frontend can point at that URL with no backend and no connection.
+- What you save applies straight away, without restarting it.
+- While it's running, the collection shows its port. Stop it with **Stop local mock**; it also stops when you switch workspace or close the app.
+
 ## Environments and variables
 
 **Environments** in the activity bar: create, edit and choose the active one (also from the title bar). Mark a variable as **secret** with the eye icon: its value is hidden and stored encrypted with a key kept in your system keychain. Global variables are at the bottom of the list. When a script calls `pm.environment.set`, the value is saved in the environment (you can turn that off in Settings).
@@ -48,7 +70,16 @@ Right-click a collection or folder → **Run**. Choose iterations, delay, a CSV 
 
 ## Import and export
 
-**Import** (`Ctrl+O`, or the button next to Collections) accepts Postman collections v1, v2.0 and v2.1, Postman environments and globals, a full Cartero export and cURL commands, pasted or from a file. Right-click a collection → **Export** saves it as Postman v2.1, without losing anything.
+**Import** (`Ctrl+O`, or the button next to Collections) accepts, pasted or from a file:
+
+- Postman collections v1, v2.0 and v2.1, and Postman environments and globals;
+- a full Cartero export;
+- **OpenAPI 3.0/3.1** specs in JSON or YAML: each operation becomes a request with its contract;
+- cURL commands.
+
+Right-click a collection:
+- **Export (Postman v2.1)** saves it without losing anything.
+- **Export OpenAPI 3.1 (YAML)** or **(JSON)** generates the spec with the contracts.
 
 ## Connecting to a Cartero server
 

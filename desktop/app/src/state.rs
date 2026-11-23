@@ -69,6 +69,8 @@ pub struct AppState {
     pub sync_status: SyncStatus,
     pub conflicts: usize,
     pub presence: Vec<cartero_sync::realtime::Presence>,
+    /// Mocks locales en marcha, por colección
+    pub mocks: HashMap<String, crate::mock::LocalMock>,
 }
 
 impl EventEmitter<StateEvent> for AppState {}
@@ -184,6 +186,7 @@ impl AppState {
             sync_status: SyncStatus::Local,
             conflicts: 0,
             presence: vec![],
+            mocks: HashMap::new(),
         };
         state.servers = state.store.setting("servers").unwrap_or_default();
         state.load_workspace();
@@ -210,6 +213,56 @@ impl AppState {
         let ws = self.workspace.id.clone();
         self.collections = self.store.collections(&ws).unwrap_or_default();
         self.trees = self.collections.iter().filter_map(|c| self.store.collection(&c.id).ok().map(|t| (c.id.clone(), t))).collect();
+        self.refresh_mocks();
+    }
+
+    // ─────────────────────────── Mock local ───────────────────────────
+
+    /// Colección y variables para el mock (globales < colección < entorno activo).
+    fn mock_data(&self, collection: &str) -> Option<crate::mock::MockData> {
+        let c = self.trees.get(collection)?;
+        let state = self.var_state(Some(c));
+        let mut vars = state.globals;
+        vars.extend(state.collection);
+        vars.extend(state.environment);
+        Some(crate::mock::MockData { collection: serde_json::to_value(c).unwrap_or_default(), vars })
+    }
+
+    /// Los mocks en marcha responden con lo último guardado.
+    fn refresh_mocks(&mut self) {
+        let running: Vec<String> = self.mocks.keys().cloned().collect();
+        for id in running {
+            match self.mock_data(&id) {
+                Some(data) => self.mocks[&id].update(data),
+                None => {
+                    // La colección ya no está (borrada o de otro workspace): se para
+                    self.mocks.remove(&id);
+                }
+            }
+        }
+    }
+
+    /// Arranca el mock local de una colección y devuelve su URL.
+    pub fn start_mock(&mut self, collection: &str, cx: &mut Context<Self>) -> Result<String, String> {
+        if let Some(m) = self.mocks.get(collection) {
+            return Ok(m.url());
+        }
+        let data = self.mock_data(collection).ok_or_else(|| "colección no encontrada".to_string())?;
+        let first = self.mocks.values().map(|m| m.port + 1).max().unwrap_or(crate::mock::FIRST_PORT).max(crate::mock::FIRST_PORT);
+        let mock = crate::mock::start(data, first).map_err(|e| e.to_string())?;
+        let url = mock.url();
+        self.mocks.insert(collection.to_string(), mock);
+        cx.emit(StateEvent::Collections);
+        cx.notify();
+        Ok(url)
+    }
+
+    pub fn stop_mock(&mut self, collection: &str, cx: &mut Context<Self>) {
+        if let Some(m) = self.mocks.remove(collection) {
+            m.stop();
+        }
+        cx.emit(StateEvent::Collections);
+        cx.notify();
     }
 
     pub fn reload_collections(&mut self, cx: &mut Context<Self>) {
@@ -224,6 +277,7 @@ impl AppState {
             self.active_env = None;
         }
         self.globals = self.store.globals(&self.workspace.id).unwrap_or_default();
+        self.refresh_mocks();
         cx.emit(StateEvent::Environments);
         cx.notify();
     }
@@ -257,6 +311,7 @@ impl AppState {
     pub fn set_active_env(&mut self, id: Option<String>, cx: &mut Context<Self>) {
         self.active_env = id;
         let _ = self.store.set_setting(&format!("env:{}", self.workspace.id), &self.active_env);
+        self.refresh_mocks();
         cx.emit(StateEvent::Environments);
         cx.notify();
     }

@@ -22,7 +22,7 @@
     "@cartero/exporters": "workspace:*",
     "@cartero/importers": "workspace:*",
     "@cartero/mcp": "workspace:*",
-    "@faker-js/faker": "^10.6.0",
+    "@cartero/mock": "workspace:*",
     "@fastify/cookie": "^11.1.5",
     "@fastify/multipart": "^10.1.9",
     "@fastify/rate-limit": "^11.3.0",

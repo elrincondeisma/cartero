@@ -16,6 +16,8 @@ import { requireUser } from '../lib/auth.js'
 import { openVariables, sealVariables } from '../lib/crypto.js'
 import { broadcast } from '../lib/realtime.js'
 import { canonical, forgetDeletions, recordDeletions } from '../lib/sync.js'
+import { rowToItem } from '../lib/tree.js'
+import { recordContractRevision } from './collections.js'
 
 /** Margen del cursor: lo que se guarde mientras se lee no se pierde (la app ignora repetidos). */
 const CURSOR_OVERLAP_MS = 5000
@@ -296,6 +298,16 @@ export async function syncRoutes(app: FastifyInstance) {
             .set({ ...data, version: row.version + 1, updatedBy: user.id, updatedAt: new Date() })
             .where(eq(schema.items.id, id))
             .returning()
+          // El contrato cambiado desde la app de escritorio también queda en el historial
+          if (data.type === 'request')
+            await recordContractRevision(
+              data.collectionId,
+              user.id,
+              id,
+              data.name,
+              rowToItem(row),
+              rowToItem(after),
+            ).catch(() => {})
           touched.add(data.collectionId)
           if (row.collectionId !== data.collectionId) touched.add(row.collectionId)
           return { id, entity: o.entity, status: 'ok', version: after.version }
@@ -305,6 +317,15 @@ export async function syncRoutes(app: FastifyInstance) {
           .values({ id, ...data, updatedBy: user.id })
           .returning()
         await forgetDeletions([id])
+        if (data.type === 'request')
+          await recordContractRevision(
+            data.collectionId,
+            user.id,
+            id,
+            data.name,
+            null,
+            rowToItem(created),
+          ).catch(() => {})
         touched.add(data.collectionId)
         return { id, entity: o.entity, status: 'ok', version: created.version }
       }

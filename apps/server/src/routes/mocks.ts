@@ -7,7 +7,7 @@ import { assertCollection, assertRole, getRole } from '../lib/access.js'
 import { requireUser, resolveUser } from '../lib/auth.js'
 import { openVariables, randomToken } from '../lib/crypto.js'
 import { notFound } from '../lib/errors.js'
-import { mockResponse } from '../lib/mock.js'
+import { mockResponse } from '@cartero/mock'
 import { loadCollection } from '../lib/tree.js'
 
 const mockBody = z.object({

@@ -38,6 +38,28 @@ Funciona como la web ([Peticiones](02-peticiones.md)):
 
 Las cookies que mandan los servidores se guardan por workspace y se envían solas; gestiónalas con el botón de cookies de la barra de título.
 
+Las peticiones salen **de tu equipo**: llegan igual a una API en Internet que a `localhost`, a tu red local o a tu VPN.
+
+## Contratos
+
+La pestaña **Contrato** de cada petición funciona igual que en la web ([Contratos](19-contratos.md)). La comprobación usa el mismo motor, así que el resultado es idéntico.
+
+- **Crear el contrato**: genéralo desde la última respuesta o empieza en blanco. Se edita con el árbol de campos, las tablas de parámetros y cabeceras, o como JSON Schema.
+- **Al enviar**: junto al código de estado aparece **Cumple** o **N fallos**. La pestaña **Contrato** de la respuesta separa lo enviado de lo recibido.
+- **Al guardar**: si el cambio rompe a quien ya usa el contrato, un diálogo lo enumera antes de guardar.
+- **Historial**: guarda cada versión en tu equipo, aunque no estés conectado a un servidor. Si sincronizas, el servidor también registra cada cambio de contrato en su historial.
+
+## Mock local
+
+Botón derecho en una colección → **Iniciar mock local**. La app levanta un servidor en tu equipo (`http://127.0.0.1:4010`, o el siguiente puerto libre) y copia su URL.
+
+- Responde igual que los [mock servers](08-mock-servers.md) de la web: con los ejemplos guardados y, si ninguno encaja, con datos generados desde el contrato.
+- Acepta las cabeceras `x-mock-response-*`.
+- Usa las variables del entorno activo.
+- Admite peticiones desde el navegador (CORS), así que el frontend puede apuntar a esa URL sin backend y sin conexión.
+- Lo que guardas se aplica al momento, sin reiniciarlo.
+- Mientras está en marcha, la colección muestra su puerto. Se para con **Detener mock local**, al cambiar de workspace o al cerrar la app.
+
 ## Entornos y variables
 
 **Entornos** en la barra de actividad: crea, edita y elige el activo (también desde la barra de título). Marca una variable como **secreta** con el icono del ojo: su valor se oculta y se guarda cifrado con una clave que vive en el llavero del sistema. Las variables globales están al final de la lista. Cuando un script llama a `pm.environment.set`, el valor se guarda en el entorno (se puede desactivar en Ajustes).
@@ -48,7 +70,16 @@ Botón derecho en una colección o carpeta → **Ejecutar**. Elige iteraciones, 
 
 ## Importar y exportar
 
-**Importar** (`Ctrl+O`, o el botón junto a Colecciones) acepta colecciones de Postman v1, v2.0 y v2.1, entornos y globales de Postman, una exportación completa de Cartero y comandos cURL, pegados o desde un fichero. Botón derecho en una colección → **Exportar** la guarda en Postman v2.1, sin perder nada.
+**Importar** (`Ctrl+O`, o el botón junto a Colecciones) acepta, pegados o desde un fichero:
+
+- colecciones de Postman v1, v2.0 y v2.1, y entornos y globales de Postman;
+- una exportación completa de Cartero;
+- especificaciones **OpenAPI 3.0/3.1** en JSON o YAML: cada operación se convierte en una petición con su contrato;
+- comandos cURL.
+
+Botón derecho en una colección:
+- **Exportar (Postman v2.1)** la guarda sin perder nada.
+- **Exportar OpenAPI 3.1 (YAML)** o **(JSON)** genera la especificación con los contratos.
 
 ## Conectar con un servidor de Cartero
 

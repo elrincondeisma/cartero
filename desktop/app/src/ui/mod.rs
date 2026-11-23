@@ -1,5 +1,6 @@
 pub mod auth;
 pub mod collection;
+pub mod contract;
 pub mod dialogs;
 pub mod environment;
 pub mod kv;

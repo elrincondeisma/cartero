@@ -90,6 +90,17 @@ Así el frontend puede avanzar con solo el contrato, sin escribir ejemplos.
 
 En el árbol de la colección, las peticiones con contrato llevan un pequeño icono de documento con una marca.
 
+## En la app de escritorio
+
+La [app de escritorio](18-app-de-escritorio.md) tiene todo lo anterior, con el mismo motor:
+- el editor;
+- la comprobación al enviar, también contra `localhost`;
+- los cambios que rompen;
+- el historial, que allí se guarda en tu equipo;
+- importar y exportar OpenAPI.
+
+En lugar de un mock en el servidor, levanta un **mock local** en tu equipo.
+
 ## Desde un asistente de IA
 
 El [servidor MCP](13-ia-mcp.md) tiene herramientas para todo lo anterior: `ver_contrato`, `generar_contrato`, `guardar_contrato`, `validar_contrato`, `historial_contrato` y `exportar_openapi`. Puedes pedirle, por ejemplo, «genera el contrato de todas las peticiones de *API* y dime cuáles no cumplen». Los cambios que rompen tampoco se guardan desde el asistente sin confirmarlos.

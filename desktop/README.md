@@ -15,7 +15,7 @@ User guide: [docs/manual/18-desktop-app.md](../docs/manual/18-desktop-app.md). I
 | `crates/runner` | Runs a request with its script chain, and whole collections (iterations, CSV/JSON data, `setNextRequest`, JSON/JUnit reports) |
 | `crates/store` | Local SQLite with the server's logical schema, fractional ordering compatible with the server and encrypted secrets |
 | `crates/sync` | Optional sync with a Cartero server: pull since a cursor, push with conflict detection, history, runs and a realtime WebSocket |
-| `js/` | Builds the sandbox libraries (`crates/script/assets/libs/`, committed so `cargo build` doesn't need Node) |
+| `js/` | Builds the sandbox libraries (`crates/script/assets/libs/`) and the contracts and mock engine (`crates/script/assets/engine.js`, made from `packages/contracts` and `packages/mock`: the same code as the web app and the server). They're committed so `cargo build` doesn't need Node; if you change those packages, run `npm run build` here |
 | `packaging/` | Icons and installer scripts (`.dmg`, Windows setup, `.deb`, AppImage) |
 
 ## Build

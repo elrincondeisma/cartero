@@ -232,6 +232,47 @@ describe('sincronización con la app de escritorio', () => {
     expect(runs.body[0].source).toBe('desktop')
   })
 
+  it('los cambios de contrato desde la app quedan en el historial', async () => {
+    const id = randomUUID()
+    const v1 = {
+      responses: {
+        '200': {
+          body: {
+            type: 'object',
+            properties: { id: { type: 'integer' }, email: { type: 'string' } },
+            required: ['id', 'email'],
+          },
+        },
+      },
+    }
+    const v2 = {
+      responses: {
+        '200': { body: { type: 'object', properties: { id: { type: 'integer' } }, required: ['id'] } },
+      },
+    }
+    const item = (contract: unknown) => ({
+      collectionId,
+      parentId: null,
+      type: 'request',
+      name: 'Ver usuario',
+      sort: 'b0',
+      data: { request: { method: 'GET', url: 'https://x.io/users/:id' }, contract },
+    })
+    let r = await api('POST', `/api/workspaces/${ws}/sync`, {
+      ops: [{ entity: 'item', op: 'upsert', id, base: null, data: item(v1) }],
+    })
+    expect(r.body.results[0].status).toBe('ok')
+    r = await api('POST', `/api/workspaces/${ws}/sync`, {
+      ops: [{ entity: 'item', op: 'upsert', id, base: item(v1), data: item(v2) }],
+    })
+    expect(r.body.results[0].status).toBe('ok')
+    const revs = await api('GET', `/api/collections/${collectionId}/revisions?itemId=${id}&action=contract`)
+    expect(revs.body.map((x: any) => x.summary)).toEqual([
+      'Contrato de «Ver usuario»: 1 cambio que rompe',
+      'Contrato de «Ver usuario»: creado',
+    ])
+  })
+
   it('sin token no hay nada', async () => {
     const r = await api('GET', `/api/workspaces/${ws}/changes`, undefined, '')
     expect(r.status).toBe(401)

@@ -43,7 +43,7 @@ export function operationKey(method: string, path: string): string {
   return `${method.toUpperCase()} ${path.replace(/\{[^}]*\}/g, '{}').replace(/\/+$/, '') || '/'}`
 }
 
-const REASONS: Record<string, string> = {
+export const REASONS: Record<string, string> = {
   '200': 'OK',
   '201': 'Created',
   '202': 'Accepted',

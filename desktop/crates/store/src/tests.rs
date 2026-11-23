@@ -114,3 +114,33 @@ fn historial_ajustes_y_cookies() {
     s.delete_workspace(&ws.id).unwrap();
     assert!(s.history(&ws.id, 10).unwrap().is_empty());
 }
+
+#[test]
+fn versiones_del_contrato_al_guardar() {
+    let s = Store::in_memory().unwrap();
+    let ws = s.create_workspace("W").unwrap();
+    let c = s.import_collection(&ws.id, &import_any(&fixture("postman-v21.json")).unwrap().collections.remove(0)).unwrap();
+    let row = s.item_rows(&c).unwrap().into_iter().find(|r| r.kind == "request").unwrap();
+    let mut item = s.item(&row.id).unwrap();
+
+    // Guardar sin contrato no crea versiones
+    s.save_item(&item).unwrap();
+    assert!(s.contract_versions(&row.id).unwrap().is_empty());
+
+    let v1 = serde_json::json!({ "responses": { "200": { "body": { "type": "object" } } } });
+    item.extra.insert("contract".into(), v1.clone());
+    s.save_item(&item).unwrap();
+    s.save_item(&item).unwrap(); // sin cambios: no hay versión nueva
+    let v2 = serde_json::json!({ "responses": { "200": {}, "404": {} } });
+    item.extra.insert("contract".into(), v2.clone());
+    s.save_item(&item).unwrap();
+
+    let versions = s.contract_versions(&row.id).unwrap();
+    assert_eq!(versions.len(), 2);
+    assert_eq!((versions[0].before.as_ref(), versions[0].after.as_ref()), (Some(&v1), Some(&v2)));
+    assert_eq!((versions[1].before.as_ref(), versions[1].after.as_ref()), (None, Some(&v1)));
+    assert_eq!(s.item(&row.id).unwrap().extra.get("contract"), Some(&v2));
+
+    s.delete_item(&row.id).unwrap();
+    assert!(s.contract_versions(&row.id).unwrap().is_empty());
+}

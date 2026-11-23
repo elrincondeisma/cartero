@@ -10,6 +10,8 @@ gpui_kit::assets::icon_assets!(pub AppIcons, [
     Globe, Import, Inbox, Info, Keyboard, Layers, Link, ListChecks, Loader, LoaderCircle, Lock, LogIn, Mail, Minus, Moon, Package,
     PanelLeft, Pencil, Play, Plus, RefreshCw, Rocket, Save, Search, Send, Server, Settings, Square, SquareTerminal, Sun, Terminal,
     Trash, TriangleAlert, Unlink, Upload, Variable, X, Zap,
+    // Contratos y mock local
+    ArrowUp, FileCheck, Radio, SlidersHorizontal, Undo2, WandSparkles,
 ]);
 
 const LOGO: &[u8] = include_bytes!("../assets/logo.svg");

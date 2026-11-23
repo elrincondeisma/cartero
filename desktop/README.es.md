@@ -15,7 +15,7 @@ Manual de uso: [docs/manual/es/18-app-de-escritorio.md](../docs/manual/es/18-app
 | `crates/runner` | Ejecuta una petición con su cadena de scripts y colecciones enteras (iteraciones, datos CSV/JSON, `setNextRequest`, informes JSON/JUnit) |
 | `crates/store` | SQLite local con el esquema lógico del servidor, orden fraccional compatible con el servidor y secretos cifrados |
 | `crates/sync` | Sincronización opcional con un servidor de Cartero: bajar desde un cursor, subir con detección de conflictos, historial, ejecuciones y WebSocket en tiempo real |
-| `js/` | Empaqueta las librerías del sandbox (`crates/script/assets/libs/`, versionadas para que `cargo build` no necesite Node) |
+| `js/` | Empaqueta las librerías del sandbox (`crates/script/assets/libs/`) y el motor de contratos y mock (`crates/script/assets/engine.js`, hecho con `packages/contracts` y `packages/mock`: el mismo código que la web y el servidor). Están versionados para que `cargo build` no necesite Node; si cambias esos paquetes, ejecuta `npm run build` aquí |
 | `packaging/` | Iconos y scripts de los instaladores (`.dmg`, instalador de Windows, `.deb`, AppImage) |
 
 ## Compilar

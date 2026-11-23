@@ -39,3 +39,27 @@ for (const [name, mod] of Object.entries(LIBS)) {
   names.push([name, file, result.outputFiles[0].text.length])
 }
 for (const [n, f, size] of names) console.log(`${n.padEnd(22)} ${f}.js ${(size / 1024).toFixed(0)} KB`)
+
+// Motor de contratos y mock (packages/contracts + packages/mock) para la app: ../crates/script/assets/engine.js
+{
+  const result = await build({
+    entryPoints: ['./engine.ts'],
+    bundle: true,
+    write: false,
+    format: 'iife',
+    platform: 'browser',
+    target: 'es2020',
+    minify: true,
+    legalComments: 'none',
+    define: { 'process.env.NODE_ENV': '"production"', global: 'globalThis' },
+    // Fuentes de los paquetes del monorepo (no sus dist, que pueden estar sin compilar)
+    alias: {
+      '@cartero/core': '../../packages/core/src/index.ts',
+      '@cartero/contracts': '../../packages/contracts/src/index.ts',
+    },
+    nodePaths: ['../../packages/contracts/node_modules', '../../packages/mock/node_modules', '../../packages/core/node_modules'],
+    inject: ['./shims.js'],
+  })
+  writeFileSync('../crates/script/assets/engine.js', result.outputFiles[0].text)
+  console.log('engine', result.outputFiles[0].text.length)
+}
