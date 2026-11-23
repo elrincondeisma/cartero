@@ -1217,4 +1217,5 @@ export const en: Record<string, string> = {
   'Colección creada': 'Collection created',
   'Configuración de la colección': 'Collection settings',
   'Actualizada desde Postman': 'Updated from Postman',
+  'campo': 'field',
 }

@@ -792,11 +792,13 @@ impl ContractEditor {
         self.edit_field(target, path, cx, |obj| {
             let o = obj.as_object_mut().unwrap();
             let props = o.entry("properties").or_insert_with(|| json!({}));
-            let mut key = "campo".to_string();
+            // El nombre por defecto sigue el idioma de la interfaz (campo / field)
+            let base = tr("campo").to_string();
+            let mut key = base.clone();
             let mut i = 1;
             while props.get(&key).is_some() {
                 i += 1;
-                key = format!("campo{i}");
+                key = format!("{base}{i}");
             }
             props[&key] = json!({ "type": "string" });
             o.entry("required").or_insert_with(|| json!([])).as_array_mut().unwrap().push(json!(key));

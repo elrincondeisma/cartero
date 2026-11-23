@@ -92,6 +92,27 @@ test('capturas de la landing', async ({ page }) => {
   await page.getByRole('button', { name: new RegExp(L('Crear post', 'Create post')) }).first().click()
   await shotMain(page, 'runner')
 
+  // Contrato: generarlo desde una respuesta real y romperlo
+  await openRequest(page, blog, L('Usuarios', 'Users'), L('Obtener usuario', 'Get user'))
+  await page.getByRole('button', { name: L('Enviar', 'Send'), exact: true }).click()
+  await expect(page.getByText('200 OK')).toBeVisible({ timeout: 20_000 })
+  await page.locator('main').getByRole('button', { name: L('Contrato', 'Contract'), exact: true }).first().click()
+  await page.getByRole('button', { name: L('Generar desde la última respuesta', 'Generate from last response') }).first().click()
+  await page.keyboard.press('Control+s')
+  await page.getByRole('button', { name: L('Enviar', 'Send'), exact: true }).click()
+  await expect(page.getByText(L('Cumple el contrato', 'Matches the contract'))).toBeVisible({ timeout: 20_000 })
+  await expect(page.locator('[data-sonner-toast]')).toHaveCount(0, { timeout: 15_000 })
+  await shotMain(page, 'contract')
+  // El id pasa a texto y se pide un campo que la API no manda
+  await page.locator('input[value="id"]').locator('xpath=../..').getByLabel(L('Tipo', 'Type')).selectOption('string')
+  await page.getByRole('button', { name: L('Campo', 'Field'), exact: true }).last().click()
+  await page.getByRole('button', { name: L('Enviar', 'Send'), exact: true }).click()
+  const fails = L('Contrato: 2 fallos', 'Contract: 2 failures')
+  await expect(page.getByText(fails)).toBeVisible({ timeout: 20_000 })
+  await page.getByText(fails).click()
+  await expect(page.locator('[data-sonner-toast]')).toHaveCount(0, { timeout: 15_000 })
+  await shotMain(page, 'contract-fail')
+
   // Colaboración
   await openRequest(page, blog, 'Posts', L('Crear post', 'Create post'))
   await page.getByRole('button', { name: L('Comentarios y cambios', 'Comments and changes') }).click()

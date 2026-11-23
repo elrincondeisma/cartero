@@ -60,17 +60,13 @@ export const Background: React.FC = () => {
   )
 }
 
-/** Envoltorio de escena: sale con fundido, leve zoom y desenfoque. */
-export const Scene: React.FC<{ children: React.ReactNode; out?: number }> = ({ children, out = 12 }) => {
-  const f = useCurrentFrame()
-  const { durationInFrames } = useVideoConfig()
-  const o = interpolate(f, [durationInFrames - out, durationInFrames], [1, 0], clamp)
-  return (
-    <AbsoluteFill style={{ opacity: o, transform: `scale(${1.04 - o * 0.04})`, filter: `blur(${(1 - o) * 12}px)`, fontFamily: inter, color: C.text }}>
-      {children}
-    </AbsoluteFill>
-  )
-}
+/**
+ * Envoltorio de escena. Sin fundidos: cada escena termina transformando un objeto en el
+ * primero de la siguiente, y el corte cae en el golpe de la música.
+ */
+export const Scene: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <AbsoluteFill style={{ fontFamily: inter, color: C.text }}>{children}</AbsoluteFill>
+)
 
 export const Logo: React.FC<{ size?: number; draw?: number }> = ({ size = 64, draw = 1 }) => (
   <svg width={size} height={size} viewBox="0 0 32 32">

@@ -517,5 +517,6 @@
   "Se quita este código de respuesta": "This response code is removed",
   "1 fallo": "1 failure",
   "{n} fallos": "{n} failures",
-  "Cumple": "Matches"
+  "Cumple": "Matches",
+  "campo": "field"
 }

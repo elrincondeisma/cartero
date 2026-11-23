@@ -263,6 +263,7 @@ mod tests {
 
     #[test]
     fn plantillas_y_resumenes() {
+        let _lang = i18n::LANG_LOCK.lock().unwrap_or_else(|e| e.into_inner());
         assert_eq!(
             template("Se esperaba {0} y ha llegado {1}", &[json!("integer"), json!("string")]),
             "Se esperaba integer y ha llegado string"
@@ -298,6 +299,7 @@ mod tests {
 
     #[test]
     fn comprueba_lo_enviado_y_lo_recibido() {
+        let _lang = i18n::LANG_LOCK.lock().unwrap_or_else(|e| e.into_inner());
         let contract = json!({ "request": { "query": [{ "name": "page", "required": true }] }, "responses": { "200": { "body": { "type": "object", "properties": { "id": { "type": "integer" } }, "required": ["id"] } } } });
         let sent = Prepared {
             method: "GET".into(),
@@ -314,6 +316,7 @@ mod tests {
 
     #[test]
     fn cambios_traducidos() {
+        let _lang = i18n::LANG_LOCK.lock().unwrap_or_else(|e| e.into_inner());
         let before = json!({ "responses": { "200": { "body": { "type": "object", "properties": { "email": { "type": "string" } }, "required": ["email"] } } } });
         let after = json!({ "responses": { "200": { "body": { "type": "object", "properties": {}, "required": [] } } } });
         let d = diff(Some(&before), Some(&after));

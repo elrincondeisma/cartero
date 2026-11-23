@@ -63,10 +63,15 @@ pub fn trf(es: &'static str, args: &[(&str, &str)]) -> SharedString {
     s.into()
 }
 
+/// Los tests que cambian o dependen del idioma global no pueden ir a la vez.
+#[cfg(test)]
+pub static LANG_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
 #[cfg(test)]
 mod tests {
     #[test]
     fn en_json_valido() {
+        let _lang = super::LANG_LOCK.lock().unwrap_or_else(|e| e.into_inner());
         assert!(super::EN.len() > 300);
         super::set_english(true);
         assert_eq!(super::tr("Guardar").as_ref(), "Save");

@@ -89,9 +89,11 @@ function FieldRow({ name, schema, required, depth, readOnly, isItems, onChange, 
     onChange({ ...schema, properties: next, required: nextReq.filter((k) => k in next) })
 
   const addField = () => {
+    // El nombre por defecto sigue el idioma de la interfaz (campo / field)
+    const base = t('campo')
     let i = 1
-    let key = 'campo'
-    while (key in props) key = `campo${++i}`
+    let key = base
+    while (key in props) key = `${base}${++i}`
     setProps({ ...props, [key]: { type: 'string' } }, [...req, key])
   }
 
