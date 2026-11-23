@@ -17,6 +17,7 @@
 - [Conectar asistentes de IA (MCP)](13-ia-mcp.md)
 - [Atajos de teclado](14-atajos.md)
 - [Instalación y administración](15-autoalojamiento.md)
+- [Desplegar en AWS](20-desplegar-en-aws.md)
 - [Administración](17-administracion-y-login-social.md)
 - [App de escritorio](18-app-de-escritorio.md)
 - [Contratos](19-contratos.md)

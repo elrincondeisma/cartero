@@ -13,6 +13,8 @@ docker compose up -d
 
 Arrancan tres contenedores: **cartero** (web, API y worker de monitores), **postgres** y **redis**. Abre `http://localhost:3000` (o el puerto de `CARTERO_PORT`).
 
+> **En AWS** hay un asistente que lo hace todo por ti con CDK (ECS Fargate o EC2): mira [Desplegar en AWS](20-desplegar-en-aws.md).
+
 ## Primer arranque: el asistente
 
 La primera vez que abres un Cartero nuevo aparece un asistente paso a paso en lugar del login. Nadie puede registrarse hasta que crea la primera cuenta.

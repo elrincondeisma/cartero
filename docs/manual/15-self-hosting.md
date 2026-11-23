@@ -13,6 +13,8 @@ docker compose up -d
 
 Three containers start: **cartero** (web, API and monitor worker), **postgres** and **redis**. Open `http://localhost:3000` (or the `CARTERO_PORT` port).
 
+> **On AWS** there's a wizard that does all of this for you with CDK (ECS Fargate or EC2): see [Deploying to AWS](20-deploy-aws.md).
+
 ## First start: the setup wizard
 
 The first time you open a new Cartero, a step-by-step wizard appears instead of the login page. Nobody can sign up until it creates the first account.

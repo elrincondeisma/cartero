@@ -71,6 +71,8 @@ docker compose up -d
 
 Open `http://localhost:3000`. The **setup wizard** walks you through it step by step: create the admin account, set the public URL, decide who can sign up, and optionally turn on Google and GitHub sign-in and email. See [First start](docs/manual/15-self-hosting.md#first-start-the-setup-wizard).
 
+**On AWS?** `pnpm deploy:aws` starts a step-by-step wizard that deploys Cartero with CDK, on ECS Fargate or on an EC2 instance, reusing your VPC, database, Redis and domain or creating them. See [Deploying to AWS](docs/manual/20-deploy-aws.md).
+
 Everything you choose can be changed later in **Administration** (account menu), along with user management. See the [admin guide](docs/manual/17-admin-and-social-login.md).
 
 ### Configuration

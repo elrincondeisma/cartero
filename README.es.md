@@ -71,6 +71,8 @@ docker compose up -d
 
 Abre `http://localhost:3000`. El **asistente de instalación** te guía paso a paso: crear la cuenta de administrador, poner la URL pública, decidir quién puede registrarse y, si quieres, activar el login con Google y GitHub y el email. Lo tienes en [Primer arranque](docs/manual/es/15-autoalojamiento.md#primer-arranque-el-asistente).
 
+**¿En AWS?** `pnpm deploy:aws` lanza un asistente paso a paso que despliega Cartero con CDK, en ECS Fargate o en una EC2, reutilizando tu VPC, base de datos, Redis y dominio o creándolos. Mira [Desplegar en AWS](docs/manual/es/20-desplegar-en-aws.md).
+
 Todo lo que elijas se puede cambiar después en **Administración** (menú de la cuenta), junto con la gestión de usuarios. Mira la [guía de administración](docs/manual/es/17-administracion-y-login-social.md).
 
 ### Configuración

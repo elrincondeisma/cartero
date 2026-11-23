@@ -1,6 +1,7 @@
 packages:
   - "apps/*"
   - "packages/*"
+  - "deploy/*"
 allowBuilds:
   esbuild: true
   msgpackr-extract: true

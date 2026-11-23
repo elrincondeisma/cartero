@@ -1,6 +1,6 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.0.0/schema.json",
-  "files": { "includes": ["**", "!**/dist", "!**/node_modules", "!**/fixtures"] },
+  "files": { "includes": ["**", "!**/dist", "!**/node_modules", "!**/fixtures", "!**/cdk.out"] },
   "formatter": { "indentStyle": "space", "indentWidth": 2, "lineWidth": 110 },
   "javascript": { "formatter": { "quoteStyle": "single", "semicolons": "asNeeded" } },
   "linter": { "rules": { "recommended": true, "suspicious": { "noExplicitAny": "off" } } }
