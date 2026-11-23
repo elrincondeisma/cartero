@@ -4,7 +4,7 @@
 
 Un cliente de APIs de escritorio nativo, escrito en Rust: primero local (tus colecciones viven en tu ordenador) y con conexión opcional a un servidor de Cartero para sincronizar y colaborar. Las peticiones salen **de tu equipo**, así que llegan a tu `localhost`, a tu VPN y a tu red.
 
-Manual de uso: [docs/manual/es/18-app-de-escritorio.md](../docs/manual/es/18-app-de-escritorio.md). Instaladores: [Releases](https://github.com/elrincondeisma/cartero/releases).
+Manual de uso: [docs/manual/es/18-app-de-escritorio.md](../docs/manual/es/18-app-de-escritorio.md). Instaladores: [macOS](https://github.com/elrincondeisma/cartero/releases/latest/download/Cartero-macos-universal.dmg) · [Windows](https://github.com/elrincondeisma/cartero/releases/latest/download/Cartero-windows-x64-setup.exe) · [Linux .deb](https://github.com/elrincondeisma/cartero/releases/latest/download/cartero-linux-amd64.deb) · [Linux AppImage](https://github.com/elrincondeisma/cartero/releases/latest/download/Cartero-linux-x86_64.AppImage) ([todas las versiones](https://github.com/elrincondeisma/cartero/releases)).
 
 | Crate | Qué hace |
 |---|---|

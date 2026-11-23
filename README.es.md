@@ -6,6 +6,8 @@
 
 <img src="apps/landing/src/assets/screens/request-dark.png" alt="Cartero enviando una petición, tema oscuro">
 
+**App de escritorio:** [macOS](https://github.com/elrincondeisma/cartero/releases/latest/download/Cartero-macos-universal.dmg) · [Windows](https://github.com/elrincondeisma/cartero/releases/latest/download/Cartero-windows-x64-setup.exe) · [Linux .deb](https://github.com/elrincondeisma/cartero/releases/latest/download/cartero-linux-amd64.deb) · [Linux AppImage](https://github.com/elrincondeisma/cartero/releases/latest/download/Cartero-linux-x86_64.AppImage)
+
 **Cliente de APIs web y open source, autoalojado.** Una alternativa a Postman con lo que allí es de pago incluido gratis y sin límites: runner de colecciones, mock servers, monitores, documentación publicada y colaboración en equipo. Importa tus colecciones de Postman sin perder nada.
 
 > MIT · TypeScript · Un `docker compose up` y listo
@@ -102,6 +104,10 @@ Más detalles en el [manual](docs/manual/es/13-ia-mcp.md).
 ## App de escritorio
 
 Una app nativa para macOS, Windows y Linux, escrita en Rust. Funciona sola (tus colecciones se guardan en tu ordenador y las peticiones salen de tu equipo, así que llegan a `localhost` y a tu VPN) y puede sincronizar workspaces con un servidor de Cartero. Descárgala en [Releases](https://github.com/elrincondeisma/cartero/releases) y lee la [guía](docs/manual/es/18-app-de-escritorio.md).
+
+| macOS (Apple Silicon e Intel) | Windows | Linux |
+|---|---|---|
+| [⬇ Cartero-macos-universal.dmg](https://github.com/elrincondeisma/cartero/releases/latest/download/Cartero-macos-universal.dmg)<br>firmada y notarizada | [⬇ Cartero-windows-x64-setup.exe](https://github.com/elrincondeisma/cartero/releases/latest/download/Cartero-windows-x64-setup.exe) | [⬇ .deb](https://github.com/elrincondeisma/cartero/releases/latest/download/cartero-linux-amd64.deb) (Debian, Ubuntu)<br>[⬇ AppImage](https://github.com/elrincondeisma/cartero/releases/latest/download/Cartero-linux-x86_64.AppImage) (cualquier distribución) |
 
 <img src="apps/landing/src/assets/screens/desktop.png" alt="App de escritorio de Cartero comprobando un contrato contra una API en localhost, con un mock local en marcha">
 

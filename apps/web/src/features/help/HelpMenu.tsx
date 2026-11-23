@@ -1,11 +1,12 @@
 import * as Popover from '@radix-ui/react-popover'
-import { BookOpen, Bot, CircleHelp, Eye, Keyboard, Rocket, Search, ShieldCheck, Wand2 } from 'lucide-react'
+import { BookOpen, Bot, CircleHelp, Eye, Keyboard, Monitor, Rocket, Search, ShieldCheck, Wand2 } from 'lucide-react'
 import { useNavigate } from 'react-router'
 import { useEffect, useState } from 'react'
 import { useEnvironments, useGlobals } from '@/api/hooks'
 import { Dialog, Menu, Tooltip } from '@/components/ui'
 import { useUi } from '@/store/ui'
 import { useTour } from '../onboarding/Tour'
+import { DesktopDownloadDialog } from './DesktopDownload'
 import { usePalette } from '../palette/CommandPalette'
 import { useOpen } from '../workspace/actions'
 import { useWs } from '../workspace/context'
@@ -52,6 +53,7 @@ export function ShortcutsDialog({ open, onOpenChange }: { open: boolean; onOpenC
 /** Botones de la barra superior: búsqueda (Ctrl+K) y ayuda. */
 export function HelpMenu() {
   const [shortcuts, setShortcuts] = useState(false)
+  const [desktop, setDesktop] = useState(false)
   const startTour = useTour((s) => s.start)
   const openSettings = useUi((s) => s.openSettings)
   const setPalette = usePalette((s) => s.setOpen)
@@ -95,6 +97,7 @@ export function HelpMenu() {
           { label: t("Atajos de teclado"), icon: <Keyboard />, shortcut: '?', onSelect: () => setShortcuts(true) },
           'separator',
           { label: t("Conectar con IA (MCP)"), icon: <Bot />, onSelect: () => openSettings('ai') },
+          { label: t('Descargar la app de escritorio'), icon: <Monitor />, onSelect: () => setDesktop(true) },
           ...(me.role === 'admin'
             ? [
                 'separator' as const,
@@ -105,6 +108,7 @@ export function HelpMenu() {
         ]}
       />
       <ShortcutsDialog open={shortcuts} onOpenChange={setShortcuts} />
+      <DesktopDownloadDialog open={desktop} onOpenChange={setDesktop} />
     </>
   )
 }

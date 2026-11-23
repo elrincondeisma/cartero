@@ -6,13 +6,16 @@ Cartero también es una app de escritorio nativa para macOS, Windows y Linux. Fu
 
 ## Instalarla
 
-Descarga el instalador de tu sistema en la [página de releases](https://github.com/elrincondeisma/cartero/releases):
+Descarga el instalador de tu sistema (siempre la última versión):
 
-| Sistema | Fichero | Notas |
+| Sistema | Descarga | Notas |
 |---|---|---|
-| macOS (Apple Silicon e Intel) | `Cartero-…-macos-universal.dmg` | Abre el `.dmg` y arrastra **Cartero** a **Aplicaciones**. Si la versión no está firmada, la primera vez haz clic derecho en la app → **Abrir** → **Abrir**. |
-| Windows 10/11 | `Cartero-…-windows-x64-setup.exe` | Si SmartScreen avisa, pulsa **Más información** → **Ejecutar de todas formas**. |
-| Linux | `.deb` o `.AppImage` | `sudo apt install ./cartero_…_amd64.deb`, o da permiso de ejecución al AppImage y ábrelo. |
+| macOS (Apple Silicon e Intel) | [Cartero-macos-universal.dmg](https://github.com/elrincondeisma/cartero/releases/latest/download/Cartero-macos-universal.dmg) | Abre el `.dmg` y arrastra **Cartero** a **Aplicaciones**. Está firmada y notarizada por Apple: se abre sin avisos. |
+| Windows 10/11 | [Cartero-windows-x64-setup.exe](https://github.com/elrincondeisma/cartero/releases/latest/download/Cartero-windows-x64-setup.exe) | Si SmartScreen avisa, pulsa **Más información** → **Ejecutar de todas formas**. |
+| Linux (Debian, Ubuntu) | [cartero-linux-amd64.deb](https://github.com/elrincondeisma/cartero/releases/latest/download/cartero-linux-amd64.deb) | `sudo apt install ./cartero-linux-amd64.deb` |
+| Linux (cualquier distribución) | [Cartero-linux-x86_64.AppImage](https://github.com/elrincondeisma/cartero/releases/latest/download/Cartero-linux-x86_64.AppImage) | `chmod +x Cartero-linux-x86_64.AppImage` y ábrelo. |
+
+Las versiones anteriores están en la [página de releases](https://github.com/elrincondeisma/cartero/releases). También puedes descargarla desde la web de Cartero: **Ayuda (?) → Descargar la app de escritorio**.
 
 La primera vez la app crea un workspace con una colección de ejemplo contra httpbin.org y un entorno `httpbin`, para que puedas pulsar **Enviar** desde el primer momento.
 

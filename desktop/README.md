@@ -4,7 +4,7 @@
 
 A native desktop API client written in Rust: local first (your collections live on your computer), with an optional connection to a Cartero server to sync and collaborate. Requests are sent **from your machine**, so they reach your `localhost`, your VPN and your network.
 
-User guide: [docs/manual/18-desktop-app.md](../docs/manual/18-desktop-app.md). Installers: [Releases](https://github.com/elrincondeisma/cartero/releases).
+User guide: [docs/manual/18-desktop-app.md](../docs/manual/18-desktop-app.md). Installers: [macOS](https://github.com/elrincondeisma/cartero/releases/latest/download/Cartero-macos-universal.dmg) · [Windows](https://github.com/elrincondeisma/cartero/releases/latest/download/Cartero-windows-x64-setup.exe) · [Linux .deb](https://github.com/elrincondeisma/cartero/releases/latest/download/cartero-linux-amd64.deb) · [Linux AppImage](https://github.com/elrincondeisma/cartero/releases/latest/download/Cartero-linux-x86_64.AppImage) ([all releases](https://github.com/elrincondeisma/cartero/releases)).
 
 | Crate | What it does |
 |---|---|

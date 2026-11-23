@@ -109,6 +109,14 @@ jobs:
         with:
           path: dist
           merge-multiple: true
+      - name: Copias con nombre fijo (enlaces directos /releases/latest/download/…)
+        run: |
+          cd dist
+          cp Cartero-*-macos-universal.dmg Cartero-macos-universal.dmg
+          cp Cartero-*-windows-x64-setup.exe Cartero-windows-x64-setup.exe
+          cp Cartero-*-x86_64.AppImage Cartero-linux-x86_64.AppImage
+          cp cartero_*_amd64.deb cartero-linux-amd64.deb
+          ls -la
       - name: Release (borrador si es manual)
         uses: softprops/action-gh-release@v2
         with:
@@ -123,3 +131,9 @@ jobs:
             - **macOS** (Apple Silicon e Intel): `Cartero-…-macos-universal.dmg`, firmado y notarizado por Apple: abre el .dmg y arrastra Cartero a Aplicaciones.
             - **Windows**: `Cartero-…-windows-x64-setup.exe`.
             - **Linux**: `.deb` (Debian, Ubuntu) o `.AppImage` (cualquier distribución).
+
+            Cada instalador está también con un nombre sin versión (`Cartero-macos-universal.dmg`…), para los enlaces directos a la última versión.
+
+            ---
+
+            Cartero desktop installers. **macOS** (Apple Silicon and Intel, signed and notarized), **Windows** and **Linux** (`.deb` or `.AppImage`). Each installer also has a version-less name for direct links to the latest release.

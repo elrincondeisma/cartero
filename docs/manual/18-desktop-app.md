@@ -6,13 +6,16 @@ Cartero also comes as a native desktop app for macOS, Windows and Linux. It work
 
 ## Install
 
-Download the installer for your system from the [releases page](https://github.com/elrincondeisma/cartero/releases):
+Download the installer for your system (always the latest version):
 
-| System | File | Notes |
+| System | Download | Notes |
 |---|---|---|
-| macOS (Apple Silicon and Intel) | `Cartero-…-macos-universal.dmg` | Open the `.dmg` and drag **Cartero** to **Applications**. If the build is not signed, the first time right-click the app → **Open** → **Open**. |
-| Windows 10/11 | `Cartero-…-windows-x64-setup.exe` | If SmartScreen warns you, click **More info** → **Run anyway**. |
-| Linux | `.deb` or `.AppImage` | `sudo apt install ./cartero_…_amd64.deb`, or make the AppImage executable and run it. |
+| macOS (Apple Silicon and Intel) | [Cartero-macos-universal.dmg](https://github.com/elrincondeisma/cartero/releases/latest/download/Cartero-macos-universal.dmg) | Open the `.dmg` and drag **Cartero** to **Applications**. It's signed and notarized by Apple, so it opens without warnings. |
+| Windows 10/11 | [Cartero-windows-x64-setup.exe](https://github.com/elrincondeisma/cartero/releases/latest/download/Cartero-windows-x64-setup.exe) | If SmartScreen warns you, click **More info** → **Run anyway**. |
+| Linux (Debian, Ubuntu) | [cartero-linux-amd64.deb](https://github.com/elrincondeisma/cartero/releases/latest/download/cartero-linux-amd64.deb) | `sudo apt install ./cartero-linux-amd64.deb` |
+| Linux (any distribution) | [Cartero-linux-x86_64.AppImage](https://github.com/elrincondeisma/cartero/releases/latest/download/Cartero-linux-x86_64.AppImage) | `chmod +x Cartero-linux-x86_64.AppImage` and run it. |
+
+Older versions are on the [releases page](https://github.com/elrincondeisma/cartero/releases). You can also download it from Cartero's web app: **Help (?) → Download the desktop app**.
 
 The first time it opens, the app creates a workspace with an example collection against httpbin.org and an `httpbin` environment, so you can press **Send** right away.
 

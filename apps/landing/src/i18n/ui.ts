@@ -4,6 +4,15 @@ export type Lang = keyof typeof languages
 /** URL del repositorio. Cámbiala con PUBLIC_REPO_URL al publicar. */
 export const REPO_URL = import.meta.env.PUBLIC_REPO_URL ?? 'https://github.com/elrincondeisma/cartero'
 
+/** Descarga directa de la última versión publicada de la app de escritorio (nombres sin versión). */
+export const DESKTOP_DOWNLOADS = {
+  mac: 'Cartero-macos-universal.dmg',
+  win: 'Cartero-windows-x64-setup.exe',
+  deb: 'cartero-linux-amd64.deb',
+  appimage: 'Cartero-linux-x86_64.AppImage',
+} as const
+export const downloadUrl = (file: string) => `${REPO_URL}/releases/latest/download/${file}`
+
 export const ui = {
   es: {
     meta: {
@@ -106,9 +115,15 @@ export const ui = {
       title: 'También como app nativa',
       text: 'Una app para macOS, Windows y Linux escrita en Rust. Funciona sola: tus colecciones se guardan en tu ordenador y las peticiones salen de tu equipo, así que llegan a tu localhost y a tu VPN. Si quieres, sincroniza tus workspaces con tu servidor de Cartero.',
       mac: 'macOS',
+      macSub: 'Apple Silicon e Intel',
       win: 'Windows',
-      linux: 'Linux',
-      note: 'Gratis y open source, como todo Cartero.',
+      winSub: '64 bits',
+      deb: 'Linux (.deb)',
+      debSub: 'Debian, Ubuntu',
+      appimage: 'Linux (AppImage)',
+      appimageSub: 'Cualquier distribución',
+      all: 'Todas las versiones',
+      note: 'Gratis y open source, como todo Cartero. Firmada y notarizada por Apple en macOS.',
     },
     cli: { kicker: 'CLI', title: 'Tus tests de API, en cada push', text: 'La misma colección que usas en la interfaz, en tu CI. Sale con código 1 si algo falla y genera informes JUnit que entienden GitHub, GitLab y Jenkins.' },
     oss: {
@@ -235,9 +250,15 @@ export const ui = {
       title: 'Also as a native app',
       text: 'An app for macOS, Windows and Linux written in Rust. It works on its own: your collections live on your computer and requests leave from your machine, so they reach your localhost and your VPN. If you want, it syncs your workspaces with your Cartero server.',
       mac: 'macOS',
+      macSub: 'Apple Silicon and Intel',
       win: 'Windows',
-      linux: 'Linux',
-      note: 'Free and open source, like the rest of Cartero.',
+      winSub: '64-bit',
+      deb: 'Linux (.deb)',
+      debSub: 'Debian, Ubuntu',
+      appimage: 'Linux (AppImage)',
+      appimageSub: 'Any distribution',
+      all: 'All releases',
+      note: 'Free and open source, like the rest of Cartero. Signed and notarized by Apple on macOS.',
     },
     cli: { kicker: 'CLI', title: 'Your API tests, on every push', text: 'The same collection you use in the app, in your CI. Exits with code 1 when something fails and writes JUnit reports GitHub, GitLab and Jenkins understand.' },
     oss: {

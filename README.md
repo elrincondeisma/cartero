@@ -6,6 +6,8 @@
 
 <img src="apps/landing/src/assets/screens/en/request-dark.png" alt="Cartero sending a request, dark theme">
 
+**Desktop app:** [macOS](https://github.com/elrincondeisma/cartero/releases/latest/download/Cartero-macos-universal.dmg) · [Windows](https://github.com/elrincondeisma/cartero/releases/latest/download/Cartero-windows-x64-setup.exe) · [Linux .deb](https://github.com/elrincondeisma/cartero/releases/latest/download/cartero-linux-amd64.deb) · [Linux AppImage](https://github.com/elrincondeisma/cartero/releases/latest/download/Cartero-linux-x86_64.AppImage)
+
 **An open-source, self-hosted web API client.** A Postman alternative that includes what Postman charges for, free and without limits: collection runner, mock servers, monitors, published documentation and team collaboration. Import your Postman collections without losing anything.
 
 > MIT · TypeScript · One `docker compose up` and you're done
@@ -102,6 +104,10 @@ More in the [user guide](docs/manual/13-ai-mcp.md).
 ## Desktop app
 
 A native app for macOS, Windows and Linux, written in Rust. It works on its own (your collections live on your computer and requests leave from your machine, so they reach `localhost` and your VPN) and can sync workspaces with a Cartero server. Download it from [Releases](https://github.com/elrincondeisma/cartero/releases) and read the [guide](docs/manual/18-desktop-app.md).
+
+| macOS (Apple Silicon and Intel) | Windows | Linux |
+|---|---|---|
+| [⬇ Cartero-macos-universal.dmg](https://github.com/elrincondeisma/cartero/releases/latest/download/Cartero-macos-universal.dmg)<br>signed and notarized | [⬇ Cartero-windows-x64-setup.exe](https://github.com/elrincondeisma/cartero/releases/latest/download/Cartero-windows-x64-setup.exe) | [⬇ .deb](https://github.com/elrincondeisma/cartero/releases/latest/download/cartero-linux-amd64.deb) (Debian, Ubuntu)<br>[⬇ AppImage](https://github.com/elrincondeisma/cartero/releases/latest/download/Cartero-linux-x86_64.AppImage) (any distribution) |
 
 <img src="apps/landing/src/assets/screens/en/desktop.png" alt="Cartero desktop app checking a contract against a localhost API, with a local mock running">
 
