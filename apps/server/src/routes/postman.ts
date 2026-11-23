@@ -302,7 +302,7 @@ export async function postmanRoutes(app: FastifyInstance) {
               }
             } catch (e) {
               failed++
-              send({ type: 'error', name: c.name, message: (e as Error).message })
+              send({ type: 'error', name: c.name, message: errorMessage(e) })
             }
             step(c.name)
           })
@@ -350,7 +350,7 @@ export async function postmanRoutes(app: FastifyInstance) {
               }
             } catch (e) {
               failed++
-              send({ type: 'error', name: en.name, message: (e as Error).message })
+              send({ type: 'error', name: en.name, message: errorMessage(e) })
             }
             step(en.name)
           })
@@ -389,7 +389,7 @@ export async function postmanRoutes(app: FastifyInstance) {
               }
             } catch (e) {
               failed++
-              send({ type: 'error', name: `${w.name} · globales`, message: (e as Error).message })
+              send({ type: 'error', name: `${w.name} · globales`, message: errorMessage(e) })
             }
             step('Variables globales')
           }
@@ -409,11 +409,19 @@ export async function postmanRoutes(app: FastifyInstance) {
         send({ type: 'done', calls: pm.calls, created, updated, failed })
       } catch (e) {
         req.log.error(e)
-        send({ type: 'error', name: 'Cartero', message: (e as Error).message })
+        send({ type: 'error', name: 'Cartero', message: errorMessage(e) })
         send({ type: 'done', calls: pm.calls, created: 0, updated: 0, failed: 1 })
       } finally {
         reply.raw.end()
       }
     },
   )
+}
+
+/** Mensaje legible de un error: los de Drizzle traen la consulta entera y la causa real dentro. */
+function errorMessage(e: unknown): string {
+  const err = e as Error & { cause?: Error }
+  if (err?.cause?.message && /^Failed query/.test(err.message))
+    return `Error de la base de datos: ${err.cause.message}`
+  return err?.message ?? String(e)
 }

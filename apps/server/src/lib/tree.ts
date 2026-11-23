@@ -25,7 +25,8 @@ export function itemData(item: Item): Record<string, any> {
 }
 
 export function rowToItem(row: ItemRow, children?: Item[]): Item {
-  if (row.type === 'folder') return { id: row.id, name: row.name, ...row.data, item: children ?? [] } as FolderItem
+  if (row.type === 'folder')
+    return { id: row.id, name: row.name, ...row.data, item: children ?? [] } as FolderItem
   return { id: row.id, name: row.name, ...row.data } as RequestItem
 }
 
@@ -60,8 +61,15 @@ export function rowToCollection(row: CollectionRow, items: Item[]): Collection {
   return col
 }
 
-export async function loadCollection(collectionId: string, tx: DB = db): Promise<{ row: CollectionRow; collection: Collection }> {
-  const [row] = await tx.select().from(schema.collections).where(eq(schema.collections.id, collectionId)).limit(1)
+export async function loadCollection(
+  collectionId: string,
+  tx: DB = db,
+): Promise<{ row: CollectionRow; collection: Collection }> {
+  const [row] = await tx
+    .select()
+    .from(schema.collections)
+    .where(eq(schema.collections.id, collectionId))
+    .limit(1)
   if (!row) throw notFound('Colección')
   const rows = await tx
     .select()
@@ -77,7 +85,24 @@ export function collectionData(col: Collection): Record<string, any> {
     const v = k === 'description' ? (col.info.description ?? (col as any).description) : (col as any)[k]
     if (v !== undefined && v !== null) data[k] = v
   }
-  return data
+  return stripNul(data)
+}
+
+/**
+ * PostgreSQL no admite el carácter NUL (\u0000) en jsonb ni en text. Aparece en respuestas
+ * guardadas con cuerpos binarios (un .docx o un .xlsx pegados como texto), así que se quita
+ * antes de guardar.
+ */
+export function stripNul<T>(value: T): T {
+  if (typeof value === 'string')
+    return (value.includes('\u0000') ? value.replaceAll('\u0000', '') : value) as T
+  if (Array.isArray(value)) return value.map(stripNul) as T
+  if (value && typeof value === 'object') {
+    const out: Record<string, unknown> = {}
+    for (const [k, v] of Object.entries(value)) out[stripNul(k)] = stripNul(v)
+    return out as T
+  }
+  return value
 }
 
 /** Aplana el árbol a filas con ids nuevos y claves de orden fraccional. */
@@ -92,9 +117,9 @@ export function flattenItems(collectionId: string, items: Item[], userId?: strin
         collectionId,
         parentId,
         type: isFolder(item) ? 'folder' : 'request',
-        name: item.name || 'Sin nombre',
+        name: stripNul(item.name || 'Sin nombre'),
         sort: keys[i],
-        data: itemData(item),
+        data: stripNul(itemData(item)),
         updatedBy: userId,
       })
       if (isFolder(item)) walk(item.item, id)
@@ -105,7 +130,12 @@ export function flattenItems(collectionId: string, items: Item[], userId?: strin
 }
 
 /** Crea una colección completa (con su árbol) en un workspace. */
-export async function insertCollection(workspaceId: string, col: Collection, userId?: string, forkedFrom?: string) {
+export async function insertCollection(
+  workspaceId: string,
+  col: Collection,
+  userId?: string,
+  forkedFrom?: string,
+) {
   return db.transaction(async (tx) => {
     const [row] = await tx
       .insert(schema.collections)
@@ -122,7 +152,10 @@ export function replaceItem(items: Item[], replacement: Item): boolean {
   for (let i = 0; i < items.length; i++) {
     const it = items[i]
     if (it.id === replacement.id) {
-      items[i] = isFolder(it) && !isFolder(replacement) ? replacement : { ...replacement, ...(isFolder(it) ? { item: it.item } : {}) }
+      items[i] =
+        isFolder(it) && !isFolder(replacement)
+          ? replacement
+          : { ...replacement, ...(isFolder(it) ? { item: it.item } : {}) }
       return true
     }
     if (isFolder(it) && replaceItem(it.item, replacement)) return true

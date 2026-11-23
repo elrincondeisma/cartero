@@ -4,6 +4,7 @@
  * cada petición y solo se usa para hablar con Postman.
  */
 import { badRequest } from './errors.js'
+import { stripNul } from './tree.js'
 
 const BASE = () => (process.env.POSTMAN_API_URL ?? 'https://api.getpostman.com').replace(/\/$/, '')
 
@@ -90,7 +91,7 @@ export class PostmanClient {
         continue
       }
       const body: any = await res.json().catch(() => ({}))
-      if (res.ok) return body as T
+      if (res.ok) return stripNul(body) as T
       throw new PostmanError(describe(res.status, body), res.status)
     }
   }

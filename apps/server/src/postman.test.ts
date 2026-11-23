@@ -42,6 +42,21 @@ function fakePostman(): Promise<Server> {
       c.info.name = collectionName
       return { collection: c }
     },
+    '/collections/1-nul': () => ({
+      collection: {
+        info: {
+          name: 'Binaria',
+          schema: 'https://schema.getpostman.com/json/collection/v2.1.0/collection.json',
+        },
+        item: [
+          {
+            name: 'Descarga\u0000',
+            request: { method: 'GET', url: 'https://example.com/doc' },
+            response: [{ name: 'docx', code: 200, body: 'PK\u0003\u0004\u0000\u0000binario' }],
+          },
+        ],
+      },
+    }),
     '/environments/1-e1': () => ({
       environment: {
         id: 'e1',
@@ -223,6 +238,24 @@ describe('importar desde la API de Postman', () => {
     })
     expect(events.find((e) => e.type === 'error')).toMatchObject({ name: 'Borrada' })
     expect(events.at(-1)).toMatchObject({ type: 'done', updated: 1, failed: 1 })
+  })
+
+  it('guarda colecciones con respuestas binarias (carácter NUL)', async () => {
+    const events = await runImport({
+      apiKey: KEY,
+      workspaces: [
+        {
+          postmanId: 'w1',
+          name: 'Mi workspace',
+          targetId: newWs,
+          collections: [{ uid: '1-nul', name: 'Binaria' }],
+          environments: [],
+          globals: false,
+        },
+      ],
+    })
+    expect(events.find((e) => e.type === 'error')).toBeUndefined()
+    expect(events.at(-1)).toMatchObject({ type: 'done', created: 1, failed: 0 })
   })
 
   it('no deja importar a un workspace ajeno', async () => {
