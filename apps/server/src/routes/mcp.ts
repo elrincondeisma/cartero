@@ -32,7 +32,7 @@ export async function mcpRoutes(app: FastifyInstance) {
       if (msg?.method === 'tools/call' && typeof msg.params?.name === 'string' && /^[a-z_]{1,40}$/.test(msg.params.name))
         countEvent(`mcp.${msg.params.name}`)
 
-    const server = createCarteroMcpServer({ baseUrl: `http://127.0.0.1:${config.port}`, token, publicUrl: await publicUrl() })
+    const server = createCarteroMcpServer({ baseUrl: `http://127.0.0.1:${config.port}`, token, publicUrl: await publicUrl(), version: config.version })
     const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined, enableJsonResponse: true })
     reply.hijack()
     reply.raw.on('close', () => {

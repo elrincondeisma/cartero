@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs'
 import http from 'node:http'
 import type { AddressInfo } from 'node:net'
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
@@ -107,6 +108,16 @@ async function connect() {
 const text = (r: any) => r.content[0].text as string
 
 describe('createCarteroMcpServer', () => {
+  it('anuncia la versión del paquete, o la que le pasa el servidor', async () => {
+    const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'))
+    expect((await connect()).getServerVersion()?.version).toBe(pkg.version)
+    const server = createCarteroMcpServer({ baseUrl: base, token: 'crt_test', version: '9.9.9' })
+    const [a, b] = InMemoryTransport.createLinkedPair()
+    const client = new Client({ name: 't', version: '1' })
+    await Promise.all([server.connect(a), client.connect(b)])
+    expect(client.getServerVersion()?.version).toBe('9.9.9')
+  })
+
   it('expone las herramientas y envía el token', async () => {
     const c = await connect()
     const { tools } = await c.listTools()

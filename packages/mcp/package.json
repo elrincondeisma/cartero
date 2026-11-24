@@ -1,6 +1,6 @@
 {
   "name": "@cartero/mcp",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "description": "Servidor MCP de Cartero: conecta asistentes de IA a tus colecciones",
   "license": "MIT",
   "type": "module",

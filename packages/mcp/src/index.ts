@@ -5,6 +5,7 @@
  * Todas las herramientas usan la API REST de Cartero con el token del usuario,
  * así que respetan sus permisos (un lector no puede modificar nada).
  */
+import { readFileSync } from 'node:fs'
 import type { Contract } from '@cartero/core'
 import {
   checkExchange,
@@ -27,6 +28,17 @@ export interface CarteroMcpOptions {
   token: string
   /** URL pública (para enlaces que se devuelven al usuario). Por defecto, baseUrl */
   publicUrl?: string
+  /** Versión que se anuncia a los clientes MCP. Por defecto, la del paquete */
+  version?: string
+}
+
+/** Versión de este paquete, leída de su package.json (no hace falta tocarla a mano en cada versión). */
+function packageVersion(): string {
+  try {
+    return JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')).version
+  } catch {
+    return '0.0.0'
+  }
 }
 
 type Json = any
@@ -172,7 +184,7 @@ export function createCarteroMcpServer(opts: CarteroMcpOptions): McpServer {
   }
 
   const server = new McpServer(
-    { name: 'cartero', version: '0.1.0', title: 'Cartero' },
+    { name: 'cartero', version: opts.version ?? packageVersion(), title: 'Cartero' },
     {
       instructions:
         'Cartero es un cliente de APIs (alternativa a Postman). Flujo típico: listar_workspaces → listar_colecciones → ver_coleccion → ver_peticion / enviar_peticion. ' +
