@@ -75,6 +75,10 @@ Open `http://localhost:3000`. The **setup wizard** walks you through it step by 
 
 Everything you choose can be changed later in **Administration** (account menu), along with user management. See the [admin guide](https://cartero.elrincondeisma.com/docs/admin-and-social-login/).
 
+**Updates.** Installations use the `stable` image. When a new version comes out, Cartero shows a notice and an **Update** button in **Administration → System**, or updates itself at night if you turn that on. It works with Docker Compose, EC2 and Fargate. See [Updating Cartero](https://cartero.elrincondeisma.com/docs/updating/).
+
+**Telemetry.** Once a day, Cartero sends anonymous counts (version, how many users and collections, which features are used, errors) so we know how many people use it. It never sends your requests, URLs, collections, variables, secrets or emails. You can see the exact report and turn it off in **Administration → System**, or with `CARTERO_TELEMETRY=off`. See [Telemetry](https://cartero.elrincondeisma.com/docs/telemetry/).
+
 ### Configuration
 
 Only what the server needs **before it starts** goes in `.env`:
