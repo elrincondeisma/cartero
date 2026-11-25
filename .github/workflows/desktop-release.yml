@@ -126,6 +126,8 @@ jobs:
           name: ${{ github.ref_type == 'tag' && format('Cartero de escritorio {0}', github.ref_name) || format('Cartero de escritorio · compilación {0}', github.run_number) }}
           draft: ${{ github.ref_type != 'tag' }}
           prerelease: ${{ github.ref_type != 'tag' }}
+          # «Latest» es siempre la de escritorio: los enlaces /releases/latest/download/… apuntan a sus instaladores
+          make_latest: ${{ github.ref_type == 'tag' && 'true' || 'false' }}
           files: dist/*
           body: |
             Instaladores de la app de escritorio de Cartero.

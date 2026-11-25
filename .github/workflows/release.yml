@@ -49,8 +49,9 @@ jobs:
             ghcr.io/${{ github.repository }}:stable
           cache-from: type=gha
           cache-to: type=gha,mode=max
-      # La release va después de la imagen: cuando las instalaciones la ven, :stable ya apunta a ella
+      # La release va después de la imagen: cuando las instalaciones la ven, :stable ya apunta a ella.
+      # No es «Latest»: esa es la de escritorio, para que funcionen los enlaces /releases/latest/download/…
       - name: GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" --title "Cartero ${{ steps.version.outputs.version }}" --generate-notes --verify-tag
+        run: gh release create "$GITHUB_REF_NAME" --title "Cartero ${{ steps.version.outputs.version }}" --generate-notes --verify-tag --latest=false
